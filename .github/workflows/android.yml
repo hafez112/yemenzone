@@ -25,6 +25,12 @@ jobs:
       - name: إعداد Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: قبول التراخيص وتثبيت مكونات SDK المطلوبة
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+
       - name: إعداد Node وتثبيت اعتماديات Capacitor
         uses: actions/setup-node@v4
         with:
@@ -61,6 +67,12 @@ jobs:
 
       - name: إعداد Android SDK
         uses: android-actions/setup-android@v3
+
+      - name: قبول التراخيص وتثبيت مكونات SDK المطلوبة
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "platform-tools"
 
       - name: إعداد Node وتثبيت اعتماديات Capacitor
         uses: actions/setup-node@v4
