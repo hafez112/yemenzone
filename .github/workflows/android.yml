@@ -31,26 +31,40 @@ jobs:
           yes | "$SDKMANAGER" --licenses > /dev/null || true
           "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "platform-tools"
 
-      - name: إعداد Node وتثبيت اعتماديات Capacitor
+      - name: إعداد Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci --include=dev --workspaces=false --no-audit --no-fund
-        working-directory: apps/mobile
 
-      - name: مزامنة Capacitor وفحص الربط
+      - name: تثبيت الاعتماديات والمزامنة وبناء APK (خطوة موحدة)
         working-directory: apps/mobile
         run: |
-          echo "📂 المسار الحالي: $(pwd)"
-          echo "📦 الأدوات المثبتة:" && ls node_modules/.bin/ | head -20
+          set -e
+          echo "===== 1) البيئة ====="
+          echo "📂 المسار: $(pwd)"
+          echo "🔢 node=$(node -v) npm=$(npm -v) NODE_ENV=${NODE_ENV:-none} CI=${CI:-none}"
+          echo "===== 2) التثبيت ====="
+          npm ci --include=dev --workspaces=false --no-audit --no-fund || npm install --include=dev --workspaces=false --no-audit --no-fund
+          echo "===== 3) فحص التثبيت ====="
+          if [ ! -d node_modules ]; then
+            echo "❌ node_modules غير موجود هنا! npm ثبّت في مكان آخر:"
+            echo "prefix = $(npm config get prefix)"
+            echo "محتوى الجذر:" && ls -la ../.. | head -20
+            echo "محتوى المجلد الأب:" && ls -la .. | head -20
+            find /home/runner/work -maxdepth 4 -name "@capacitor" -type d 2>/dev/null | head -5
+            exit 1
+          fi
+          echo "✅ node_modules موجود — عدد الحزم: $(ls node_modules | wc -l)"
+          ls node_modules/.bin | head -10
+          echo "===== 4) مزامنة Capacitor ====="
           node node_modules/@capacitor/cli/bin/capacitor sync android
           ls node_modules/@capacitor/android/capacitor/build.gradle
-
-      - name: بناء APK
-        working-directory: apps/mobile/android
-        run: |
+          echo "===== 5) بناء APK ====="
+          cd android
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
+          echo "===== 6) الناتج ====="
+          ls -la app/build/outputs/apk/debug/
 
       - name: رفع الناتج
         uses: actions/upload-artifact@v4
@@ -82,20 +96,23 @@ jobs:
           yes | "$SDKMANAGER" --licenses > /dev/null || true
           "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "platform-tools"
 
-      - name: إعداد Node وتثبيت اعتماديات Capacitor
+      - name: إعداد Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci --include=dev --workspaces=false --no-audit --no-fund
-        working-directory: apps/mobile
 
-      - name: مزامنة Capacitor وفحص الربط
+      - name: تثبيت الاعتماديات والمزامنة (خطوة موحدة)
         working-directory: apps/mobile
         run: |
-          echo "📂 المسار الحالي: $(pwd)"
-          echo "📦 الأدوات المثبتة:" && ls node_modules/.bin/ | head -20
+          set -e
+          echo "📂 المسار: $(pwd)"
+          npm ci --include=dev --workspaces=false --no-audit --no-fund || npm install --include=dev --workspaces=false --no-audit --no-fund
+          if [ ! -d node_modules ]; then
+            echo "❌ node_modules غير موجود بعد التثبيت"
+            exit 1
+          fi
+          echo "✅ عدد الحزم: $(ls node_modules | wc -l)"
           node node_modules/@capacitor/cli/bin/capacitor sync android
-          ls node_modules/@capacitor/android/capacitor/build.gradle
 
       - name: فك تشفير مفتاح التوقيع
         working-directory: apps/mobile/android
