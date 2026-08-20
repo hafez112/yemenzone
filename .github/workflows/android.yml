@@ -41,7 +41,9 @@ jobs:
       - name: مزامنة Capacitor وفحص الربط
         working-directory: apps/mobile
         run: |
-          npx cap sync android
+          echo "📂 المسار الحالي: $(pwd)"
+          echo "📦 الأدوات المثبتة:" && ls node_modules/.bin/ | head -20
+          node node_modules/@capacitor/cli/bin/capacitor sync android
           ls node_modules/@capacitor/android/capacitor/build.gradle
 
       - name: بناء APK
@@ -90,7 +92,9 @@ jobs:
       - name: مزامنة Capacitor وفحص الربط
         working-directory: apps/mobile
         run: |
-          npx cap sync android
+          echo "📂 المسار الحالي: $(pwd)"
+          echo "📦 الأدوات المثبتة:" && ls node_modules/.bin/ | head -20
+          node node_modules/@capacitor/cli/bin/capacitor sync android
           ls node_modules/@capacitor/android/capacitor/build.gradle
 
       - name: فك تشفير مفتاح التوقيع
