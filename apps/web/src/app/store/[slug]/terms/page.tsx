@@ -1,0 +1,44 @@
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+
+import { getStorefront as getStore } from '@/lib/storefront';
+import { termsFor } from '@/lib/policies';
+
+
+// شروط الاستخدام — فريدة لكل نشاط (تسوق/حجز فندقي/استئجار/خدمات)
+export default async function TermsPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const store = await getStore(slug);
+  if (!store) notFound();
+  const primary = (store.themeJson as any)?.primary || '#6C3DF5';
+  const terms = termsFor(store.type?.kind || 'products', store.name, store.whatsapp);
+
+  return (
+    <main className="min-h-screen bg-gray-50 pt-20 pb-24">
+      <div className="max-w-3xl mx-auto px-4">
+        <Link href={`/store/${store.slug}`} className="text-sm font-bold mb-4 inline-block" style={{ color: primary }}>
+          → العودة إلى {store.name}
+        </Link>
+        <div className="bg-white rounded-3xl shadow-sm p-6 md:p-8">
+          <h1 className="text-2xl font-black mb-1">{terms.heading}</h1>
+          <p className="text-xs text-gray-400 mb-6">{terms.sub}</p>
+
+          <div className="space-y-5 text-sm leading-relaxed text-gray-600">
+            {terms.sections.map((s) => (
+              <section key={s.title}>
+                <h2 className="font-extrabold text-base mb-1" style={{ color: primary }}>{s.title}</h2>
+                <p>{s.body}</p>
+              </section>
+            ))}
+          </div>
+
+          {/* روابط السياسات الأخرى */}
+          <div className="flex flex-wrap gap-2 mt-8 pt-6 border-t border-gray-100">
+            <Link href={`/store/${store.slug}/privacy`} className="px-4 py-2 rounded-full text-xs font-bold bg-gray-100 hover:bg-gray-200 transition-colors">🔒 سياسة الخصوصية</Link>
+            <Link href={`/store/${store.slug}/returns`} className="px-4 py-2 rounded-full text-xs font-bold bg-gray-100 hover:bg-gray-200 transition-colors">🔄 سياسة الاسترجاع</Link>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}

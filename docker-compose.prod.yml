@@ -1,0 +1,121 @@
+version: "3.9"
+
+# يمن زون — إنتاج: كل شيء خلف Caddy بدومين واحد و SSL تلقائي
+# الواجهة والـ API لا يُعرّضان للخارج إطلاقاً — Caddy فقط على 80/443
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: yz-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?ضع كلمة مرور قوية في .env}
+      POSTGRES_DB: ${POSTGRES_DB:-yemenzone}
+    volumes:
+      - yz_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: yz-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-yemenzone}?schema=public
+      API_PORT: 4000
+      JWT_SECRET: ${JWT_SECRET:?ضع سراً عشوائياً في .env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?ضع سراً عشوائياً آخر في .env}
+      BACKUP_DIR: /app/backups
+      PLATFORM_DOMAIN: ${DOMAIN}
+      # ⚡ Redis اختياري للكاش — فعّل خدمة redis أسفل ثم ضع REDIS_URL=redis://redis:6379 في .env
+      # عند غيابه يعمل الكاش بالذاكرة المحلية تلقائياً — لا شيء ينكسر
+      REDIS_URL: ${REDIS_URL:-}
+    volumes:
+      - yz_uploads:/app/uploads
+      - yz_backups:/app/backups
+
+  # ⚡ كاش Redis — اختياري تماماً. التفعيل: أضف REDIS_URL=redis://redis:6379 للـ .env
+  # ثم: docker compose -f docker-compose.prod.yml --profile cache up -d redis
+  redis:
+    image: redis:7-alpine
+    container_name: yz-redis
+    profiles: ["cache"]
+    restart: unless-stopped
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - yz_redis:/data
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # فارغ = نفس الدومين عبر Caddy (لا تغيّره)
+        NEXT_PUBLIC_API_URL: ""
+        NEXT_PUBLIC_SITE_URL: https://${DOMAIN:?ضع دومينك في .env}
+    container_name: yz-web
+    restart: unless-stopped
+    environment:
+      # عنوان الـ API الداخلي للجلب من الخادم (SSR) — اسم خدمة Docker
+      - API_INTERNAL_URL=http://api:4000
+      # 🛡️ الرمز السري لبوابة لوحة تحكم المنصة — ضعه في .env (فارغ = البوابة معطلة)
+      - ADMIN_GATE=${ADMIN_GATE:-}
+    depends_on:
+      - api
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: yz-caddy
+    restart: unless-stopped
+    depends_on:
+      - web
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - yz_caddy_data:/data
+      - yz_caddy_config:/config
+
+  # 🔒 نفق VPN اختياري للخادم (WireGuard) — مقاومة حجب مستوى الشبكة للترافيك الصادر
+  # التفعيل: docker compose -f docker-compose.prod.yml --profile vpn up -d wireguard
+  # يتطلب: WG_PRIVATE_KEY و WG_PEER_PUBLIC_KEY و WG_ENDPOINT في .env (من مزود VPN تجاري أو خادم خارجي تملكه)
+  # ملاحظة: حجب مزود الإنترنت اليمني للمستخدمين تُعالجه الدومينات المرآة (لوحة الإدارة ← الأمن ← درع الحماية)
+  wireguard:
+    image: linuxserver/wireguard:latest
+    container_name: yz-vpn
+    profiles: ["vpn"]
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Asia/Aden
+    volumes:
+      - yz_wireguard:/config
+      - /lib/modules:/lib/modules:ro
+    sysctls:
+      net.ipv4.conf.all.src_valid_mark: "1"
+
+volumes:
+  yz_wireguard:
+  yz_pgdata:
+  yz_uploads:
+  yz_backups:
+  yz_caddy_data:
+  yz_caddy_config:
+  yz_redis:

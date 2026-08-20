@@ -1,0 +1,22 @@
+{
+  "appId": "com.yemenzone1.app",
+  "appName": "يمن زون",
+  "webDir": "www",
+  "server": {
+    "url": "https://yemenzone1.com",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#0A0A14"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "launchAutoHide": true,
+      "backgroundColor": "#0A0A14",
+      "androidSplashResourceName": "splash",
+      "showSpinner": false
+    }
+  }
+}

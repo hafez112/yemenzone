@@ -1,0 +1,23 @@
+{
+  "name": "yemen-zone",
+  "version": "1.0.0",
+  "private": true,
+  "description": "منصة يمن زون — منظومة تجارة إلكترونية متكاملة (متاجر/إيجارات/فنادق/خدمات)",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "db:generate": "npm run generate --workspace=apps/api",
+    "db:migrate": "npm run migrate --workspace=apps/api",
+    "db:push": "npm run push --workspace=apps/api",
+    "db:seed": "npm run seed --workspace=apps/api",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": { "node": ">=22.0.0" }
+}

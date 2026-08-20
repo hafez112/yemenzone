@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: yz-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: yemenzone
+    ports:
+      - "5432:5432"
+    volumes:
+      - yz_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: yz-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/yemenzone?schema=public
+      API_PORT: 4000
+      JWT_SECRET: ${JWT_SECRET:-change-me-super-secret-key-32chars-min}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-refresh-secret-32chars}
+      BACKUP_DIR: /app/backups
+    ports:
+      - "4000:4000"
+    volumes:
+      - yz_uploads:/app/uploads
+      - yz_backups:/app/backups
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: yz-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
+
+volumes:
+  yz_pgdata:
+  yz_uploads:
+  yz_backups:

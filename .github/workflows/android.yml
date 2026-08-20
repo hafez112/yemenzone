@@ -1,0 +1,89 @@
+# 📱 بناء تطبيق يمن زون لأندرويد سحابياً — بدون حاسوب
+# يعمل تلقائياً عند أي تعديل على apps/mobile، أو يدوياً من تبويب Actions → Run workflow
+# الناتج: ملف APK جاهز للتثبيت من صفحة Artifacts، وملف AAB لجوجل بلاي عند إضافة أسرار التوقيع
+name: 📱 بناء تطبيق أندرويد
+
+on:
+  push:
+    paths:
+      - 'apps/mobile/**'
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    name: بناء APK (للتثبيت المباشر)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: إعداد Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: إعداد Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: إعداد Node وتثبيت اعتماديات Capacitor
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci --workspaces=false --no-audit --no-fund
+        working-directory: apps/mobile
+
+      - name: بناء APK
+        working-directory: apps/mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: رفع الناتج
+        uses: actions/upload-artifact@v4
+        with:
+          name: yemen-zone-app-debug-apk
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+  build-bundle:
+    name: بناء AAB (لجوجل بلاي — يتطلب أسرار التوقيع)
+    runs-on: ubuntu-latest
+    # يعمل فقط إذا أُضيفت أسرار التوقيع في إعدادات المستودع
+    if: ${{ vars.KEYSTORE_CONFIGURED == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: إعداد Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: إعداد Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: إعداد Node وتثبيت اعتماديات Capacitor
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci --workspaces=false --no-audit --no-fund
+        working-directory: apps/mobile
+
+      - name: فك تشفير مفتاح التوقيع
+        working-directory: apps/mobile/android
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > yemenzone.keystore
+          printf "storeFile=yemenzone.keystore\nstorePassword=%s\nkeyAlias=yemenzone\nkeyPassword=%s\n" "${{ secrets.KEYSTORE_PASSWORD }}" "${{ secrets.KEY_PASSWORD }}" > keystore.properties
+
+      - name: بناء AAB موقّع
+        working-directory: apps/mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon --stacktrace
+
+      - name: رفع حزمة جوجل بلاي
+        uses: actions/upload-artifact@v4
+        with:
+          name: yemen-zone-release-aab
+          path: apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
