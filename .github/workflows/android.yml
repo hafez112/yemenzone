@@ -76,6 +76,9 @@ jobs:
   build-release-aab:
     name: بناء AAB موقّع (Google Play)
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -135,34 +138,36 @@ jobs:
       - name: التثبيت والمزامنة وبناء AAB الموقّع
         working-directory: apps/mobile
         run: |
-          set -e
-          echo "===== 1) التثبيت ====="
+          exec 2>&1
+          LOG=/tmp/build.log
+          STAGE=""
+          report_failure() {
+            echo ""
+            echo "❌❌ فشل في مرحلة: $STAGE — آخر 45 سطر من السجل:"
+            tail -45 "$LOG"
+            jq -n --arg stage "$STAGE" --arg log "$(tail -70 "$LOG")" \
+              '{title:("🚨 فشل بناء AAB — مرحلة: " + $stage), body:("```\n" + $log + "\n```")}' > /tmp/issue.json
+            curl -s -X POST -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues" -d @/tmp/issue.json | head -c 200 || true
+            exit 1
+          }
+          STAGE="تثبيت حزم npm"
           sed -i 's|https://npm.mirrors.msh.team|https://registry.npmjs.org|g' package-lock.json
-          npm ci --include=dev --workspaces=false --no-audit --no-fund || true
+          npm ci --include=dev --workspaces=false --no-audit --no-fund > "$LOG" 2>&1 || true
           if [ ! -f node_modules/@capacitor/cli/bin/capacitor ]; then
             rm -rf node_modules
-            npm ci --include=dev --workspaces=false --no-audit --no-fund || true
+            npm ci --include=dev --workspaces=false --no-audit --no-fund >> "$LOG" 2>&1 || true
           fi
-          if [ ! -f node_modules/@capacitor/cli/bin/capacitor ]; then
-            echo "❌ فشل التثبيت"
-            exit 1
-          fi
-          echo "===== 2) مزامنة Capacitor ====="
-          node node_modules/@capacitor/cli/bin/capacitor sync android
-          echo "===== 3) بناء AAB للإصدار ====="
+          [ -f node_modules/@capacitor/cli/bin/capacitor ] || report_failure
+          echo "✅ التثبيت مكتمل"
+          STAGE="مزامنة Capacitor"
+          node node_modules/@capacitor/cli/bin/capacitor sync android > "$LOG" 2>&1 || report_failure
+          echo "✅ المزامنة مكتملة"
+          STAGE="بناء AAB عبر Gradle"
           cd android
           chmod +x gradlew
-          if ! ./gradlew bundleRelease --no-daemon --stacktrace > /tmp/build.log 2>&1; then
-            echo "❌ فشل البناء — آخر 45 سطر من السجل:"
-            tail -45 /tmp/build.log
-            echo "===== إرسال تقرير الخطأ كـ Issue ====="
-            tail -60 /tmp/build.log > /tmp/err.txt
-            jq -n --arg body "$(cat /tmp/err.txt)" '{title:"🚨 فشل بناء AAB — تقرير تلقائي", body:("```\n" + $body + "\n```")}' > /tmp/issue.json
-            curl -s -X POST -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues" -d @/tmp/issue.json | head -c 300 || true
-            exit 1
-          fi
-          echo "===== 4) الناتج ====="
+          ./gradlew bundleRelease --no-daemon --stacktrace > "$LOG" 2>&1 || report_failure
+          echo "✅ البناء مكتمل"
           ls -la app/build/outputs/bundle/release/
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
