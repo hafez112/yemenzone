@@ -35,20 +35,32 @@ export default function NativeApp() {
       const app = t?.app || {};
 
       // سمات التصميم — تقرأها قواعد CSS الخاصة بالتطبيق في globals.css
-      root.dataset.appDensity = app.density || 'compact';        // كثافة الهوامش: compact | cozy
-      root.dataset.appHeader = app.headerStyle || 'glass';       // الترويسة: glass | solid | tinted
+      root.dataset.appDensity = app.density || 'compact';        // كثافة الهوامش: ultra | compact | cozy | relaxed
+      root.dataset.appHeader = app.headerStyle || 'glass';       // الترويسة: glass | solid | tinted | gradient | minimal
       root.dataset.appHero = app.heroHeight || 'compact';        // قسم البطل: compact | full
+      root.dataset.appFontsize = app.fontSize || 'medium';       // حجم الخط: small | medium | large | xlarge
       root.dataset.appFloatnav = app.floatingNav === false ? 'off' : 'on';
+      // شكل الشريط السفلي: bar | capsule | curved | minimal (يتقدم على مفتاح العائم القديم)
+      root.dataset.appNavstyle = app.navStyle || (app.floatingNav === false ? 'bar' : 'capsule');
       root.dataset.appAnnounce = app.showAnnouncement === false ? 'off' : 'on';
       root.dataset.appCurrency = app.showCurrency === false ? 'off' : 'on';
       root.dataset.appCta = app.showCta === false ? 'off' : 'on';
 
-      // 🌈 ثيم التطبيق الجاهز — original | sand | midnight | amoled | ocean
+      // 🌈 ثيم التطبيق الجاهز — فاتحة: original | sand | sky | mint | rose | lavender | peach — داكنة: midnight | amoled | ocean
       const theme = app.theme || 'original';
       root.dataset.appTheme = theme;
       // شريط الحالة يتكيف مع الثيم: أيقونات فاتحة للثيمات الداكنة
       const darkThemes = ['midnight', 'amoled', 'ocean'];
       StatusBar?.setStyle?.({ style: darkThemes.includes(theme) ? 'LIGHT' : 'DARK' })?.catch?.(() => {});
+
+      // 🖊️ لون خط مخصص — يغطي لون نص الثيم داخل التطبيق
+      if (app.textColor) {
+        root.dataset.appInk = 'custom';
+        root.style.setProperty('--app-ink', app.textColor);
+      } else {
+        delete root.dataset.appInk;
+        root.style.removeProperty('--app-ink');
+      }
 
       // 🎨 لون وانحناء خاصان بالتطبيق — يغطيان ألوان المنصة داخل التطبيق فقط
       const applyBrand = () => {

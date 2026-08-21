@@ -31,7 +31,12 @@ const RADII = [
 // 📱 ثيمات التطبيق الجاهزة — تُطبق داخل تطبيق أندرويد فقط
 const APP_THEMES = [
   { id: "original", name: "الزجاجي الفاتح", desc: "الوضع الحالي — فاتح أنيق", bg: "#f7f7fc", card: "#ffffff", ink: "#1f2937" },
-  { id: "sand", name: "الرملي الدافئ", desc: "فاتح بلمسة ترابية هادئة", bg: "#faf6ef", card: "#fffdf8", ink: "#3f3a2e" },
+  { id: "sand", name: "الرملي الدافئ", desc: "فاتح بلمسة ترابية هادئة", bg: "#faf6ef", card: "#fffdf8", ink: "#3d2f1d" },
+  { id: "sky", name: "السماوي", desc: "فاتح أزرق منعش", bg: "#eef6ff", card: "#ffffff", ink: "#0b2545" },
+  { id: "mint", name: "النعناعي", desc: "فاتح أخضر مريح", bg: "#edf9f3", card: "#ffffff", ink: "#053b2c" },
+  { id: "rose", name: "الوردي", desc: "فاتح وردي ناعم", bg: "#fff3f6", card: "#ffffff", ink: "#4a0e20" },
+  { id: "lavender", name: "اللافندر", desc: "فاتح بنفسجي هادئ", bg: "#f5f3ff", card: "#ffffff", ink: "#2b1a5e" },
+  { id: "peach", name: "الخوخي", desc: "فاتح برتقالي دافئ", bg: "#fff6ee", card: "#ffffff", ink: "#4a1d05" },
   { id: "midnight", name: "الليلي البنفسجي", desc: "داكن فاخر يريح العين", bg: "#0d0d1a", card: "#161628", ink: "#e8e8f5" },
   { id: "amoled", name: "AMOLED الأسود", desc: "أسود خالص موفّر للطاقة", bg: "#000000", card: "#101010", ink: "#f2f2f2" },
   { id: "ocean", name: "الليلي المحيطي", desc: "أزرق ليلي عميق وهادئ", bg: "#071018", card: "#0d1b26", ink: "#e3f0f8" },
@@ -59,7 +64,7 @@ export default function AdminDesignPage() {
   const [fonts, setFonts] = useState<any>({});
   const [customCode, setCustomCode] = useState<any>({ headScripts: "", bodyScripts: "", customCss: "" });
   // 📱 إعدادات استوديو التطبيق — تُطبق داخل تطبيق أندرويد فقط
-  const [appCfg, setAppCfg] = useState<any>({ theme: "original", density: "compact", headerStyle: "glass", heroHeight: "compact", floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "" });
+  const [appCfg, setAppCfg] = useState<any>({ theme: "original", density: "compact", headerStyle: "glass", heroHeight: "compact", fontSize: "medium", navStyle: "capsule", textColor: "", floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "" });
   const [slideForm, setSlideForm] = useState<any>({ title: "", subtitle: "", image: "", link: "", sort: 0 });
   const [editingSlide, setEditingSlide] = useState<string | null>(null);
   const [backupName, setBackupName] = useState("");
@@ -71,7 +76,7 @@ export default function AdminDesignPage() {
     setLayout(d.settings.layout || {});
     setFonts(d.settings.fonts || {});
     setCustomCode({ headScripts: "", bodyScripts: "", customCss: "", ...(d.settings.customCode || {}) });
-    setAppCfg({ theme: "original", density: "compact", headerStyle: "glass", heroHeight: "compact", floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "", ...(d.settings.app || {}) });
+    setAppCfg({ theme: "original", density: "compact", headerStyle: "glass", heroHeight: "compact", fontSize: "medium", navStyle: "capsule", textColor: "", floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "", ...(d.settings.app || {}) });
   }).catch((e) => toast(e.message, "error"));
   useEffect(() => { load(); }, []);
 
@@ -378,9 +383,9 @@ export default function AdminDesignPage() {
 
               <div className="card mb-3">
                 <h3 className="font-black mb-2">📐 كثافة الهوامش</h3>
-                <div className="flex gap-2 mb-1">
-                  {[["compact", "✨ مضغوطة — أنيقة كالتطبيقات"], ["cozy", "🌐 مريحة — مثل الموقع"]].map(([k, l]) => (
-                    <button key={k} className="badge cursor-pointer flex-1"
+                <div className="grid grid-cols-2 gap-2 mb-1">
+                  {[["ultra", "⚡ فائقة الإدماج — أقصى محتوى"], ["compact", "✨ مضغوطة — أنيقة كالتطبيقات"], ["cozy", "🌐 متوازنة — مثل الموقع"], ["relaxed", "🍃 مريحة — مساحات واسعة"]].map(([k, l]) => (
+                    <button key={k} className="badge cursor-pointer"
                       style={{ background: appCfg.density === k ? "#6C3DF5" : "#f3f4f6", color: appCfg.density === k ? "#fff" : "#374151", padding: "10px" }}
                       onClick={() => setAppCfg({ ...appCfg, density: k })}>{l}</button>
                   ))}
@@ -388,12 +393,75 @@ export default function AdminDesignPage() {
               </div>
 
               <div className="card mb-3">
+                <h3 className="font-black mb-2">🔠 حجم الخط داخل التطبيق</h3>
+                <div className="grid grid-cols-4 gap-2">
+                  {[["small", "صغير", "13px"], ["medium", "وسط", "16px"], ["large", "كبير", "19px"], ["xlarge", "ضخم", "23px"]].map(([k, l, s]) => (
+                    <button key={k} className="badge cursor-pointer flex flex-col items-center gap-0.5"
+                      style={{ background: appCfg.fontSize === k ? "#6C3DF5" : "#f3f4f6", color: appCfg.fontSize === k ? "#fff" : "#374151", padding: "8px 4px" }}
+                      onClick={() => setAppCfg({ ...appCfg, fontSize: k })}>
+                      <span style={{ fontSize: s, fontWeight: 900, lineHeight: 1.2 }}>أ</span>
+                      <span className="text-[10px]">{l}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">🖊️ لون الخط داخل التطبيق</h3>
+                <p className="text-xs text-gray-400 mb-2">لون نصوص المحتوى (اتركه فارغاً ليتبع لون الثيم)</p>
+                <div className="flex gap-2 items-center flex-wrap mb-2">
+                  {["#111827", "#1e3a5f", "#3b2f2f", "#4a044e", "#052e16", "#7c2d12"].map((c) => (
+                    <button key={c} className="w-9 h-9 rounded-full transition-transform active:scale-90"
+                      style={{ background: c, border: appCfg.textColor === c ? "3px solid #6C3DF5" : "2px solid #e5e7eb" }}
+                      onClick={() => setAppCfg({ ...appCfg, textColor: c })} />
+                  ))}
+                  <input type="color" className="w-9 h-9 rounded-full cursor-pointer border-2 border-dashed border-gray-300" value={appCfg.textColor || "#111827"} onChange={(e) => setAppCfg({ ...appCfg, textColor: e.target.value })} />
+                </div>
+                {appCfg.textColor && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold" style={{ color: appCfg.textColor }}>نص تجريبي بلونك {appCfg.textColor}</span>
+                    <button className="badge cursor-pointer" style={{ background: "#f3f4f6", color: "#374151" }} onClick={() => setAppCfg({ ...appCfg, textColor: "" })}>↩️ لون الثيم</button>
+                  </div>
+                )}
+              </div>
+
+              <div className="card mb-3">
                 <h3 className="font-black mb-2">🎩 نمط الترويسة العلوية</h3>
-                <div className="grid grid-cols-3 gap-2">
-                  {[["glass", "زجاجية"], ["solid", "بيضاء صلبة"], ["tinted", "مموّهة باللون"]].map(([k, l]) => (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {[["glass", "🫧 زجاجية"], ["solid", "⬜ بيضاء صلبة"], ["tinted", "🎨 مموّهة باللون"], ["gradient", "🌈 متدرجة باللون"], ["minimal", "▫️ شفافة بسيطة"]].map(([k, l]) => (
                     <button key={k} className="badge cursor-pointer"
                       style={{ background: appCfg.headerStyle === k ? "#6C3DF5" : "#f3f4f6", color: appCfg.headerStyle === k ? "#fff" : "#374151", padding: "10px" }}
                       onClick={() => setAppCfg({ ...appCfg, headerStyle: k })}>{l}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-1">🧭 شكل شريط التنقل السفلي</h3>
+                <p className="text-xs text-gray-400 mb-3">اختر الشكل الذي يناسب شخصية تطبيقك</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {([
+                    ["bar", "شريط كلاسيكي", "ممتد بعرض الشاشة", { borderRadius: "6px 6px 0 0", margin: "0" }],
+                    ["capsule", "كبسولة عائمة", "حبّة زجاجية عصرية", { borderRadius: "999px", margin: "0 10px 6px" }],
+                    ["curved", "منحني الأعلى", "لوحة سفلية بانحناء", { borderRadius: "16px 16px 0 0", margin: "0" }],
+                    ["minimal", "مصغّر أنيق", "كبسولة صغيرة منخفضة", { borderRadius: "999px", margin: "0 26px 6px", height: "14px" }],
+                  ] as const).map(([k, l, dsc, st]) => (
+                    <button key={k} onClick={() => setAppCfg({ ...appCfg, navStyle: k })}
+                      className="rounded-2xl overflow-hidden text-right transition-transform active:scale-95 bg-white"
+                      style={{ border: appCfg.navStyle === k ? "3px solid #6C3DF5" : "1px solid #e5e7eb", boxShadow: appCfg.navStyle === k ? "0 8px 24px -8px rgba(108,61,245,.4)" : "none" }}>
+                      <div className="h-16 relative" style={{ background: "#f7f7fc" }}>
+                        <div className="absolute bottom-0 inset-x-0 flex items-center justify-around" style={{ background: "#fff", height: "18px", boxShadow: "0 -2px 8px rgba(0,0,0,.08)", ...(st as any) }}>
+                          <div className="w-2 h-2 rounded-full" style={{ background: "#6C3DF5" }} />
+                          <div className="w-2 h-2 rounded-full bg-gray-300" />
+                          <div className="w-2 h-2 rounded-full bg-gray-300" />
+                          <div className="w-2 h-2 rounded-full bg-gray-300" />
+                        </div>
+                      </div>
+                      <div className="px-2 py-1.5">
+                        <div className="text-xs font-black">{appCfg.navStyle === k ? "✅ " : ""}{l}</div>
+                        <div className="text-[10px] text-gray-400">{dsc}</div>
+                      </div>
+                    </button>
                   ))}
                 </div>
               </div>

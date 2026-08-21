@@ -1199,3 +1199,149 @@ html.native-app[data-app-theme="ocean"] .yz-drawer .text-gray-500 { color: var(-
 html.native-app[data-app-theme="midnight"] .yz-drawer .bg-purple-50,
 html.native-app[data-app-theme="amoled"] .yz-drawer .bg-purple-50,
 html.native-app[data-app-theme="ocean"] .yz-drawer .bg-purple-50 { background: color-mix(in srgb, var(--primary) 18%, transparent); }
+
+/* ═══════════════════════════════════════════════════════════════
+   🎛️ استوديو التطبيق الموسّع — حجم الخط · كثافات إضافية · ثيمات فاتحة
+   لون خط مخصص · أشكال الأشرطة · توحيد المكونات
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── ① حجم الخط — تحجيم جذري يشمل النصوص والمسافات (وحدات rem) ── */
+html.native-app[data-app-fontsize="small"] { font-size: 14px; }
+html.native-app[data-app-fontsize="medium"] { font-size: 16px; }
+html.native-app[data-app-fontsize="large"] { font-size: 17.5px; }
+html.native-app[data-app-fontsize="xlarge"] { font-size: 19px; }
+
+/* ── ② كثافة فائقة الإدماج — ultra ── */
+html.native-app[data-app-density="ultra"] .yz-main section { padding-top: .55rem; padding-bottom: .55rem; }
+html.native-app[data-app-density="ultra"] .yz-main section:first-child { padding-top: calc(3.5rem + var(--sa-top)); padding-bottom: .9rem; }
+html.native-app[data-app-density="ultra"] .yz-main .p-10 { padding: .8rem; }
+html.native-app[data-app-density="ultra"] .yz-main .p-8 { padding: .7rem; }
+html.native-app[data-app-density="ultra"] .yz-main .py-16 { padding-top: 1.1rem; padding-bottom: 1.1rem; }
+html.native-app[data-app-density="ultra"] .yz-main .py-12 { padding-top: .9rem; padding-bottom: .9rem; }
+html.native-app[data-app-density="ultra"] .yz-main .py-8 { padding-top: .75rem; padding-bottom: .75rem; }
+html.native-app[data-app-density="ultra"] .yz-main .mt-16 { margin-top: 1.25rem; }
+html.native-app[data-app-density="ultra"] .yz-main .mb-16 { margin-bottom: 1.25rem; }
+html.native-app[data-app-density="ultra"] .yz-main .mb-12 { margin-bottom: 1rem; }
+html.native-app[data-app-density="ultra"] .yz-main .mb-10 { margin-bottom: .85rem; }
+html.native-app[data-app-density="ultra"] .yz-main .mb-8 { margin-bottom: .7rem; }
+html.native-app[data-app-density="ultra"] .yz-main .grid.gap-6,
+html.native-app[data-app-density="ultra"] .yz-main .gap-6 { gap: .6rem; }
+html.native-app[data-app-density="ultra"] .yz-main .grid.gap-4,
+html.native-app[data-app-density="ultra"] .yz-main .gap-4 { gap: .45rem; }
+html.native-app[data-app-density="ultra"] .yz-main .gap-3 { gap: .35rem; }
+html.native-app[data-app-density="ultra"] .yz-main .mb-6 { margin-bottom: .55rem; }
+html.native-app[data-app-density="ultra"] .yz-main .mb-4 { margin-bottom: .45rem; }
+html.native-app[data-app-density="ultra"] .yz-main .mt-8 { margin-top: .85rem; }
+html.native-app[data-app-density="ultra"] .yz-main .pt-10 { padding-top: 1rem; }
+html.native-app[data-app-density="ultra"] .yz-main .pb-10 { padding-bottom: 1rem; }
+html.native-app[data-app-density="ultra"] .card { padding: .8rem; margin-bottom: .5rem; }
+html.native-app[data-app-density="ultra"] .page { padding-top: calc(4.2rem + var(--sa-top)); }
+
+/* ── كثافة مريحة واسعة — relaxed ── */
+html.native-app[data-app-density="relaxed"] .yz-main section { padding-top: 1.6rem; padding-bottom: 1.6rem; }
+html.native-app[data-app-density="relaxed"] .yz-main .card { padding: 1.5rem; margin-bottom: 1.1rem; }
+html.native-app[data-app-density="relaxed"] .yz-main .gap-6 { gap: 1.5rem; }
+html.native-app[data-app-density="relaxed"] .yz-main .gap-4 { gap: 1.1rem; }
+
+/* ── ③ ثيمات فاتحة جديدة — متغيرات الألوان ── */
+html.native-app[data-app-theme="sand"] { --app-bg: #faf6ef; --app-card: #fffdf8; --app-card2: #f3ecdc; --app-ink: #3d2f1d; --app-ink2: #7a6a52; --app-line: #e9dec7; }
+html.native-app[data-app-theme="sky"] { --app-bg: #eef6ff; --app-card: #ffffff; --app-card2: #deeeff; --app-ink: #0b2545; --app-ink2: #3d5a80; --app-line: #cfe4ff; }
+html.native-app[data-app-theme="mint"] { --app-bg: #edf9f3; --app-card: #ffffff; --app-card2: #d9f4e7; --app-ink: #053b2c; --app-ink2: #2f6f5b; --app-line: #c4ecdc; }
+html.native-app[data-app-theme="rose"] { --app-bg: #fff3f6; --app-card: #ffffff; --app-card2: #ffe0e8; --app-ink: #4a0e20; --app-ink2: #94495f; --app-line: #ffd0dc; }
+html.native-app[data-app-theme="lavender"] { --app-bg: #f5f3ff; --app-card: #ffffff; --app-card2: #eae6ff; --app-ink: #2b1a5e; --app-ink2: #5b4b9e; --app-line: #ddd6fe; }
+html.native-app[data-app-theme="peach"] { --app-bg: #fff6ee; --app-card: #ffffff; --app-card2: #ffe8d4; --app-ink: #4a1d05; --app-ink2: #96603a; --app-line: #ffd8b8; }
+
+/* محرك الثيمات الفاتحة — يعيد تلوين مكونات الواجهة بألوان الثيم */
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) body { background: var(--app-bg); color: var(--app-ink); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .page { background: linear-gradient(160deg, var(--app-bg), var(--app-card2)); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .bg-white,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .card { background: var(--app-card); color: var(--app-ink); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .bg-gray-50,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .bg-gray-100,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .bg-slate-50 { background: var(--app-card2); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .text-gray-900,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .text-gray-800,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .text-gray-700 { color: var(--app-ink); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .text-gray-600,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .text-gray-500 { color: var(--app-ink2); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main [class*="border-gray"],
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main [class*="border-slate"] { border-color: var(--app-line); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main input,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main select,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main textarea { background: var(--app-card); color: var(--app-ink); border-color: var(--app-line); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .tabs button,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .btn.ghost,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .badge { background: var(--app-card2); color: var(--app-ink); border-color: var(--app-line); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-topbar { background: color-mix(in srgb, var(--app-bg) 82%, transparent); border-bottom-color: var(--app-line); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-topbar span,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-topbar a,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-topbar button { color: var(--app-ink); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-bottomnav { background: color-mix(in srgb, var(--app-card) 94%, transparent); border-color: var(--app-line); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-drawer { background: var(--app-card); color: var(--app-ink); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-drawer .yz-menu-ic,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-drawer .bg-gray-100 { background: var(--app-card2); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-drawer .text-gray-700 { color: var(--app-ink); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-drawer .text-gray-500 { color: var(--app-ink2); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-drawer .border-gray-100 { border-color: var(--app-line); }
+
+/* ── ④ لون خط مخصص — يغطي لون نص الثيم (يُضبط inline من NativeApp) ── */
+html.native-app[data-app-ink="custom"] .yz-main { color: var(--app-ink); }
+html.native-app[data-app-ink="custom"] .yz-main .text-gray-900,
+html.native-app[data-app-ink="custom"] .yz-main .text-gray-800,
+html.native-app[data-app-ink="custom"] .yz-main .text-gray-700 { color: var(--app-ink); }
+html.native-app[data-app-ink="custom"] .yz-drawer { color: var(--app-ink); }
+html.native-app[data-app-ink="custom"] .yz-drawer .text-gray-700 { color: var(--app-ink); }
+
+/* ── ⑤ أشكال الشريط السفلي — data-app-navstyle ── */
+/* شريط كلاسيكي ممتد — يلغي الكبسولة */
+html.native-app[data-app-navstyle="bar"] .yz-bottomnav {
+  margin: 0; width: 100%; border-radius: 0; border: 0;
+  border-top: 1px solid rgba(0,0,0,.08);
+}
+/* كبسولة عائمة */
+html.native-app[data-app-navstyle="capsule"] .yz-bottomnav {
+  margin: 0 .75rem calc(.55rem + var(--sa-bot));
+  border-radius: 1.4rem; border: 1px solid rgba(255,255,255,.55);
+  overflow: hidden; box-shadow: 0 10px 30px rgba(20,10,50,.18);
+}
+/* منحني الأعلى — لوحة سفلية عصرية */
+html.native-app[data-app-navstyle="curved"] .yz-bottomnav {
+  margin: 0; width: 100%; border-radius: 1.6rem 1.6rem 0 0;
+  border: 1px solid rgba(0,0,0,.06); border-bottom: 0; overflow: hidden;
+  box-shadow: 0 -12px 30px -12px rgba(15,15,40,.22);
+}
+/* مصغّر أنيق — كبسولة صغيرة منخفضة */
+html.native-app[data-app-navstyle="minimal"] .yz-bottomnav {
+  margin: 0 .9rem calc(.5rem + var(--sa-bot));
+  border-radius: 1.1rem; overflow: hidden;
+  box-shadow: 0 8px 22px rgba(20,10,50,.15);
+}
+html.native-app[data-app-navstyle="minimal"] .yz-bottomnav .grid { height: 2.9rem; }
+html.native-app[data-app-navstyle="minimal"] .yz-bottomnav a span { font-size: 1.05rem; }
+html.native-app[data-app-navstyle="minimal"] .yz-bottomnav a { font-size: 8px; gap: 0; }
+
+/* ── ⑥ أنماط ترويسة إضافية ── */
+/* متدرج بلون المنصة */
+html.native-app[data-app-header="gradient"] .yz-topbar {
+  background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 72%, #1b1035));
+  border-bottom-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html.native-app[data-app-header="gradient"] .yz-topbar a,
+html.native-app[data-app-header="gradient"] .yz-topbar button,
+html.native-app[data-app-header="gradient"] .yz-topbar span,
+html.native-app[data-app-header="gradient"] .yz-topbar div { color: #fff; border-color: rgba(255,255,255,.35); }
+/* شفاف بسيط */
+html.native-app[data-app-header="minimal"] .yz-topbar {
+  background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none;
+  border-bottom-color: transparent; box-shadow: none;
+}
+
+/* ── ⑦ توحيد مكونات الواجهة داخل التطبيق — انسجام كامل ── */
+html.native-app .yz-main .card { border-radius: var(--radius); box-shadow: 0 10px 26px -16px rgba(15,15,40,.16); }
+html.native-app .yz-main .btn { border-radius: calc(var(--radius) * .8); }
+html.native-app .yz-main input,
+html.native-app .yz-main select,
+html.native-app .yz-main textarea { border-radius: calc(var(--radius) * .7); }
+html.native-app .yz-main .badge { border-radius: 999px; }
+html.native-app .yz-main img:not([class*="rounded-full"]) { border-radius: calc(var(--radius) * .65); }
+html.native-app .yz-main [class*="rounded-3xl"]:not(.card) { border-radius: calc(var(--radius) * 1.2); }
