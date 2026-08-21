@@ -43,13 +43,15 @@ const ORDER_LABELS: Record<string, string> = {
 const DEFAULT_ORDER = Object.keys(ORDER_LABELS);
 
 export default function AdminDesignPage() {
-  const [tab, setTab] = useState<"identity" | "typography" | "slider" | "sections" | "code" | "backups">("identity");
+  const [tab, setTab] = useState<"identity" | "typography" | "slider" | "sections" | "app" | "code" | "backups">("identity");
   const [data, setData] = useState<any>(null);
   const [platform, setPlatform] = useState<any>({});
   const [colors, setColors] = useState<any>({});
   const [layout, setLayout] = useState<any>({});
   const [fonts, setFonts] = useState<any>({});
   const [customCode, setCustomCode] = useState<any>({ headScripts: "", bodyScripts: "", customCss: "" });
+  // 📱 إعدادات استوديو التطبيق — تُطبق داخل تطبيق أندرويد فقط
+  const [appCfg, setAppCfg] = useState<any>({ density: "compact", headerStyle: "glass", heroHeight: "compact", floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "" });
   const [slideForm, setSlideForm] = useState<any>({ title: "", subtitle: "", image: "", link: "", sort: 0 });
   const [editingSlide, setEditingSlide] = useState<string | null>(null);
   const [backupName, setBackupName] = useState("");
@@ -61,6 +63,7 @@ export default function AdminDesignPage() {
     setLayout(d.settings.layout || {});
     setFonts(d.settings.fonts || {});
     setCustomCode({ headScripts: "", bodyScripts: "", customCss: "", ...(d.settings.customCode || {}) });
+    setAppCfg({ density: "compact", headerStyle: "glass", heroHeight: "compact", floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "", ...(d.settings.app || {}) });
   }).catch((e) => toast(e.message, "error"));
   useEffect(() => { load(); }, []);
 
@@ -125,7 +128,7 @@ export default function AdminDesignPage() {
           )}
 
           <div className="tabs">
-            {([["identity", "🎨 الهوية والألوان"], ["typography", "✍️ الخطوط والأشكال"], ["slider", "🖼️ السلايدر"], ["sections", "🧩 أقسام الرئيسية"], ["code", "⚡ سكربتات مخصصة"], ["backups", "💾 النسخ"]] as const).map(([k, l]) => (
+            {([["identity", "🎨 الهوية والألوان"], ["typography", "✍️ الخطوط والأشكال"], ["slider", "🖼️ السلايدر"], ["sections", "🧩 أقسام الرئيسية"], ["app", "📱 التطبيق"], ["code", "⚡ سكربتات مخصصة"], ["backups", "💾 النسخ"]] as const).map(([k, l]) => (
               <button key={k} className={"tab" + (tab === k ? " active" : "")} onClick={() => setTab(k as any)}>{l}</button>
             ))}
           </div>
@@ -326,6 +329,101 @@ export default function AdminDesignPage() {
                 })()}
                 <button className="btn w-full mt-3" onClick={() => save([{ key: "layout", value: layout, group: "theme" }], "✅ حُفظت الأقسام والترتيب — ظهرت فوراً في الرئيسية")}>💾 حفظ الأقسام والترتيب</button>
               </div>
+            </div>
+          )}
+
+          {tab === "app" && (
+            <div>
+              <div className="card mb-3" style={{ border: "1px solid #ddd6fe", background: "#f5f3ff" }}>
+                <b className="text-sm">📱 استوديو تصميم التطبيق</b>
+                <p className="text-xs text-gray-500 mt-1">هذه الإعدادات تُطبَّق داخل تطبيق أندرويد فقط ولا تغيّر شيئاً في المتصفح. تظهر التغييرات فور الحفظ — داخل التطبيق اسحب الشاشة للأسفل للتحديث.</p>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">📐 كثافة الهوامش</h3>
+                <div className="flex gap-2 mb-1">
+                  {[["compact", "✨ مضغوطة — أنيقة كالتطبيقات"], ["cozy", "🌐 مريحة — مثل الموقع"]].map(([k, l]) => (
+                    <button key={k} className="badge cursor-pointer flex-1"
+                      style={{ background: appCfg.density === k ? "#6C3DF5" : "#f3f4f6", color: appCfg.density === k ? "#fff" : "#374151", padding: "10px" }}
+                      onClick={() => setAppCfg({ ...appCfg, density: k })}>{l}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">🎩 نمط الترويسة العلوية</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  {[["glass", "زجاجية"], ["solid", "بيضاء صلبة"], ["tinted", "مموّهة باللون"]].map(([k, l]) => (
+                    <button key={k} className="badge cursor-pointer"
+                      style={{ background: appCfg.headerStyle === k ? "#6C3DF5" : "#f3f4f6", color: appCfg.headerStyle === k ? "#fff" : "#374151", padding: "10px" }}
+                      onClick={() => setAppCfg({ ...appCfg, headerStyle: k })}>{l}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">🎯 قسم البطل (الرئيسية)</h3>
+                <div className="flex gap-2">
+                  {[["compact", "مضغوط — محتوى أكثر"], ["full", "كامل — كالموقع"]].map(([k, l]) => (
+                    <button key={k} className="badge cursor-pointer flex-1"
+                      style={{ background: appCfg.heroHeight === k ? "#6C3DF5" : "#f3f4f6", color: appCfg.heroHeight === k ? "#fff" : "#374151", padding: "10px" }}
+                      onClick={() => setAppCfg({ ...appCfg, heroHeight: k })}>{l}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">🎨 هوية خاصة بالتطبيق</h3>
+                <p className="text-xs text-gray-400 mb-2">لون مختلف للتطبيق عن لون المنصة (اتركه فارغاً ليتبع لون المنصة)</p>
+                <div className="flex gap-2 items-center mb-3">
+                  <input type="color" className="w-16 h-12 rounded-xl cursor-pointer border-0" value={appCfg.primaryColor || "#6C3DF5"} onChange={(e) => setAppCfg({ ...appCfg, primaryColor: e.target.value })} />
+                  <button className="badge cursor-pointer" style={{ background: "#f3f4f6", color: "#374151" }} onClick={() => setAppCfg({ ...appCfg, primaryColor: "" })}>↩️ لون المنصة</button>
+                  {appCfg.primaryColor && <span className="text-xs font-bold" style={{ color: appCfg.primaryColor }}>{appCfg.primaryColor}</span>}
+                </div>
+                <p className="text-xs text-gray-400 mb-2">انحناء البطاقات داخل التطبيق</p>
+                <div className="flex gap-2 flex-wrap">
+                  {[["", "كالمنصة"], ...RADII.map((r) => [r.id, r.name])].map(([k, l]) => (
+                    <button key={k || "inherit"} className="badge cursor-pointer"
+                      style={{ background: appCfg.radius === k ? "#6C3DF5" : "#f3f4f6", color: appCfg.radius === k ? "#fff" : "#374151" }}
+                      onClick={() => setAppCfg({ ...appCfg, radius: k })}>{l}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">👁️ عناصر الترويسة داخل التطبيق</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {([["showAnnouncement", "📢 شريط الإعلان"], ["showCurrency", "💱 مبدّل العملة"], ["showCta", "🚀 زر أنشئ متجرك"]] as const).map(([k, l]) => (
+                    <button key={k} className="badge cursor-pointer"
+                      style={{ background: appCfg[k] !== false ? "#059669" : "#e5e7eb", color: appCfg[k] !== false ? "#fff" : "#374151" }}
+                      onClick={() => setAppCfg({ ...appCfg, [k]: appCfg[k] === false })}>
+                      {appCfg[k] !== false ? "✅ " : "🚫 "}{l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">✨ لمسات التطبيق الحديثة</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {([["floatingNav", "🫧 تنقل سفلي عائم"], ["pullToRefresh", "🔄 سحب للتحديث"], ["haptics", "📳 اهتزاز لمسي"]] as const).map(([k, l]) => (
+                    <button key={k} className="badge cursor-pointer"
+                      style={{ background: appCfg[k] !== false ? "#059669" : "#e5e7eb", color: appCfg[k] !== false ? "#fff" : "#374151" }}
+                      onClick={() => setAppCfg({ ...appCfg, [k]: appCfg[k] === false })}>
+                      {appCfg[k] !== false ? "✅ " : "🚫 "}{l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">🖌️ CSS مخصص للتطبيق فقط</h3>
+                <p className="text-xs text-gray-400 mb-2">يُحقن داخل التطبيق فقط — لا يمس المتصفح</p>
+                <textarea dir="ltr" rows={4} className="input w-full font-mono text-xs" placeholder={".yz-bottomnav { background: #000; }"}
+                  value={appCfg.customCss} onChange={(e) => setAppCfg({ ...appCfg, customCss: e.target.value })} />
+              </div>
+
+              <button className="btn w-full" onClick={() => save([{ key: "app", value: appCfg, group: "theme" }], "✅ حُفظت إعدادات التطبيق — اسحب للتحديث داخل التطبيق")}>💾 حفظ إعدادات التطبيق</button>
             </div>
           )}
 

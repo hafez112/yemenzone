@@ -32,6 +32,8 @@ export class ThemeController {
       layout: map['layout'] ?? {},
       platform: map['platform'] ?? {},
       customCode: map['customCode'] ?? {},
+      // 📱 إعدادات تصميم التطبيق الأصلي — تُدار من /admin/design تبويب «التطبيق»
+      app: map['app'] ?? {},
       slides,
       flashSale,
     };

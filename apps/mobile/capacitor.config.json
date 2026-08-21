@@ -8,7 +8,8 @@
   },
   "android": {
     "allowMixedContent": false,
-    "backgroundColor": "#0A0A14"
+    "backgroundColor": "#0A0A14",
+    "adjustMarginsForEdgeToEdge": "disable"
   },
   "plugins": {
     "SplashScreen": {
@@ -17,6 +18,10 @@
       "backgroundColor": "#0A0A14",
       "androidSplashResourceName": "splash",
       "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#FFFFFF"
     }
   }
 }

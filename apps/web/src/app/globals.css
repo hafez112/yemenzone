@@ -952,3 +952,85 @@ section[id], div[id="features"], div[id="pricing"] { scroll-margin-top: 92px; }
 .table-wrap th { font-size: var(--fs-xs); font-weight: 800; }
 .table-wrap tbody tr { transition: background 0.2s; }
 .table-wrap tbody tr:hover { background: color-mix(in srgb, var(--primary) 4%, transparent); }
+
+/* ═══ 📱 وضع التطبيق الأصلي (Capacitor) — يُفعَّل تلقائياً بكلاس native-app على <html> ═══ */
+:root { --sa-top: 0px; --sa-bot: 0px; }
+html.native-app {
+  --sa-top: env(safe-area-inset-top, 0px);
+  --sa-bot: env(safe-area-inset-bottom, 0px);
+}
+
+/* بلا فوتر داخل التطبيق — الفوتر للمتصفح فقط */
+html.native-app footer { display: none !important; }
+
+/* الشريط العلوي: يمتد بلونه حتى أعلى الشاشة — لا فراغ ميت فوق الترويسة */
+html.native-app .yz-topbar { padding-top: var(--sa-top); }
+html.native-app .yz-announce { padding-top: var(--sa-top); }
+
+/* إزاحة المحتوى بمقدار شريط الحالة حتى لا يختفي تحت الترويسة الممتدة */
+html.native-app .yz-main { padding-top: var(--sa-top); padding-bottom: calc(5rem + var(--sa-bot)); }
+@media (min-width: 768px) { html.native-app .yz-main { padding-bottom: 0; } }
+
+/* التنقل السفلي يرتفع فوق شريط إيماءات أندرويد */
+html.native-app .yz-bottomnav { padding-bottom: var(--sa-bot); }
+
+/* حركات قائمة الجوال الجانبية */
+@keyframes slideIn { from { transform: translateX(100%) } to { transform: translateX(0) } }
+.anim-slide-in { animation: slideIn .28s cubic-bezier(.2,.8,.3,1) both }
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+.anim-fade { animation: fadeIn .2s ease both }
+
+/* ═══ 🎨 استوديو تصميم التطبيق — يُدار من /admin/design ← تبويب «التطبيق» ═══ */
+
+/* كثافة الهوامش المضغوطة (افتراضي التطبيق) — إيقاع عمودي أنيق يشبه التطبيقات الأصلية */
+html.native-app[data-app-density="compact"] .yz-main section { padding-top: .9rem; padding-bottom: .9rem; }
+html.native-app[data-app-density="compact"] .yz-main section:first-child { padding-top: calc(3.5rem + var(--sa-top)); padding-bottom: 1.25rem; }
+html.native-app[data-app-density="compact"] .yz-main .p-10 { padding: 1.25rem; }
+html.native-app[data-app-density="compact"] .yz-main .p-8 { padding: 1rem; }
+html.native-app[data-app-density="compact"] .yz-main .py-16 { padding-top: 1.75rem; padding-bottom: 1.75rem; }
+html.native-app[data-app-density="compact"] .yz-main .py-12 { padding-top: 1.35rem; padding-bottom: 1.35rem; }
+html.native-app[data-app-density="compact"] .yz-main .py-8 { padding-top: 1.1rem; padding-bottom: 1.1rem; }
+html.native-app[data-app-density="compact"] .yz-main .mt-16 { margin-top: 2rem; }
+html.native-app[data-app-density="compact"] .yz-main .mb-16 { margin-bottom: 2rem; }
+html.native-app[data-app-density="compact"] .yz-main .mb-12 { margin-bottom: 1.5rem; }
+html.native-app[data-app-density="compact"] .yz-main .mb-10 { margin-bottom: 1.25rem; }
+html.native-app[data-app-density="compact"] .yz-main .mb-8 { margin-bottom: 1rem; }
+
+/* قسم البطل مضغوط — عنوان أقرب للمحتوى */
+html.native-app[data-app-hero="compact"] .yz-main section.min-h-\[94vh\] { min-height: 62vh; }
+
+/* أنماط الترويسة داخل التطبيق */
+html.native-app[data-app-header="solid"] .yz-topbar { background: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; }
+html.native-app[data-app-header="tinted"] .yz-topbar {
+  background: color-mix(in srgb, var(--primary) 9%, #fff);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  border-bottom-color: color-mix(in srgb, var(--primary) 22%, #fff);
+}
+
+/* التنقل السفلي العائم — كبسولة زجاجية حديثة */
+html.native-app[data-app-floatnav="on"] .yz-bottomnav {
+  margin: 0 .75rem calc(.55rem + var(--sa-bot));
+  border-radius: 1.4rem;
+  border: 1px solid rgba(255,255,255,.55);
+  overflow: hidden;
+  background: rgba(255,255,255,.93);
+  box-shadow: 0 10px 30px rgba(20,10,50,.18);
+}
+
+/* تبديلات الإظهار داخل التطبيق */
+html.native-app[data-app-announce="off"] .yz-announce { display: none; }
+html.native-app[data-app-announce="off"] .yz-topbar { top: 0 !important; }
+html.native-app[data-app-currency="off"] .yz-currency { display: none; }
+html.native-app[data-app-cta="off"] .yz-cta { display: none; }
+
+/* انتقال ناعم بين الصفحات داخل التطبيق */
+html.native-app .yz-main > *:first-child { animation: fadeUp .32s ease both; }
+
+/* مؤشر السحب للتحديث */
+.yz-ptr {
+  position: fixed; top: calc(4rem + var(--sa-top)); right: 50%; translate: 50% 0; z-index: 90;
+  width: 2.4rem; height: 2.4rem; border-radius: 9999px; display: grid; place-items: center;
+  background: #fff; box-shadow: 0 6px 20px rgba(20,10,50,.18); font-size: 1.1rem; pointer-events: none;
+}
+.yz-ptr span { display: inline-block; animation: yzspin .9s linear infinite; }
+@keyframes yzspin { to { transform: rotate(360deg) } }

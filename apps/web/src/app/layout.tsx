@@ -11,6 +11,7 @@ const cairo = Cairo({
 });
 import TopBar from '@/components/TopBar';
 import BottomNav from '@/components/BottomNav';
+import NativeApp from '@/components/NativeApp';
 import ToastHost from '@/components/Toast';
 import PwaRegister from '@/components/PwaRegister';
 import PwaInstaller from '@/components/PwaInstaller';
@@ -104,6 +105,8 @@ export const viewport: Viewport = {
   themeColor: '#6C3DF5',
   width: 'device-width',
   initialScale: 1,
+  // 📱 viewport-fit=cover ضروري لتمتد الواجهة تحت شريط الحالة داخل التطبيق الأصلي (env safe-area)
+  viewportFit: 'cover',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -118,8 +121,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {seo.gaId && <GaTracker gaId={seo.gaId} />}
         <ToastHost />
         <PwaRegister />
+        <NativeApp />
         <TopBar />
-        <div className="pb-20 md:pb-0">{children}</div>
+        <div className="yz-main pb-20 md:pb-0">{children}</div>
         <BottomNav />
         <PwaInstaller />
         {code.bodyScripts ? <div dangerouslySetInnerHTML={{ __html: code.bodyScripts }} suppressHydrationWarning /> : null}

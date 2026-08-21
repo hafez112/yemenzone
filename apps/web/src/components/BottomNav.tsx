@@ -31,7 +31,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 backdrop-blur-xl bg-white/85 border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+    <nav className="yz-bottomnav md:hidden fixed bottom-0 inset-x-0 z-50 backdrop-blur-xl bg-white/85 border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
       <div className="grid grid-cols-5 h-16">
         {items.map(it => {
           const active = path === it.href;
