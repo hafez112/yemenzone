@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CardsService } from '../cards/cards.service';
 import { saveImage } from '../../common/upload';
 import { randomBytes } from 'crypto';
 
@@ -103,7 +104,54 @@ export class ToolsService {
       select: { key: true },
     });
     const { fx, aiImages } = await this.getConfig();
-    return { tools: rows.map((r) => r.key), fx, aiImages };
+    // 💰 أسعار الخدمات — تُرسل للواجهة لتعرف المجانية من المدفوعة
+    const all = await this.prisma.platformTool.findMany({ select: { key: true, price: true } });
+    const prices: Record<string, number> = {};
+    for (const t of all) if (Number(t.price || 0) > 0) prices[t.key] = Number(t.price);
+    return { tools: rows.map((r) => r.key), fx, aiImages, prices };
+  }
+
+  // 🔓 وصولي للخدمات المدفوعة — ما اشتريته يعمل فوراً ودائماً
+  async myAccess(ownerType: string, ownerId: string) {
+    const rows = await this.prisma.toolPurchase.findMany({
+      where: { ownerType, ownerId },
+      select: { slug: true, amount: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    return { purchased: rows.map((r) => r.slug), purchases: rows };
+  }
+
+  // 💳 شراء خدمة مدفوعة ببطاقة يمن زون فقط — عند الدفع تفتح تلقائياً
+  async buyTool(ownerType: string, ownerId: string, key: string) {
+    if (!TOOL_KEYS.includes(key as any)) throw new NotFoundException('الخدمة غير معروفة');
+    await this.ensureRows();
+    const tool = await this.prisma.platformTool.findUnique({ where: { key } });
+    const price = Number(tool?.price || 0);
+    if (!price) throw new BadRequestException('هذه الخدمة مجانية — لا تحتاج شراء');
+    if (!tool?.isVisible) throw new BadRequestException('هذه الخدمة غير متاحة حالياً');
+
+    const existing = await this.prisma.toolPurchase.findUnique({
+      where: { ownerType_ownerId_slug: { ownerType, ownerId, slug: key } },
+    });
+    if (existing) return { unlocked: true, already: true, message: 'الخدمة مشتراة مسبقاً — هي لك دائماً' };
+
+    // 💳 الدفع من بطاقة يمن زون حصراً — يرمي خطأ واضحاً عند نقص الرصيد أو إيقاف البطاقة
+    const card = await this.cards.chargeYzCard(ownerType, ownerId, price);
+
+    await this.prisma.$transaction([
+      this.prisma.toolPurchase.create({
+        data: { ownerType, ownerId, slug: key, amount: price, cardId: card.id },
+      }),
+      this.prisma.payment.create({
+        data: {
+          number: 'SRV-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
+          payerType: ownerType, payerId: ownerId, purpose: 'tool',
+          amount: price, method: 'yz-card', status: 'approved',
+          reviewedAt: new Date(), referenceId: key,
+        },
+      }),
+    ]);
+    return { unlocked: true, amount: price, message: `🎉 تم الدفع من بطاقتك — الخدمة «${TOOL_LABELS[key] || key}» مفتوحة لك الآن دائماً` };
   }
 
   // 👑 للإدارة: كل الأدوات مع الحالة والعدادات (استخدام + زيارات)
@@ -119,12 +167,17 @@ export class ToolsService {
     };
   }
 
-  async updateTool(key: string, patch: { isVisible?: boolean; order?: number; seoTitle?: string; seoDesc?: string; seoKeys?: string }) {
+  async updateTool(key: string, patch: { isVisible?: boolean; order?: number; seoTitle?: string; seoDesc?: string; seoKeys?: string; price?: number | null }) {
     if (!TOOL_KEYS.includes(key as any)) throw new NotFoundException('الأداة غير معروفة');
     await this.ensureRows();
     const data: any = {};
     if (typeof patch.isVisible === 'boolean') data.isVisible = patch.isVisible;
     if (patch.order !== undefined && isFinite(Number(patch.order))) data.order = Math.max(0, Math.min(999, Math.round(Number(patch.order))));
+    // 💰 التسعير: صفر/فارغ = مجانية — غير ذلك سعر الشراء ببطاقة يمن زون
+    if (patch.price !== undefined) {
+      const p = Number(patch.price);
+      data.price = p > 0 && isFinite(p) && p < 1e9 ? p : null;
+    }
     if (patch.seoTitle !== undefined) data.seoTitle = String(patch.seoTitle).trim().slice(0, 120) || null;
     if (patch.seoDesc !== undefined) data.seoDesc = String(patch.seoDesc).trim().slice(0, 300) || null;
     if (patch.seoKeys !== undefined) data.seoKeys = String(patch.seoKeys).trim().slice(0, 300) || null;

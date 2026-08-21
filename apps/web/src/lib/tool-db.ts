@@ -38,3 +38,23 @@ export async function loadToolData<T = any>(slug: string): Promise<T | null> {
 // 📤 حفظ بيانات الخدمة في قاعدتها الخاصة بحسابي
 export const saveToolData = (slug: string, data: any) =>
   api(`/v1/my-tools/${slug}/data`, { method: 'PUT', body: JSON.stringify({ data }) });
+
+// 💰 أسعار الخدمات (من القائمة العامة — مؤقتة في الجلسة)
+let pricesCache: Record<string, number> | null = null;
+export async function toolPrices(): Promise<Record<string, number>> {
+  if (pricesCache) return pricesCache;
+  try {
+    const API = process.env.NEXT_PUBLIC_API_URL || '';
+    const r = await fetch(`${API}/api/v1/tools`).then((x) => x.json());
+    pricesCache = r?.prices || {};
+  } catch { pricesCache = {}; }
+  return pricesCache!;
+}
+
+// 🔓 الخدمات المدفوعة التي اشتريتها
+export const myAccess = (): Promise<{ purchased: string[]; purchases: any[] }> =>
+  api('/v1/tools/my-access');
+
+// 💳 شراء خدمة ببطاقة يمن زون — تفتح فوراً بعد الدفع
+export const buyTool = (slug: string) =>
+  api(`/v1/tools/${slug}/buy`, { method: 'POST' });

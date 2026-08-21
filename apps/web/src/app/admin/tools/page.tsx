@@ -7,7 +7,7 @@ import AdminSidebar from '@/components/AdminSidebar';
 import ImageUpload from '@/components/ImageUpload';
 import { TOOLS } from '@/lib/tools';
 
-interface ToolRow { key: string; isVisible: boolean; order: number; uses: number; views: number; seoTitle?: string; seoDesc?: string; seoKeys?: string }
+interface ToolRow { key: string; isVisible: boolean; order: number; uses: number; views: number; seoTitle?: string; seoDesc?: string; seoKeys?: string; price?: number | null }
 interface AdRow { id: string; title: string; image: string; link?: string; position: string; size: string; isActive: boolean; views: number; clicks: number; positionLabel?: string; sizeLabel?: string }
 
 // 👑 إدارة تكنولوجيا المنصة — خدمات + زيارات + SEO + إعلانات مستهدفة + أسعار صرف
@@ -21,6 +21,9 @@ export default function AdminToolsPage() {
   const [newRate, setNewRate] = useState('');
   const [seoEdit, setSeoEdit] = useState<string | null>(null);
   const [seoForm, setSeoForm] = useState({ seoTitle: '', seoDesc: '', seoKeys: '' });
+  // 💰 تسعير الخدمة — فارغ/صفر = مجانية
+  const [priceEdit, setPriceEdit] = useState<string | null>(null);
+  const [priceVal, setPriceVal] = useState('');
   const [aiImages, setAiImages] = useState(false);
   // 📢 الإعلانات
   const [ads, setAds] = useState<AdRow[]>([]);
@@ -74,6 +77,22 @@ export default function AdminToolsPage() {
       toast('↕️ أُعيد الترتيب');
       load();
     } catch (e: any) { toast(e.message || 'تعذّر', 'error'); }
+  };
+
+  // 💰 التسعير — كل خدمة: مجانية أو مدفوعة بسعر تحدده هنا (الدفع ببطاقة يمن زون فقط)
+  const openPrice = (r: ToolRow) => {
+    setPriceEdit(priceEdit === r.key ? null : r.key);
+    setPriceVal(r.price ? String(r.price) : '');
+  };
+  const savePrice = async (key: string, free = false) => {
+    const p = free ? null : Number(priceVal);
+    if (!free && (!p || p <= 0)) { toast('⚠️ أدخل سعراً صحيحاً بالريال أو اختر «مجانية»', 'error'); return; }
+    try {
+      await api(`/admin/tools/${key}`, { method: 'PATCH', body: JSON.stringify({ price: p }) });
+      setRows(rows.map((x) => x.key === key ? { ...x, price: p } : x));
+      setPriceEdit(null);
+      toast(p ? `💰 أصبحت مدفوعة بـ ${p.toLocaleString()} ر.ي — تُفتح تلقائياً بعد الدفع بالبطاقة` : '🎁 أصبحت مجانية للجميع');
+    } catch (e: any) { toast(e.message || 'تعذّر الحفظ', 'error'); }
   };
 
   // 🔍 SEO
@@ -145,7 +164,7 @@ export default function AdminToolsPage() {
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <h1 className="text-2xl font-black">🧰 إدارة تكنولوجيا المنصة</h1>
-              <p className="text-sm text-gray-500 mt-1">الخدمات المجانية: إظهار/إخفاء · زيارات · SEO · إعلانات مستهدفة · أسعار الصرف</p>
+              <p className="text-sm text-gray-500 mt-1">إظهار/إخفاء · 💰 تسعير (مجانية/مدفوعة بالبطاقة) · زيارات · SEO · إعلانات مستهدفة · أسعار الصرف</p>
             </div>
             <a href="/tools" target="_blank" className="px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-bold hover:bg-purple-500">👁️ معاينة صفحة الخدمات</a>
           </div>
@@ -190,6 +209,12 @@ export default function AdminToolsPage() {
                       </div>
                       <span className="text-xs font-bold text-sky-600 shrink-0" title="زيارات الصفحة">👥 {r.views.toLocaleString()}</span>
                       <span className="text-xs font-bold text-gray-500 shrink-0" title="مرات الاستخدام">📈 {r.uses.toLocaleString()}</span>
+                      <button onClick={() => openPrice(r)} title="التسعير — مجانية أو مدفوعة"
+                        className={`h-8 px-2 grid place-items-center rounded-lg text-[11px] font-black shrink-0 ${
+                          r.price ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                        }`}>
+                        {r.price ? `💰 ${Number(r.price).toLocaleString()}` : '🎁 مجانية'}
+                      </button>
                       <button onClick={() => openSeo(r)} title="إعدادات SEO"
                         className={`w-8 h-8 grid place-items-center rounded-lg text-sm ${seoEdit === r.key ? 'bg-purple-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>🔍</button>
                       <a href={`/tools/${r.key}`} target="_blank" className="w-8 h-8 grid place-items-center rounded-lg bg-gray-100 hover:bg-gray-200 text-sm" title="معاينة">👁️</a>
@@ -198,6 +223,20 @@ export default function AdminToolsPage() {
                         <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-all ${r.isVisible ? 'right-1' : 'right-6'}`} />
                       </button>
                     </div>
+                    {/* 💰 محرر التسعير */}
+                    {priceEdit === r.key && (
+                      <div className="mx-4 mb-4 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 space-y-2">
+                        <p className="text-xs font-extrabold text-amber-800">💰 تسعير خدمة «{meta?.title}»</p>
+                        <p className="text-[11px] text-gray-500">مجانية = متاحة لكل مسجل · مدفوعة = تُشترى ببطاقة يمن زون فقط وتفتح تلقائياً فور الدفع (شراء مرة واحدة = فتح دائم)</p>
+                        <div className="flex gap-2 items-center flex-wrap">
+                          <input type="number" min="0" value={priceVal} onChange={(e) => setPriceVal(e.target.value)}
+                            placeholder="السعر بالريال اليمني (مثال: 5000)" className={inp} style={{ maxWidth: 240 }} />
+                          <button onClick={() => savePrice(r.key)} className="px-5 py-2 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-400">💾 حفظ السعر</button>
+                          <button onClick={() => savePrice(r.key, true)} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-500">🎁 اجعلها مجانية</button>
+                          <button onClick={() => setPriceEdit(null)} className="px-4 py-2 rounded-xl bg-gray-200 text-sm font-bold">إلغاء</button>
+                        </div>
+                      </div>
+                    )}
                     {/* 🔍 محرر SEO */}
                     {seoEdit === r.key && (
                       <div className="mx-4 mb-4 rounded-2xl border border-purple-200 bg-purple-50/60 p-4 space-y-2">

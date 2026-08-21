@@ -9,7 +9,14 @@ const WD_STATUS: Record<string, string> = { pending: "⏳ معلّق", paid: "�
 const TP_STATUS: Record<string, string> = { pending: "⏳ معلّق", approved: "✅ معتمد", rejected: "❌ مرفوض" };
 
 export default function AdminCardsPage() {
-  const [tab, setTab] = useState<"cards" | "topups" | "withdrawals">("cards");
+  const [tab, setTab] = useState<"cards" | "yz" | "edits" | "topups" | "withdrawals">("cards");
+  // 💳 بطاقات يمن زون (عملاء + بائعون)
+  const [yzCards, setYzCards] = useState<any[]>([]);
+  const [yzQ, setYzQ] = useState("");
+  const [editCard, setEditCard] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ holderName: "", phone: "", note: "" });
+  // 📝 طلبات تعديل البطاقات
+  const [editReqs, setEditReqs] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [batches, setBatches] = useState<any[]>([]);
   const [cards, setCards] = useState<any[]>([]);
@@ -26,8 +33,11 @@ export default function AdminCardsPage() {
   const loadCards = () => api(`/admin/cards?${filterBatch ? `batchId=${filterBatch}&` : ""}${filterStatus ? `status=${filterStatus}` : ""}`).then(setCards).catch(() => {});
   const loadTopups = () => api("/admin/topups").then(setTopups).catch(() => {});
   const loadWithdrawals = () => api("/admin/withdrawals").then(setWithdrawals).catch(() => {});
+  // 💳 بحث شامل: رقم البطاقة / اسم صاحبها / جوالها
+  const loadYz = (q = yzQ) => api(`/admin/yz-cards${q ? `?q=${encodeURIComponent(q)}` : ""}`).then(setYzCards).catch((e) => toast(e.message, "error"));
+  const loadEditReqs = () => api("/admin/card-edit-requests").then(setEditReqs).catch(() => {});
 
-  useEffect(() => { load(); loadBatches(); loadTopups(); loadWithdrawals(); }, []);
+  useEffect(() => { load(); loadBatches(); loadTopups(); loadWithdrawals(); loadYz(""); loadEditReqs(); }, []);
   useEffect(() => { loadCards(); }, [filterBatch, filterStatus]);
 
   const createBatch = async () => {
@@ -48,6 +58,25 @@ export default function AdminCardsPage() {
 
   const reviewTopup = async (id: string, approve: boolean) => {
     try { await api(`/admin/topups/${id}/review`, { method: "PATCH", body: JSON.stringify({ approve }) }); toast(approve ? "✅ اعتُمد الشحن وأُضيف الرصيد" : "❌ رُفض"); loadTopups(); load(); }
+    catch (e: any) { toast(e.message, "error"); }
+  };
+
+  // 💳 إيقاف/تفعيل بطاقة يمن زون
+  const toggleYz = async (id: string) => {
+    try { const r = await api(`/admin/yz-cards/${id}/toggle`, { method: "PATCH" }); toast(r.isActive ? "▶️ فُعّلت البطاقة" : "⛔ أُوقفت البطاقة — لن يستطيع صاحبها الدفع بها"); loadYz(); }
+    catch (e: any) { toast(e.message, "error"); }
+  };
+
+  // ✏️ حفظ تعديل بيانات البطاقة
+  const saveYz = async () => {
+    try { await api(`/admin/yz-cards/${editCard.id}`, { method: "PATCH", body: JSON.stringify(editForm) }); toast("✅ حُدّثت بيانات البطاقة"); setEditCard(null); loadYz(); }
+    catch (e: any) { toast(e.message, "error"); }
+  };
+
+  // 📝 مراجعة طلب تعديل — الموافقة تطبق التغيير على البطاقة فوراً
+  const reviewEdit = async (id: string, approve: boolean) => {
+    const note = approve ? "" : (prompt("سبب الرفض (يظهر لصاحب البطاقة):") || "");
+    try { await api(`/admin/card-edit-requests/${id}/review`, { method: "PATCH", body: JSON.stringify({ approve, note }) }); toast(approve ? "✅ طُبّق التعديل على البطاقة وأُشعر صاحبها" : "❌ رُفض الطلب وأُشعر صاحبه"); loadEditReqs(); loadYz(); }
     catch (e: any) { toast(e.message, "error"); }
   };
 
@@ -96,7 +125,9 @@ export default function AdminCardsPage() {
           )}
 
           <nav className="tabs">
-            <button className={tab === "cards" ? "active" : ""} onClick={() => setTab("cards")}>🎫 البطاقات</button>
+            <button className={tab === "cards" ? "active" : ""} onClick={() => setTab("cards")}>🎫 بطاقات الشحن</button>
+            <button className={tab === "yz" ? "active" : ""} onClick={() => setTab("yz")}>💳 بطاقات يمن زون</button>
+            <button className={tab === "edits" ? "active" : ""} onClick={() => setTab("edits")}>📝 طلبات التعديل {editReqs.filter((r) => r.status === "pending").length ? <span className="count warn">{editReqs.filter((r) => r.status === "pending").length}</span> : null}</button>
             <button className={tab === "topups" ? "active" : ""} onClick={() => setTab("topups")}>💰 طلبات الشحن {stats?.pendingTopups ? <span className="count warn">{stats.pendingTopups}</span> : null}</button>
             <button className={tab === "withdrawals" ? "active" : ""} onClick={() => setTab("withdrawals")}>💸 طلبات السحب {stats?.pendingWithdrawals ? <span className="count warn">{stats.pendingWithdrawals}</span> : null}</button>
           </nav>
@@ -166,14 +197,96 @@ export default function AdminCardsPage() {
             </>
           )}
 
+          {/* 💳 بطاقات يمن زون — معرفة شاملة برقم البطاقة/الاسم/الجوال + تعديل + إيقاف */}
+          {tab === "yz" && (
+            <section className="card">
+              <h2>💳 بطاقات يمن زون (عملاء وبائعون)</h2>
+              <div className="row" style={{ marginBottom: ".75rem" }}>
+                <input placeholder="🔍 رقم البطاقة / اسم صاحبها / جوالها…" value={yzQ}
+                  onChange={(e) => setYzQ(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && loadYz()}
+                  style={{ marginBottom: 0, flex: 1 }} />
+                <button className="btn primary" onClick={() => loadYz()}>بحث</button>
+                {yzQ && <button className="btn ghost" onClick={() => { setYzQ(""); loadYz(""); }}>الكل</button>}
+              </div>
+              {yzCards.length === 0 ? <p className="muted">لا نتائج</p> : yzCards.map((c) => (
+                <div key={c.id} className="assign-row" style={{ alignItems: "flex-start" }}>
+                  <div style={{ fontSize: ".9rem" }}>
+                    <strong dir="ltr">{c.cardNumber}</strong>{" "}
+                    <span className={`badge ${c.isActive ? "active" : "cancelled"}`}>{c.isActive ? "✅ نشطة" : "⛔ موقوفة"}</span>{" "}
+                    <span className={`badge ${c.ownerType === "seller" ? "shipped" : "pending"}`}>{c.ownerType === "seller" ? "🛍️ بائع" : "👤 عميل"}</span>
+                    {c.pendingEdits > 0 && <span className="badge warn">📝 طلب تعديل معلق</span>}
+                    <p className="small" style={{ margin: ".3rem 0 0" }}>
+                      👤 <strong>{c.holderName || c.ownerName || "—"}</strong> · 📱 <strong dir="ltr">{c.phone || c.ownerPhone || "—"}</strong>
+                    </p>
+                    <p className="muted small">
+                      💰 الرصيد: <strong>{c.balance.toLocaleString()} ر.ي</strong> · {c.topups} شحنة · {c.purchases} شراء خدمات · أُصدرت {new Date(c.createdAt).toLocaleDateString("ar-YE")}
+                      {c.note ? ` · 📌 ${c.note}` : ""}
+                    </p>
+                  </div>
+                  <div className="row">
+                    <button className="btn small ghost" onClick={() => { setEditCard(c); setEditForm({ holderName: c.holderName || "", phone: c.phone || "", note: c.note || "" }); }}>✏️ تعديل</button>
+                    <button className={`btn small ${c.isActive ? "danger" : "primary"}`} onClick={() => toggleYz(c.id)}>{c.isActive ? "⛔ إيقاف" : "▶️ تفعيل"}</button>
+                  </div>
+                </div>
+              ))}
+            </section>
+          )}
+
+          {/* 📝 طلبات تعديل بيانات البطاقات */}
+          {tab === "edits" && (
+            <section className="card">
+              <h2>📝 طلبات تعديل بيانات البطاقات</h2>
+              {editReqs.length === 0 ? <p className="muted">لا توجد طلبات 🎉</p> : editReqs.map((r) => (
+                <div key={r.id} className="assign-row" style={{ alignItems: "flex-start" }}>
+                  <div style={{ fontSize: ".9rem" }}>
+                    <strong>{r.ownerName}</strong> ({r.ownerType === "seller" ? "🛍️ بائع" : "👤 عميل"}) — بطاقة <strong dir="ltr">{r.cardNumber}</strong>
+                    <span className={`badge ${r.status === "pending" ? "pending" : r.status === "approved" ? "active" : "cancelled"}`}>{TP_STATUS[r.status]}</span>
+                    <p className="small" style={{ margin: ".3rem 0 0" }}>
+                      {r.holderName && <>الاسم: <span className="muted">{r.currentName || "—"}</span> ← <strong>{r.holderName}</strong> · </>}
+                      {r.phone && <>الجوال: <span className="muted" dir="ltr">{r.currentPhone || "—"}</span> ← <strong dir="ltr">{r.phone}</strong></>}
+                    </p>
+                    {r.message && <p className="muted small">💬 {r.message}</p>}
+                    <p className="muted small">{new Date(r.createdAt).toLocaleDateString("ar-YE")}{r.adminNote ? ` · ردك: ${r.adminNote}` : ""}</p>
+                  </div>
+                  {r.status === "pending" && (
+                    <div className="row">
+                      <button className="btn small primary" onClick={() => reviewEdit(r.id, true)}>✅ تنفيذ</button>
+                      <button className="btn small danger" onClick={() => reviewEdit(r.id, false)}>❌ رفض</button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </section>
+          )}
+
+          {/* نافذة تعديل بطاقة */}
+          {editCard && (
+            <div onClick={() => setEditCard(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 90, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+              <div className="card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "26rem", width: "100%" }}>
+                <h2>✏️ تعديل البطاقة <span dir="ltr">{editCard.cardNumber}</span></h2>
+                <label className="small muted">اسم صاحب البطاقة</label>
+                <input value={editForm.holderName} onChange={(e) => setEditForm({ ...editForm, holderName: e.target.value })} />
+                <label className="small muted">الجوال المرتبط</label>
+                <input dir="ltr" value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
+                <label className="small muted">ملاحظة داخلية (لا يراها المالك)</label>
+                <textarea rows={2} value={editForm.note} onChange={(e) => setEditForm({ ...editForm, note: e.target.value })} />
+                <div className="row">
+                  <button className="btn primary" onClick={saveYz}>💾 حفظ</button>
+                  <button className="btn ghost" onClick={() => setEditCard(null)}>إلغاء</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* طلبات الشحن */}
           {tab === "topups" && (
             <section className="card">
-              <h2>💰 طلبات شحن بطاقات العملاء</h2>
+              <h2>💰 طلبات شحن بطاقات يمن زون</h2>
               {topups.length === 0 ? <p className="muted">لا توجد طلبات 🎉</p> : topups.map((t) => (
                 <div key={t.id} className="assign-row">
                   <div>
-                    <strong>{Number(t.amount).toLocaleString()} ر.ي</strong> — {t.customer?.name} ({t.customer?.phone})
+                    <strong>{Number(t.amount).toLocaleString()} ر.ي</strong> — {t.customer?.name || t.seller?.name} ({t.customer?.phone || t.seller?.phone}) {t.seller ? "🛍️" : ""}
                     <span className={`badge ${t.status}`}>{TP_STATUS[t.status]}</span>
                     <p className="muted small">{t.method} · بطاقة <span dir="ltr">{t.card?.cardNumber}</span></p>
                   </div>

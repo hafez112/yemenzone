@@ -63,23 +63,54 @@ export class CardsService {
   }
 
   // ═══ العميل: بطاقته ═══
-  async myCard(customerId: string) {
-    let card = await this.prisma.customerCard.findFirst({ where: { customerId } });
+  // 🎯 تحديد مالك البطاقة (عميل أو بائع) — شرط الاستعلام الموحد
+  private ownerWhere(ownerType: string, ownerId: string) {
+    return ownerType === 'seller'
+      ? { ownerType: 'seller', sellerId: ownerId }
+      : { ownerType: 'customer', customerId: ownerId };
+  }
+
+  // جلب اسم وجوال المالك من سجله
+  private async ownerInfo(ownerType: string, ownerId: string) {
+    const u = ownerType === 'seller'
+      ? await this.prisma.seller.findUnique({ where: { id: ownerId }, select: { name: true, phone: true } })
+      : await this.prisma.customer.findUnique({ where: { id: ownerId }, select: { name: true, phone: true } });
+    return u || { name: '', phone: '' };
+  }
+
+  async myCard(ownerType: string, ownerId: string) {
+    let card = await this.prisma.customerCard.findFirst({ where: this.ownerWhere(ownerType, ownerId) as any });
     if (!card) {
+      const info = await this.ownerInfo(ownerType, ownerId);
       card = await this.prisma.customerCard.create({
-        data: { customerId, cardNumber: this.cardNumber() },
+        data: {
+          ...this.ownerWhere(ownerType, ownerId),
+          holderName: info.name, phone: info.phone,
+          cardNumber: this.cardNumber(),
+        } as any,
+      });
+    }
+    // بطاقات قديمة بلا بيانات مالك — تُستكمل تلقائياً من سجله
+    if (!card.holderName || !card.phone) {
+      const info = await this.ownerInfo(ownerType, ownerId);
+      card = await this.prisma.customerCard.update({
+        where: { id: card.id },
+        data: { holderName: card.holderName || info.name, phone: card.phone || info.phone },
       });
     }
     const topups = await this.prisma.cardTopup.findMany({
-      where: { customerId }, orderBy: { createdAt: 'desc' }, take: 20,
+      where: { cardId: card.id }, orderBy: { createdAt: 'desc' }, take: 20,
+    });
+    const editRequests = await this.prisma.cardEditRequest.findMany({
+      where: { cardId: card.id }, orderBy: { createdAt: 'desc' }, take: 5,
     });
     const tips = this.ai.customerCardTips(Number(card.balance), topups.length);
-    return { card, topups, tips };
+    return { card, topups, editRequests, tips };
   }
 
-  // شحن ببطاقة يمن زون (فوري)
-  async redeem(customerId: string, body: { cardNumber: string; pin: string }) {
-    const key = `redeem:${customerId}`;
+  // شحن ببطاقة يمن زون (فوري) — للعميل والبائع
+  async redeem(ownerType: string, ownerId: string, body: { cardNumber: string; pin: string }) {
+    const key = `redeem:${ownerType}:${ownerId}`;
     const att = this.redeemAttempts.get(key);
     const failedCount = att && Date.now() < att.until ? att.count : 0;
 
@@ -93,34 +124,66 @@ export class CardsService {
     }
     if (card.isUsed) throw new BadRequestException('هذه البطاقة استُخدمت مسبقاً');
 
-    const myCard = await this.prisma.customerCard.findFirst({ where: { customerId } });
+    const myCard = await this.prisma.customerCard.findFirst({ where: this.ownerWhere(ownerType, ownerId) as any });
     if (!myCard) throw new NotFoundException('بطاقتك غير موجودة');
 
     await this.prisma.$transaction([
       this.prisma.paymentCard.update({
         where: { id: card.id },
-        data: { isUsed: true, usedBy: customerId, usedAt: new Date() },
+        data: { isUsed: true, usedBy: `${ownerType}:${ownerId}`, usedAt: new Date() },
       }),
       this.prisma.customerCard.update({
         where: { id: myCard.id },
         data: { balance: { increment: card.value } },
       }),
       this.prisma.cardTopup.create({
-        data: { cardId: myCard.id, customerId, amount: card.value, method: 'payment-card', status: 'approved', reviewedAt: new Date() },
+        data: { cardId: myCard.id, ...(ownerType === 'seller' ? { sellerId: ownerId } : { customerId: ownerId }), amount: card.value, method: 'payment-card', status: 'approved', reviewedAt: new Date() },
       }),
     ]);
     this.redeemAttempts.delete(key);
     return { success: true, added: Number(card.value), message: `🎉 شُحنت بطاقتك بـ ${Number(card.value).toLocaleString()} ر.ي` };
   }
 
-  // شحن عبر بوابة (إثبات → مراجعة)
-  async topupProof(customerId: string, body: { amount: number; gatewayName: string; proofImage: string }) {
-    const myCard = await this.prisma.customerCard.findFirst({ where: { customerId } });
+  // شحن عبر بوابة (إثبات → مراجعة) — للعميل والبائع
+  async topupProof(ownerType: string, ownerId: string, body: { amount: number; gatewayName: string; proofImage: string }) {
+    const myCard = await this.prisma.customerCard.findFirst({ where: this.ownerWhere(ownerType, ownerId) as any });
     if (!myCard) throw new NotFoundException('بطاقتك غير موجودة');
-    const pending = await this.prisma.cardTopup.findFirst({ where: { customerId, status: 'pending' } });
+    const pending = await this.prisma.cardTopup.findFirst({ where: { cardId: myCard.id, status: 'pending' } });
     if (pending) throw new BadRequestException('لديك طلب شحن قيد المراجعة');
     return this.prisma.cardTopup.create({
-      data: { cardId: myCard.id, customerId, amount: Number(body.amount), method: `gateway:${body.gatewayName}`, proofImage: body.proofImage },
+      data: { cardId: myCard.id, ...(ownerType === 'seller' ? { sellerId: ownerId } : { customerId: ownerId }), amount: Number(body.amount), method: `gateway:${body.gatewayName}`, proofImage: body.proofImage },
+    });
+  }
+
+  // 📝 طلب تعديل بيانات البطاقة — يرسله المالك وتنفذه الإدارة
+  async requestCardEdit(ownerType: string, ownerId: string, body: { holderName?: string; phone?: string; message?: string }) {
+    const card = await this.prisma.customerCard.findFirst({ where: this.ownerWhere(ownerType, ownerId) as any });
+    if (!card) throw new NotFoundException('بطاقتك غير موجودة');
+    const holderName = String(body.holderName || '').trim().slice(0, 80) || null;
+    const phone = String(body.phone || '').trim().slice(0, 20) || null;
+    const message = String(body.message || '').trim().slice(0, 300) || null;
+    if (!holderName && !phone) throw new BadRequestException('أدخل الاسم أو رقم الجوال المطلوب تعديله');
+    if (holderName && holderName === card.holderName) throw new BadRequestException('الاسم مطابق للحالي — لا حاجة للتعديل');
+    if (phone && phone === card.phone) throw new BadRequestException('رقم الجوال مطابق للحالي — لا حاجة للتعديل');
+    const pending = await this.prisma.cardEditRequest.findFirst({ where: { cardId: card.id, status: 'pending' } });
+    if (pending) throw new BadRequestException('لديك طلب تعديل قيد المراجعة — انتظر رد الإدارة');
+    await this.prisma.cardEditRequest.create({
+      data: { cardId: card.id, ownerType, ownerId, holderName, phone, message },
+    });
+    return { sent: true, message: '📨 أُرسل طلبك للإدارة — سيُعدَّل بعد المراجعة' };
+  }
+
+  // 💳 خصم من بطاقة يمن زون — أساس الدفع للخدمات المدفوعة والاشتراكات (عميل أو بائع)
+  async chargeYzCard(ownerType: string, ownerId: string, amount: number) {
+    const card = await this.prisma.customerCard.findFirst({ where: this.ownerWhere(ownerType, ownerId) as any });
+    if (!card) throw new NotFoundException('لا تملك بطاقة يمن زون بعد — افتح صفحة «بطاقتي» لإصدارها');
+    if (!card.isActive) throw new BadRequestException('بطاقتك موقوفة — تواصل مع إدارة المنصة');
+    if (Number(card.balance) < amount) {
+      throw new BadRequestException(`رصيد بطاقتك ${Number(card.balance).toLocaleString()} ر.ي لا يكفي — المطلوب ${amount.toLocaleString()} ر.ي`);
+    }
+    return this.prisma.customerCard.update({
+      where: { id: card.id },
+      data: { balance: { decrement: amount } },
     });
   }
 
@@ -250,7 +313,7 @@ export class CardsService {
     return this.prisma.cardTopup.findMany({
       where: status ? { status: status as any } : {},
       orderBy: { createdAt: 'desc' }, take: 100,
-      include: { customer: { select: { name: true, phone: true } }, card: { select: { cardNumber: true } } },
+      include: { customer: { select: { name: true, phone: true } }, seller: { select: { name: true, phone: true } }, card: { select: { cardNumber: true } } },
     });
   }
 
@@ -316,5 +379,126 @@ export class CardsService {
       walletsBalance: Number(walletsBalance._sum.balance || 0),
       tips: this.ai.adminTips({ unusedCards, usedCards, pendingTopups, pendingWithdrawals }),
     };
+  }
+
+  // ═══ 👑 إدارة بطاقات يمن زون (عملاء + بائعون) ═══
+
+  // بحث شامل: برقم البطاقة أو اسم صاحبها أو جوالها المرتبط
+  async yzCards(q?: string) {
+    const term = String(q || '').trim().slice(0, 60);
+    const where: any = term
+      ? { OR: [
+          { cardNumber: { contains: term.toUpperCase() } },
+          { holderName: { contains: term } },
+          { phone: { contains: term } },
+          { customer: { name: { contains: term } } },
+          { customer: { phone: { contains: term } } },
+          { seller: { name: { contains: term } } },
+          { seller: { phone: { contains: term } } },
+        ] }
+      : {};
+    const rows = await this.prisma.customerCard.findMany({
+      where, orderBy: { createdAt: 'desc' }, take: 60,
+      include: {
+        customer: { select: { name: true, phone: true } },
+        seller: { select: { name: true, phone: true } },
+        _count: { select: { topups: true, purchases: true } },
+      },
+    });
+    const pendingEdits = await this.prisma.cardEditRequest.groupBy({
+      by: ['cardId'], where: { status: 'pending' }, _count: true,
+    });
+    const pendMap = new Map(pendingEdits.map((p: any) => [p.cardId, p._count]));
+    return rows.map((c: any) => ({
+      id: c.id,
+      cardNumber: c.cardNumber,
+      balance: Number(c.balance),
+      currency: c.currency,
+      isActive: c.isActive,
+      ownerType: c.ownerType,
+      holderName: c.holderName,
+      phone: c.phone,
+      ownerName: c.customer?.name || c.seller?.name || '',
+      ownerPhone: c.customer?.phone || c.seller?.phone || '',
+      note: c.note,
+      topups: c._count.topups,
+      purchases: c._count.purchases,
+      pendingEdits: pendMap.get(c.id) || 0,
+      createdAt: c.createdAt,
+    }));
+  }
+
+  // ✏️ تعديل بيانات البطاقة من الإدارة مباشرة
+  async updateYzCard(id: string, patch: { holderName?: string; phone?: string; note?: string }) {
+    const card = await this.prisma.customerCard.findUnique({ where: { id } });
+    if (!card) throw new NotFoundException('البطاقة غير موجودة');
+    const data: any = {};
+    if (patch.holderName !== undefined) data.holderName = String(patch.holderName).trim().slice(0, 80) || null;
+    if (patch.phone !== undefined) data.phone = String(patch.phone).trim().slice(0, 20) || null;
+    if (patch.note !== undefined) data.note = String(patch.note).trim().slice(0, 300) || null;
+    return this.prisma.customerCard.update({ where: { id }, data });
+  }
+
+  // ⛔ إيقاف / ▶️ تفعيل البطاقة
+  async toggleYzCard(id: string) {
+    const card = await this.prisma.customerCard.findUnique({ where: { id } });
+    if (!card) throw new NotFoundException('البطاقة غير موجودة');
+    const updated = await this.prisma.customerCard.update({ where: { id }, data: { isActive: !card.isActive } });
+    return { isActive: updated.isActive };
+  }
+
+  // 📨 طلبات تعديل البطاقات الواردة من الملاك
+  async cardEditRequests(status?: string) {
+    const rows = await this.prisma.cardEditRequest.findMany({
+      where: status ? { status } : {},
+      orderBy: { createdAt: 'desc' }, take: 100,
+      include: { card: { include: { customer: { select: { name: true, phone: true } }, seller: { select: { name: true, phone: true } } } } },
+    });
+    return rows.map((r: any) => ({
+      id: r.id,
+      status: r.status,
+      ownerType: r.ownerType,
+      holderName: r.holderName,
+      phone: r.phone,
+      message: r.message,
+      adminNote: r.adminNote,
+      createdAt: r.createdAt,
+      reviewedAt: r.reviewedAt,
+      cardNumber: r.card.cardNumber,
+      currentName: r.card.holderName,
+      currentPhone: r.card.phone,
+      ownerName: r.card.customer?.name || r.card.seller?.name || '',
+      ownerPhone: r.card.customer?.phone || r.card.seller?.phone || '',
+    }));
+  }
+
+  // ✅ تنفيذ طلب التعديل (يُطبَّق على البطاقة) أو ❌ رفضه
+  async reviewCardEdit(id: string, approve: boolean, adminNote?: string) {
+    const req = await this.prisma.cardEditRequest.findUnique({ where: { id } });
+    if (!req) throw new NotFoundException('الطلب غير موجود');
+    if (req.status !== 'pending') throw new BadRequestException('تمت مراجعته مسبقاً');
+    const ops: any[] = [
+      this.prisma.cardEditRequest.update({
+        where: { id },
+        data: { status: approve ? 'approved' : 'rejected', reviewedAt: new Date(), adminNote: String(adminNote || '').trim().slice(0, 300) || null },
+      }),
+    ];
+    if (approve) {
+      const data: any = {};
+      if (req.holderName) data.holderName = req.holderName;
+      if (req.phone) data.phone = req.phone;
+      if (Object.keys(data).length) ops.push(this.prisma.customerCard.update({ where: { id: req.cardId }, data }));
+    }
+    await this.prisma.$transaction(ops);
+    // 🔔 إشعار المالك بنتيجة طلبه
+    this.notifications.push(req.ownerType, req.ownerId, {
+      icon: approve ? '✅' : '❌',
+      title: approve ? 'عُدّلت بيانات بطاقتك' : 'رُفض طلب تعديل بطاقتك',
+      body: approve
+        ? 'نفّذت الإدارة طلبك وحدّثت بيانات بطاقة يمن زون الخاصة بك'
+        : `رُفض طلب تعديل البطاقة${adminNote ? ` — ${adminNote}` : ''}`,
+      link: req.ownerType === 'seller' ? '/seller/card' : '/customer/card',
+    }).catch(() => {});
+    return { done: true };
   }
 }

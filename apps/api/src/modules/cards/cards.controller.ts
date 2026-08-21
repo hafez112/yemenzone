@@ -11,16 +11,38 @@ export class CustomerCardController {
   constructor(private svc: CardsService) {}
 
   @Get()
-  myCard(@CurrentUser() u: any) { return this.svc.myCard(u.sub); }
+  myCard(@CurrentUser() u: any) { return this.svc.myCard('customer', u.sub); }
 
   @Post('redeem')
-  redeem(@CurrentUser() u: any, @Body() body: any) { return this.svc.redeem(u.sub, body); }
+  redeem(@CurrentUser() u: any, @Body() body: any) { return this.svc.redeem('customer', u.sub, body); }
 
   @Post('topup-proof')
-  topupProof(@CurrentUser() u: any, @Body() body: any) { return this.svc.topupProof(u.sub, body); }
+  topupProof(@CurrentUser() u: any, @Body() body: any) { return this.svc.topupProof('customer', u.sub, body); }
+
+  @Post('edit-request')
+  editRequest(@CurrentUser() u: any, @Body() body: any) { return this.svc.requestCardEdit('customer', u.sub, body); }
 
   @Post('pay')
   pay(@CurrentUser() u: any, @Body() body: any) { return this.svc.payWithCard(u.sub, body); }
+}
+
+// ── 💳 البائع: بطاقة يمن زون الخاصة به ──
+@Controller('seller/card')
+@UseGuards(AuthGuard, RolesGuard('seller'))
+export class SellerCardController {
+  constructor(private svc: CardsService) {}
+
+  @Get()
+  myCard(@CurrentUser() u: any) { return this.svc.myCard('seller', u.sub); }
+
+  @Post('redeem')
+  redeem(@CurrentUser() u: any, @Body() body: any) { return this.svc.redeem('seller', u.sub, body); }
+
+  @Post('topup-proof')
+  topupProof(@CurrentUser() u: any, @Body() body: any) { return this.svc.topupProof('seller', u.sub, body); }
+
+  @Post('edit-request')
+  editRequest(@CurrentUser() u: any, @Body() body: any) { return this.svc.requestCardEdit('seller', u.sub, body); }
 }
 
 // ── التاجر: محفظته ──
@@ -73,5 +95,23 @@ export class AdminCardsController {
   @Patch('withdrawals/:id/review')
   reviewWithdrawal(@Param('id') id: string, @Body() body: { approve: boolean; note?: string }) {
     return this.svc.reviewWithdrawal(id, body.approve, body.note);
+  }
+
+  // ── 💳 بطاقات يمن زون (عملاء + بائعون): معرفة شاملة + تعديل + إيقاف ──
+  @Get('yz-cards')
+  yzCards(@Query('q') q?: string) { return this.svc.yzCards(q); }
+
+  @Patch('yz-cards/:id')
+  updateYzCard(@Param('id') id: string, @Body() body: any) { return this.svc.updateYzCard(id, body); }
+
+  @Patch('yz-cards/:id/toggle')
+  toggleYzCard(@Param('id') id: string) { return this.svc.toggleYzCard(id); }
+
+  @Get('card-edit-requests')
+  cardEditRequests(@Query('status') status?: string) { return this.svc.cardEditRequests(status); }
+
+  @Patch('card-edit-requests/:id/review')
+  reviewCardEdit(@Param('id') id: string, @Body() body: { approve: boolean; note?: string }) {
+    return this.svc.reviewCardEdit(id, body.approve, body.note);
   }
 }

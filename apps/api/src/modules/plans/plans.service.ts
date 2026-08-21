@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ConflictException }
 import { PrismaService } from '../../prisma/prisma.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { CardsService } from '../cards/cards.service';
 import { effectiveFeatures, subscriptionActive, FEATURE_AR } from '../../common/features';
 
 @Injectable()
@@ -10,6 +11,7 @@ export class PlansService {
     private prisma: PrismaService,
     private messaging: MessagingService,
     private notifications: NotificationsService,
+    private cards: CardsService,
   ) {}
 
   private async sellerStore(sellerId: string) {
@@ -58,6 +60,34 @@ export class PlansService {
         create: { storeId: store.id, planId: plan.id },
       });
       return { activated: true, message: 'تم التحويل للخطة المجانية' };
+    }
+
+    // 💳 الدفع ببطاقة يمن زون — خصم فوري وتفعيل فوري بدون مراجعة
+    if (body.method === 'yz-card') {
+      const card = await this.cards.chargeYzCard('seller', sellerId, Number(plan.priceMonthly));
+      const number = 'INV-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+      const endsAt = new Date(Date.now() + 30 * 24 * 3600 * 1000);
+      await this.prisma.$transaction([
+        this.prisma.subscription.upsert({
+          where: { storeId: store.id },
+          update: { planId: plan.id, isActive: true, startsAt: new Date(), expiresAt: endsAt },
+          create: { storeId: store.id, planId: plan.id, isActive: true, startsAt: new Date(), expiresAt: endsAt },
+        }),
+        this.prisma.payment.create({
+          data: {
+            number, payerType: 'seller', payerId: sellerId, purpose: 'subscription',
+            amount: plan.priceMonthly, method: 'yz-card', status: 'approved',
+            reviewedAt: new Date(), referenceId: plan.id,
+          },
+        }),
+      ]);
+      this.notifications.push('seller', sellerId, {
+        icon: '💳',
+        title: `اشتركت في خطة ${plan.name} ✅`,
+        body: `دُفع ${Number(plan.priceMonthly).toLocaleString()} ر.ي من بطاقتك وفُعّلت خطتك فوراً حتى ${endsAt.toLocaleDateString('ar-YE')}`,
+        link: '/seller/subscription',
+      }).catch(() => {});
+      return { activated: true, paidByCard: true, message: `🎉 دُفع من بطاقتك وفعّلت خطة ${plan.name} فوراً` };
     }
 
     // منع تكرار طلب معلق

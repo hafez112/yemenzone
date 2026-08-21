@@ -55,12 +55,12 @@ export default function SubscriptionPage() {
     load().catch(() => router.push('/seller/setup'));
   }, []);
 
-  async function subscribe(planId: string, price: number) {
+  async function subscribe(planId: string, price: number, method = 'transfer') {
     setSending(true);
     try {
       const r = await api('/seller/subscription/subscribe', {
         method: 'POST',
-        body: JSON.stringify({ planId, method: 'transfer' }),
+        body: JSON.stringify({ planId, method }),
       });
       toast(r.activated ? '✅ ' + r.message : '📩 ' + r.message);
       await load();
@@ -210,11 +210,25 @@ export default function SubscriptionPage() {
                     <li>{f.pwa ? '✅' : '🔒'} تطبيق الويب التقدمي 📱</li>
                   </ul>
                   {!isCurrent && !pendingPayment && (
-                    <button onClick={() => subscribe(p.id, Number(p.priceMonthly))} disabled={sending}
-                      className={`w-full py-2.5 rounded-xl text-white font-extrabold text-sm disabled:opacity-40 ${isGold ? 'btn-shine' : 'btn-primary'}`}
-                      style={isGold ? { background: 'linear-gradient(135deg, #f59e0b, #b45309)' } : {}}>
-                      {Number(p.priceMonthly) === 0 ? 'التحويل للمجاني' : isGold ? '👑 اطلب الخطة الذهبية' : '⬆️ اطلب الترقية'}
-                    </button>
+                    Number(p.priceMonthly) === 0 ? (
+                      <button onClick={() => subscribe(p.id, 0)} disabled={sending}
+                        className="w-full py-2.5 rounded-xl text-white font-extrabold text-sm disabled:opacity-40 btn-primary">
+                        التحويل للمجاني
+                      </button>
+                    ) : (
+                      <div className="space-y-2">
+                        {/* 💳 البطاقة = وسيلة دفع رسمية — تفعيل فوري */}
+                        <button onClick={() => subscribe(p.id, Number(p.priceMonthly), 'yz-card')} disabled={sending}
+                          className={`w-full py-2.5 rounded-xl text-white font-extrabold text-sm disabled:opacity-40 ${isGold ? 'btn-shine' : 'btn-primary'}`}
+                          style={isGold ? { background: 'linear-gradient(135deg, #f59e0b, #b45309)' } : {}}>
+                          💳 ادفع ببطاقة يمن زون — تفعيل فوري
+                        </button>
+                        <button onClick={() => subscribe(p.id, Number(p.priceMonthly))} disabled={sending}
+                          className="w-full py-2 rounded-xl bg-gray-100 text-gray-600 font-extrabold text-xs disabled:opacity-40 hover:bg-gray-200">
+                          📤 أو اطلب الترقية بتحويل (مراجعة الإدارة)
+                        </button>
+                      </div>
+                    )
                   )}
                 </div>
               );
@@ -226,10 +240,10 @@ export default function SubscriptionPage() {
             <h2 className="font-extrabold mb-3">💳 خطوات الترقية</h2>
             <div className="space-y-2">
               {[
-                ['1️⃣', 'اختر الخطة المناسبة واضغط "اطلب الترقية"'],
-                ['2️⃣', 'حوّل المبلغ عبر الحوالة أو المحفظة المتفق عليها مع الإدارة'],
-                ['3️⃣', 'تراجع الإدارة طلبك وتعتمد الدفعة'],
-                ['4️⃣', 'تُفعّل خطتك وتنفتح كل الميزات المقفلة فوراً ✅'],
+                ['💳', 'الأسرع: ادفع ببطاقة يمن زون — خصم فوري وتفعيل فوري بلا انتظار'],
+                ['1️⃣', 'أو اختر "اطلب الترقية بتحويل" وحوّل المبلغ عبر الحوالة المتفق عليها'],
+                ['2️⃣', 'تراجع الإدارة طلبك وتعتمد الدفعة'],
+                ['3️⃣', 'تُفعّل خطتك وتنفتح كل الميزات المقفلة فوراً ✅'],
               ].map(([n, t]) => (
                 <div key={n} className="flex items-center gap-2 text-sm text-gray-600">
                   <span>{n}</span><span>{t}</span>

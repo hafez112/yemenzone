@@ -2,12 +2,24 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UploadedFile, UseGuar
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ToolsService } from './tools.service';
 import { RateLimit } from '../../common/guards/rate-limit.guard';
+import { AuthGuard } from '../../common/guards/auth.guard';
+import { CurrentUser } from '../../common/decorators';
 import { imageFileFilter } from '../../common/upload';
 
 // 🧰 تكنولوجيا المنصة — نقاط عامة للخدمات المجانية /api/v1/tools/*
 @Controller('v1/tools')
 export class ToolsController {
   constructor(private tools: ToolsService) {}
+
+  // 🔓 ما اشتراه المستخدم من الخدمات المدفوعة (عميل أو بائع)
+  @Get('my-access')
+  @UseGuards(AuthGuard)
+  myAccess(@CurrentUser() u: any) { return this.tools.myAccess(u.typ, u.sub); }
+
+  // 💳 شراء خدمة مدفوعة ببطاقة يمن زون — تفتح تلقائياً فور الدفع
+  @Post(':key/buy')
+  @UseGuards(AuthGuard)
+  buy(@CurrentUser() u: any, @Param('key') key: string) { return this.tools.buyTool(u.typ, u.sub, key); }
 
   // القائمة العامة (الأدوات الظاهرة + أسعار الصرف)
   @Get()

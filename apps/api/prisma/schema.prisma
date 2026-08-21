@@ -111,6 +111,8 @@ model Seller {
   sessions    Session[]
   settlements Settlement[]
   otpCodes    OtpCode[]
+  cards       CustomerCard[]
+  cardTopups  CardTopup[]
 
   @@map("sellers")
 }
@@ -896,18 +898,28 @@ model PaymentCard {
   @@map("payment_cards")
 }
 
-// البطاقات الافتراضية للعملاء
+// 💳 بطاقة يمن زون — للعملاء والبائعين: رصيد + بيانات مالك + إيقاف من الإدارة
 model CustomerCard {
   id         String      @id @default(cuid())
-  customerId String
-  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  ownerType  String      @default("customer") // customer | seller
+  customerId String?
+  customer   Customer?   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  sellerId   String?
+  seller     Seller?     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  holderName String? // 👤 اسم صاحب البطاقة — تعدّله الإدارة بطلب من المالك
+  phone      String? // 📱 الجوال المرتبط بالبطاقة
+  note       String? // ملاحظات الإدارة الداخلية
   cardNumber String      @unique
   balance    Decimal     @default(0) @db.Decimal(12, 2)
   currency   String      @default("YER")
   isActive   Boolean     @default(true)
   createdAt  DateTime    @default(now())
   topups     CardTopup[]
+  editRequests CardEditRequest[]
+  purchases  ToolPurchase[]
 
+  @@index([ownerType, customerId])
+  @@index([ownerType, sellerId])
   @@map("customer_cards")
 }
 
@@ -916,8 +928,10 @@ model CardTopup {
   id         String        @id @default(cuid())
   cardId     String
   card       CustomerCard  @relation(fields: [cardId], references: [id], onDelete: Cascade)
-  customerId String
-  customer   Customer      @relation(fields: [customerId], references: [id])
+  customerId String?
+  customer   Customer?     @relation(fields: [customerId], references: [id])
+  sellerId   String?
+  seller     Seller?       @relation(fields: [sellerId], references: [id])
   amount     Decimal       @db.Decimal(12, 2)
   method     String // payment-card | gateway | transfer
   proofImage String?
@@ -926,6 +940,42 @@ model CardTopup {
   reviewedAt DateTime?
 
   @@map("card_topups")
+}
+
+// 📝 طلب تعديل بيانات البطاقة — يرسله المالك (عميل/بائع) وتنفذه الإدارة أو ترفضه
+model CardEditRequest {
+  id        String       @id @default(cuid())
+  cardId    String
+  card      CustomerCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  ownerType String // customer | seller
+  ownerId   String
+  holderName String? // الاسم المطلوب (إن طُلب تغييره)
+  phone      String? // الجوال المطلوب (إن طُلب تغييره)
+  message   String? // رسالة المالك للإدارة
+  status    String       @default("pending") // pending | approved | rejected
+  adminNote String?
+  createdAt DateTime     @default(now())
+  reviewedAt DateTime?
+
+  @@index([status, createdAt])
+  @@map("card_edit_requests")
+}
+
+// 🛒 مشتريات الخدمات المدفوعة — الدفع ببطاقة يمن زون فقط، والشراء يفتح الخدمة دائماً
+model ToolPurchase {
+  id        String       @id @default(cuid())
+  ownerType String // customer | seller
+  ownerId   String
+  slug      String // مفتاح الخدمة
+  amount    Decimal      @db.Decimal(12, 2)
+  currency  String       @default("YER")
+  cardId    String
+  card      CustomerCard @relation(fields: [cardId], references: [id])
+  createdAt DateTime     @default(now())
+
+  @@unique([ownerType, ownerId, slug])
+  @@index([ownerType, ownerId])
+  @@map("tool_purchases")
 }
 
 // محفظة البائع
@@ -1567,6 +1617,7 @@ model PlatformTool {
   seoTitle  String? // 🔍 عنوان مخصص لمحركات البحث (تضبطه الإدارة)
   seoDesc   String? // وصف ميتا مخصص
   seoKeys   String? // كلمات مفتاحية مخصصة
+  price     Decimal? @db.Decimal(12, 2) // 💰 فارغ/صفر = مجانية — غير ذلك تُشترى ببطاقة يمن زون
   updatedAt DateTime @updatedAt
 
   @@map("platform_tools")
