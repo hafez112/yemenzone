@@ -1034,3 +1034,168 @@ html.native-app .yz-main > *:first-child { animation: fadeUp .32s ease both; }
 }
 .yz-ptr span { display: inline-block; animation: yzspin .9s linear infinite; }
 @keyframes yzspin { to { transform: rotate(360deg) } }
+
+/* ═══════════════════════════════════════════════════════════════
+   🎨 نظام تصميم التطبيق الشامل — كثافة + ثيمات جاهزة
+   تُدار بالكامل من /admin/design ← تبويب «📱 التطبيق»
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── الكثافة المضغوطة: تغطي كل الصفحات (المنصة + المتاجر + اللوحات) ── */
+html.native-app[data-app-density="compact"] .yz-main .grid.gap-6,
+html.native-app[data-app-density="compact"] .yz-main .gap-6 { gap: .9rem; }
+html.native-app[data-app-density="compact"] .yz-main .grid.gap-4,
+html.native-app[data-app-density="compact"] .yz-main .gap-4 { gap: .6rem; }
+html.native-app[data-app-density="compact"] .yz-main .gap-3 { gap: .45rem; }
+html.native-app[data-app-density="compact"] .yz-main .mb-6 { margin-bottom: .8rem; }
+html.native-app[data-app-density="compact"] .yz-main .mb-4 { margin-bottom: .6rem; }
+html.native-app[data-app-density="compact"] .yz-main .mt-8 { margin-top: 1.25rem; }
+html.native-app[data-app-density="compact"] .yz-main .pt-10 { padding-top: 1.5rem; }
+html.native-app[data-app-density="compact"] .yz-main .pb-10 { padding-bottom: 1.5rem; }
+html.native-app[data-app-density="compact"] .card { padding: 1rem; margin-bottom: .75rem; }
+html.native-app[data-app-density="compact"] .page { padding-top: calc(4.2rem + var(--sa-top)); }
+
+/* عناصر المتاجر المثبّتة/اللاصقة تراعي شريط الحالة داخل التطبيق */
+html.native-app .yz-main [class*="fixed"][class*="top-0"] { padding-top: var(--sa-top); }
+html.native-app .yz-main [class*="sticky"][class*="top-14"] { top: calc(3.5rem + var(--sa-top)); }
+
+/* ─────────────────────────────────────────────
+   الثيمات الجاهزة للتطبيق — data-app-theme على <html>
+   ───────────────────────────────────────────── */
+
+/* 🏜️ رملي دافئ — فاتح بلمسة ترابية أنيقة */
+html.native-app[data-app-theme="sand"] body { background: #faf6ef; }
+html.native-app[data-app-theme="sand"] .yz-topbar { background: rgba(250,246,239,.85); }
+html.native-app[data-app-theme="sand"] .yz-bottomnav { background: rgba(250,246,239,.95); }
+html.native-app[data-app-theme="sand"] .page { background: linear-gradient(135deg, #faf6ef, #fdf9f0); }
+
+/* 🌌 ليلي بنفسجي — midnight */
+html.native-app[data-app-theme="midnight"] { --app-bg: #0d0d1a; --app-card: #161628; --app-card2: #1c1c33; --app-ink: #e8e8f5; --app-ink2: #a3a3c2; --app-line: rgba(255,255,255,.09); }
+
+/* ⚫ AMOLED أسود خالص — amoled */
+html.native-app[data-app-theme="amoled"] { --app-bg: #000; --app-card: #101010; --app-card2: #181818; --app-ink: #f2f2f2; --app-ink2: #9d9d9d; --app-line: rgba(255,255,255,.1); }
+
+/* 🌊 أزرق ليلي عميق — ocean */
+html.native-app[data-app-theme="ocean"] { --app-bg: #071018; --app-card: #0d1b26; --app-card2: #122433; --app-ink: #e3f0f8; --app-ink2: #8fb3c7; --app-line: rgba(160,210,235,.12); }
+
+/* محرك الثيمات الداكنة — يطبق متغيرات الثيم على كل مكونات الواجهة داخل التطبيق */
+html.native-app[data-app-theme="midnight"] body,
+html.native-app[data-app-theme="amoled"] body,
+html.native-app[data-app-theme="ocean"] body { background: var(--app-bg); color: var(--app-ink); }
+
+html.native-app[data-app-theme="midnight"] .page,
+html.native-app[data-app-theme="amoled"] .page,
+html.native-app[data-app-theme="ocean"] .page { background: var(--app-bg); }
+
+/* البطاقات والأسطح الفاتحة تصبح داكنة */
+html.native-app[data-app-theme="midnight"] .yz-main .bg-white,
+html.native-app[data-app-theme="amoled"] .yz-main .bg-white,
+html.native-app[data-app-theme="ocean"] .yz-main .bg-white,
+html.native-app[data-app-theme="midnight"] .yz-main .card,
+html.native-app[data-app-theme="amoled"] .yz-main .card,
+html.native-app[data-app-theme="ocean"] .yz-main .card { background: var(--app-card); color: var(--app-ink); }
+
+html.native-app[data-app-theme="midnight"] .yz-main .bg-gray-50,
+html.native-app[data-app-theme="amoled"] .yz-main .bg-gray-50,
+html.native-app[data-app-theme="ocean"] .yz-main .bg-gray-50,
+html.native-app[data-app-theme="midnight"] .yz-main .bg-gray-100,
+html.native-app[data-app-theme="amoled"] .yz-main .bg-gray-100,
+html.native-app[data-app-theme="ocean"] .yz-main .bg-gray-100,
+html.native-app[data-app-theme="midnight"] .yz-main .bg-slate-50,
+html.native-app[data-app-theme="amoled"] .yz-main .bg-slate-50,
+html.native-app[data-app-theme="ocean"] .yz-main .bg-slate-50 { background: var(--app-card2); }
+
+/* النصوص الداكنة تصبح فاتحة */
+html.native-app[data-app-theme="midnight"] .yz-main .text-gray-900,
+html.native-app[data-app-theme="midnight"] .yz-main .text-gray-800,
+html.native-app[data-app-theme="midnight"] .yz-main .text-gray-700,
+html.native-app[data-app-theme="amoled"] .yz-main .text-gray-900,
+html.native-app[data-app-theme="amoled"] .yz-main .text-gray-800,
+html.native-app[data-app-theme="amoled"] .yz-main .text-gray-700,
+html.native-app[data-app-theme="ocean"] .yz-main .text-gray-900,
+html.native-app[data-app-theme="ocean"] .yz-main .text-gray-800,
+html.native-app[data-app-theme="ocean"] .yz-main .text-gray-700 { color: var(--app-ink); }
+
+html.native-app[data-app-theme="midnight"] .yz-main .text-gray-600,
+html.native-app[data-app-theme="midnight"] .yz-main .text-gray-500,
+html.native-app[data-app-theme="amoled"] .yz-main .text-gray-600,
+html.native-app[data-app-theme="amoled"] .yz-main .text-gray-500,
+html.native-app[data-app-theme="ocean"] .yz-main .text-gray-600,
+html.native-app[data-app-theme="ocean"] .yz-main .text-gray-500 { color: var(--app-ink2); }
+
+/* الحدود */
+html.native-app[data-app-theme="midnight"] .yz-main [class*="border-gray"],
+html.native-app[data-app-theme="midnight"] .yz-main [class*="border-slate"],
+html.native-app[data-app-theme="amoled"] .yz-main [class*="border-gray"],
+html.native-app[data-app-theme="amoled"] .yz-main [class*="border-slate"],
+html.native-app[data-app-theme="ocean"] .yz-main [class*="border-gray"],
+html.native-app[data-app-theme="ocean"] .yz-main [class*="border-slate"] { border-color: var(--app-line); }
+
+/* حقول الإدخال والأزرار والتبويبات */
+html.native-app[data-app-theme="midnight"] .yz-main input,
+html.native-app[data-app-theme="midnight"] .yz-main select,
+html.native-app[data-app-theme="midnight"] .yz-main textarea,
+html.native-app[data-app-theme="amoled"] .yz-main input,
+html.native-app[data-app-theme="amoled"] .yz-main select,
+html.native-app[data-app-theme="amoled"] .yz-main textarea,
+html.native-app[data-app-theme="ocean"] .yz-main input,
+html.native-app[data-app-theme="ocean"] .yz-main select,
+html.native-app[data-app-theme="ocean"] .yz-main textarea { background: var(--app-card2); color: var(--app-ink); border-color: var(--app-line); }
+
+html.native-app[data-app-theme="midnight"] .yz-main .tabs button,
+html.native-app[data-app-theme="midnight"] .yz-main .btn.ghost,
+html.native-app[data-app-theme="midnight"] .yz-main .badge,
+html.native-app[data-app-theme="amoled"] .yz-main .tabs button,
+html.native-app[data-app-theme="amoled"] .yz-main .btn.ghost,
+html.native-app[data-app-theme="amoled"] .yz-main .badge,
+html.native-app[data-app-theme="ocean"] .yz-main .tabs button,
+html.native-app[data-app-theme="ocean"] .yz-main .btn.ghost,
+html.native-app[data-app-theme="ocean"] .yz-main .badge { background: var(--app-card2); color: var(--app-ink); border-color: var(--app-line); }
+
+/* الترويسة والتنقل السفلي والقائمة الجانبية — داكنة زجاجية */
+html.native-app[data-app-theme="midnight"] .yz-topbar,
+html.native-app[data-app-theme="amoled"] .yz-topbar,
+html.native-app[data-app-theme="ocean"] .yz-topbar { background: color-mix(in srgb, var(--app-bg) 78%, transparent); border-bottom-color: var(--app-line); }
+html.native-app[data-app-theme="midnight"] .yz-topbar span,
+html.native-app[data-app-theme="midnight"] .yz-topbar a,
+html.native-app[data-app-theme="midnight"] .yz-topbar button,
+html.native-app[data-app-theme="amoled"] .yz-topbar span,
+html.native-app[data-app-theme="amoled"] .yz-topbar a,
+html.native-app[data-app-theme="amoled"] .yz-topbar button,
+html.native-app[data-app-theme="ocean"] .yz-topbar span,
+html.native-app[data-app-theme="ocean"] .yz-topbar a,
+html.native-app[data-app-theme="ocean"] .yz-topbar button { color: var(--app-ink); }
+
+html.native-app[data-app-theme="midnight"] .yz-bottomnav,
+html.native-app[data-app-theme="amoled"] .yz-bottomnav,
+html.native-app[data-app-theme="ocean"] .yz-bottomnav { background: color-mix(in srgb, var(--app-card) 92%, transparent); border-color: var(--app-line); }
+
+html.native-app[data-app-theme="midnight"] .yz-topbar ~ div .bg-white,
+html.native-app[data-app-theme="amoled"] .yz-topbar ~ div .bg-white,
+html.native-app[data-app-theme="ocean"] .yz-topbar ~ div .bg-white { background: var(--app-card); }
+
+/* أيقونات القائمة الجانبية — قابلة للتثيم */
+.yz-menu-ic { background: #F5F5FA; }
+.yz-menu-ic.active { background: var(--primary-soft, #EDE9FE); }
+
+/* القائمة الجانبية في الثيمات الداكنة */
+html.native-app[data-app-theme="midnight"] .yz-drawer,
+html.native-app[data-app-theme="amoled"] .yz-drawer,
+html.native-app[data-app-theme="ocean"] .yz-drawer { background: var(--app-card); color: var(--app-ink); }
+html.native-app[data-app-theme="midnight"] .yz-drawer .border-gray-100,
+html.native-app[data-app-theme="amoled"] .yz-drawer .border-gray-100,
+html.native-app[data-app-theme="ocean"] .yz-drawer .border-gray-100 { border-color: var(--app-line); }
+html.native-app[data-app-theme="midnight"] .yz-drawer .text-gray-700,
+html.native-app[data-app-theme="amoled"] .yz-drawer .text-gray-700,
+html.native-app[data-app-theme="ocean"] .yz-drawer .text-gray-700 { color: var(--app-ink); }
+html.native-app[data-app-theme="midnight"] .yz-drawer .yz-menu-ic,
+html.native-app[data-app-theme="amoled"] .yz-drawer .yz-menu-ic,
+html.native-app[data-app-theme="ocean"] .yz-drawer .yz-menu-ic { background: var(--app-card2); }
+html.native-app[data-app-theme="midnight"] .yz-drawer .bg-gray-100,
+html.native-app[data-app-theme="amoled"] .yz-drawer .bg-gray-100,
+html.native-app[data-app-theme="ocean"] .yz-drawer .bg-gray-100 { background: var(--app-card2); }
+html.native-app[data-app-theme="midnight"] .yz-drawer .text-gray-500,
+html.native-app[data-app-theme="amoled"] .yz-drawer .text-gray-500,
+html.native-app[data-app-theme="ocean"] .yz-drawer .text-gray-500 { color: var(--app-ink2); }
+html.native-app[data-app-theme="midnight"] .yz-drawer .bg-purple-50,
+html.native-app[data-app-theme="amoled"] .yz-drawer .bg-purple-50,
+html.native-app[data-app-theme="ocean"] .yz-drawer .bg-purple-50 { background: color-mix(in srgb, var(--primary) 18%, transparent); }

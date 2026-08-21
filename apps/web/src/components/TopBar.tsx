@@ -189,7 +189,7 @@ export default function TopBar() {
       {open && (
         <div className="fixed inset-0 z-[80] md:hidden" role="dialog" aria-label="قائمة المنصة">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm anim-fade" onClick={() => setOpen(false)} />
-          <aside className="absolute top-0 bottom-0 right-0 w-[80%] max-w-80 bg-white shadow-2xl flex flex-col anim-slide-in rounded-l-3xl overflow-hidden"
+          <aside className="yz-drawer absolute top-0 bottom-0 right-0 w-[80%] max-w-80 bg-white shadow-2xl flex flex-col anim-slide-in rounded-l-3xl overflow-hidden"
             style={{ paddingTop: 'var(--sa-top, 0px)' }}>
             {/* رأس القائمة */}
             <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
@@ -235,8 +235,7 @@ export default function TopBar() {
                     return (
                       <Link key={l.href} href={l.href}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl mb-1 transition-colors ${active ? 'bg-purple-50' : 'active:bg-gray-50'}`}>
-                        <span className="w-9 h-9 grid place-items-center rounded-xl text-base shrink-0"
-                          style={{ background: active ? 'var(--primary-soft, #EDE9FE)' : '#F5F5FA' }}>{l.icon}</span>
+                        <span className={"yz-menu-ic w-9 h-9 grid place-items-center rounded-xl text-base shrink-0" + (active ? " active" : "")}>{l.icon}</span>
                         <span className={`text-[13px] font-bold ${active ? 'text-purple-700' : 'text-gray-700'}`}>{l.label}</span>
                         <span className="ms-auto text-gray-300">‹</span>
                       </Link>
@@ -250,7 +249,7 @@ export default function TopBar() {
                   {menuPages.map(p => (
                     <Link key={p.slug} href={'/p/' + p.slug}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-2xl mb-1 active:bg-gray-50">
-                      <span className="w-9 h-9 grid place-items-center rounded-xl text-base shrink-0" style={{ background: '#F5F5FA' }}>📄</span>
+                      <span className="yz-menu-ic w-9 h-9 grid place-items-center rounded-xl text-base shrink-0">📄</span>
                       <span className="text-[13px] font-bold text-gray-700">{p.title}</span>
                       <span className="ms-auto text-gray-300">‹</span>
                     </Link>

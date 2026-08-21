@@ -15,7 +15,7 @@ export default function NativeApp() {
     const root = document.documentElement;
     root.classList.add('native-app');
 
-    // شريط الحالة: أيقونات داكنة (ترويسة المنصة فاتحة)
+    // شريط الحالة: يُضبط لاحقاً حسب ثيم التطبيق (داكن/فاتح)
     const StatusBar = Cap.Plugins?.StatusBar;
     StatusBar?.setStyle?.({ style: 'DARK' })?.catch?.(() => {});
 
@@ -42,6 +42,13 @@ export default function NativeApp() {
       root.dataset.appAnnounce = app.showAnnouncement === false ? 'off' : 'on';
       root.dataset.appCurrency = app.showCurrency === false ? 'off' : 'on';
       root.dataset.appCta = app.showCta === false ? 'off' : 'on';
+
+      // 🌈 ثيم التطبيق الجاهز — original | sand | midnight | amoled | ocean
+      const theme = app.theme || 'original';
+      root.dataset.appTheme = theme;
+      // شريط الحالة يتكيف مع الثيم: أيقونات فاتحة للثيمات الداكنة
+      const darkThemes = ['midnight', 'amoled', 'ocean'];
+      StatusBar?.setStyle?.({ style: darkThemes.includes(theme) ? 'LIGHT' : 'DARK' })?.catch?.(() => {});
 
       // 🎨 لون وانحناء خاصان بالتطبيق — يغطيان ألوان المنصة داخل التطبيق فقط
       const applyBrand = () => {

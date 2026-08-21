@@ -28,6 +28,14 @@ const RADII = [
   { id: "1.5rem", name: "ناعم", icon: "🔘" },
   { id: "2rem", name: "دائري كامل", icon: "⭕" },
 ];
+// 📱 ثيمات التطبيق الجاهزة — تُطبق داخل تطبيق أندرويد فقط
+const APP_THEMES = [
+  { id: "original", name: "الزجاجي الفاتح", desc: "الوضع الحالي — فاتح أنيق", bg: "#f7f7fc", card: "#ffffff", ink: "#1f2937" },
+  { id: "sand", name: "الرملي الدافئ", desc: "فاتح بلمسة ترابية هادئة", bg: "#faf6ef", card: "#fffdf8", ink: "#3f3a2e" },
+  { id: "midnight", name: "الليلي البنفسجي", desc: "داكن فاخر يريح العين", bg: "#0d0d1a", card: "#161628", ink: "#e8e8f5" },
+  { id: "amoled", name: "AMOLED الأسود", desc: "أسود خالص موفّر للطاقة", bg: "#000000", card: "#101010", ink: "#f2f2f2" },
+  { id: "ocean", name: "الليلي المحيطي", desc: "أزرق ليلي عميق وهادئ", bg: "#071018", card: "#0d1b26", ink: "#e3f0f8" },
+];
 const SECTIONS: Record<string, string> = {
   hero: "قسم البطل (Hero)", slider: "السلايدر", flashSale: "عرض الفلاش", ads: "الإعلانات", trending: "يُباع الآن",
   rising: "متاجر صاعدة", features: "المميزات", newest: "وصل حديثاً",
@@ -51,7 +59,7 @@ export default function AdminDesignPage() {
   const [fonts, setFonts] = useState<any>({});
   const [customCode, setCustomCode] = useState<any>({ headScripts: "", bodyScripts: "", customCss: "" });
   // 📱 إعدادات استوديو التطبيق — تُطبق داخل تطبيق أندرويد فقط
-  const [appCfg, setAppCfg] = useState<any>({ density: "compact", headerStyle: "glass", heroHeight: "compact", floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "" });
+  const [appCfg, setAppCfg] = useState<any>({ theme: "original", density: "compact", headerStyle: "glass", heroHeight: "compact", floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "" });
   const [slideForm, setSlideForm] = useState<any>({ title: "", subtitle: "", image: "", link: "", sort: 0 });
   const [editingSlide, setEditingSlide] = useState<string | null>(null);
   const [backupName, setBackupName] = useState("");
@@ -63,7 +71,7 @@ export default function AdminDesignPage() {
     setLayout(d.settings.layout || {});
     setFonts(d.settings.fonts || {});
     setCustomCode({ headScripts: "", bodyScripts: "", customCss: "", ...(d.settings.customCode || {}) });
-    setAppCfg({ density: "compact", headerStyle: "glass", heroHeight: "compact", floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "", ...(d.settings.app || {}) });
+    setAppCfg({ theme: "original", density: "compact", headerStyle: "glass", heroHeight: "compact", floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "", ...(d.settings.app || {}) });
   }).catch((e) => toast(e.message, "error"));
   useEffect(() => { load(); }, []);
 
@@ -337,6 +345,35 @@ export default function AdminDesignPage() {
               <div className="card mb-3" style={{ border: "1px solid #ddd6fe", background: "#f5f3ff" }}>
                 <b className="text-sm">📱 استوديو تصميم التطبيق</b>
                 <p className="text-xs text-gray-500 mt-1">هذه الإعدادات تُطبَّق داخل تطبيق أندرويد فقط ولا تغيّر شيئاً في المتصفح. تظهر التغييرات فور الحفظ — داخل التطبيق اسحب الشاشة للأسفل للتحديث.</p>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-1">🌈 ثيمات التطبيق الجاهزة</h3>
+                <p className="text-xs text-gray-400 mb-3">اختر شخصية التطبيق كاملة بلمسة واحدة — الخلفيات والبطاقات والترويسة والقائمة تتغير معاً</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {APP_THEMES.map((th) => (
+                    <button key={th.id} onClick={() => setAppCfg({ ...appCfg, theme: th.id })}
+                      className="rounded-2xl overflow-hidden text-right transition-transform active:scale-95"
+                      style={{ border: appCfg.theme === th.id ? "3px solid #6C3DF5" : "1px solid #e5e7eb", boxShadow: appCfg.theme === th.id ? "0 8px 24px -8px rgba(108,61,245,.4)" : "none" }}>
+                      {/* معاينة مصغرة بشكل جوال */}
+                      <div className="p-2" style={{ background: th.bg }}>
+                        <div className="h-2.5 rounded-full mb-1.5 mx-1" style={{ background: th.card, border: "1px solid rgba(128,128,128,.15)" }} />
+                        <div className="rounded-lg p-1.5 mb-1.5" style={{ background: th.card }}>
+                          <div className="h-1.5 rounded-full w-2/3 mb-1" style={{ background: th.ink, opacity: .8 }} />
+                          <div className="h-1.5 rounded-full w-1/3" style={{ background: th.ink, opacity: .3 }} />
+                        </div>
+                        <div className="flex gap-1">
+                          <div className="h-6 rounded-lg flex-1" style={{ background: th.card }} />
+                          <div className="h-6 rounded-lg flex-1" style={{ background: th.card }} />
+                        </div>
+                      </div>
+                      <div className="px-2 py-1.5 bg-white">
+                        <div className="text-xs font-black">{appCfg.theme === th.id ? "✅ " : ""}{th.name}</div>
+                        <div className="text-[10px] text-gray-400">{th.desc}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="card mb-3">
