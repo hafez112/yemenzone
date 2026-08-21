@@ -1447,3 +1447,23 @@ html.native-app[data-app-hero="compact"] .yz-main section.min-h-\[94vh\] {
   padding-top: calc(4.2rem + var(--sa-top));
   padding-bottom: 1.4rem;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   📐 إيقاع الرئيسية المدمج داخل التطبيق — فراغات صغيرة بين التقسيمات
+   ═══════════════════════════════════════════════════════════════ */
+
+/* حشوة موحدة صغيرة لكل أقسام الرئيسية */
+html.native-app .yz-main [data-section]:not([data-section="hero"]) > section { padding-top: .45rem; padding-bottom: .45rem; }
+
+/* هوامش عناوين الأقسام — مدمجة */
+html.native-app .yz-main [data-section] .mb-14 { margin-bottom: .75rem; }
+html.native-app .yz-main [data-section] .mb-10 { margin-bottom: .6rem; }
+html.native-app .yz-main [data-section] .mb-8 { margin-bottom: .5rem; }
+html.native-app .yz-main [data-section] .mb-6 { margin-bottom: .45rem; }
+html.native-app .yz-main [data-section] .mb-5 { margin-bottom: .4rem; }
+
+/* البطل: إحكام إضافي */
+html.native-app[data-app-hero="compact"] .yz-main section.min-h-\[94vh\] { padding-top: calc(3.9rem + var(--sa-top)); padding-bottom: .9rem; }
+
+/* أزرار الخدمات تلتصق بما فوقها وما تحتها */
+html.native-app .yz-main [data-section="quickActions"] > section { padding-top: .35rem; padding-bottom: .2rem; }
