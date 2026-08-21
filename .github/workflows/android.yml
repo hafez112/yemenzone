@@ -1,11 +1,14 @@
 # 📱 بناء تطبيق يمن زون لأندرويد سحابياً — بدون حاسوب
-# الناتج: ملف APK جاهز للتثبيت من صفحة Artifacts
+# النواتج:
+#   1) APK للتثبيت المباشر والتجربة
+#   2) AAB موقّع جاهز للرفع إلى Google Play (يتطلب أسرار التوقيع في المستودع)
 name: 📱 بناء تطبيق أندرويد
 
 on:
   push:
     paths:
       - 'apps/mobile/**'
+      - '.github/workflows/android.yml'
   workflow_dispatch:
 
 jobs:
@@ -69,3 +72,104 @@ jobs:
           name: yemen-zone-app-debug-apk
           path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+
+  build-release-aab:
+    name: بناء AAB موقّع (Google Play)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: التحقق من أسرار التوقيع
+        env:
+          KS_B64: ${{ secrets.KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$KS_B64" ] || [ -z "$KS_PASS" ] || [ -z "$KS_ALIAS" ] || [ -z "$KEY_PASS" ]; then
+            echo "❌ أسرار التوقيع غير مضافة للمستودع (KEYSTORE_BASE64 / KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD)"
+            exit 1
+          fi
+          echo "✅ أسرار التوقيع موجودة"
+
+      - name: إعداد Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: إعداد Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: قبول التراخيص وتثبيت مكونات SDK المطلوبة
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+
+      - name: إعداد Node 24 (مع npm 11 السليم)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: استخراج مفتاح التوقيع من الأسرار
+        working-directory: apps/mobile/android
+        env:
+          KS_B64: ${{ secrets.KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -e
+          echo "$KS_B64" | base64 -d > app/yemen-zone-release.keystore
+          cat > keystore.properties <<EOF
+          storeFile=yemen-zone-release.keystore
+          storePassword=$KS_PASS
+          keyAlias=$KS_ALIAS
+          keyPassword=$KEY_PASS
+          EOF
+          ls -la app/yemen-zone-release.keystore
+
+      - name: التثبيت والمزامنة وبناء AAB الموقّع
+        working-directory: apps/mobile
+        run: |
+          set -e
+          echo "===== 1) التثبيت ====="
+          sed -i 's|https://npm.mirrors.msh.team|https://registry.npmjs.org|g' package-lock.json
+          npm ci --include=dev --workspaces=false --no-audit --no-fund || true
+          if [ ! -f node_modules/@capacitor/cli/bin/capacitor ]; then
+            rm -rf node_modules
+            npm ci --include=dev --workspaces=false --no-audit --no-fund || true
+          fi
+          if [ ! -f node_modules/@capacitor/cli/bin/capacitor ]; then
+            echo "❌ فشل التثبيت"
+            exit 1
+          fi
+          echo "===== 2) مزامنة Capacitor ====="
+          node node_modules/@capacitor/cli/bin/capacitor sync android
+          echo "===== 3) بناء AAB للإصدار ====="
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon --stacktrace
+          echo "===== 4) الناتج ====="
+          ls -la app/build/outputs/bundle/release/
+
+      - name: التحقق من توقيع AAB
+        run: |
+          AAB="apps/mobile/android/app/build/outputs/bundle/release/app-release.aab"
+          if [ ! -f "$AAB" ]; then
+            echo "❌ لم يتم إنتاج ملف AAB"
+            exit 1
+          fi
+          if jarsigner -verify "$AAB" > /dev/null 2>&1; then
+            echo "✅ ملف AAB موقّع وسليم — جاهز للرفع إلى Google Play"
+          else
+            echo "⚠️ تعذر التحقق بالتوقيع — سيظهر التحذير في Play Console إن كان غير موقّع"
+          fi
+
+      - name: رفع الناتج
+        uses: actions/upload-artifact@v4
+        with:
+          name: yemen-zone-release-aab
+          path: apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 90

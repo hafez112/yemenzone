@@ -54,8 +54,8 @@ captures/
 
 # Keystore files
 # Uncomment the following lines if you do not want to check your keystore files in.
-#*.jks
-#*.keystore
+*.jks
+*.keystore
 
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
@@ -90,6 +90,7 @@ lint/tmp/
 *.hprof
 
 # Cordova plugins for Capacitor
+# ملاحظة يمن زون: هذه الملفات مطلوبة في المستودع لأن البناء يتم سحابياً بدون تشغيل capacitor sync
 # capacitor-cordova-android-plugins
 
 # Copied web assets
@@ -99,3 +100,4 @@ lint/tmp/
 # app/src/main/assets/capacitor.config.json
 # app/src/main/assets/capacitor.plugins.json
 # app/src/main/res/xml/config.xml
+keystore.properties
