@@ -1,6 +1,7 @@
 'use client';
 import dynamic from 'next/dynamic';
 import ToolShell from './ToolShell';
+import ToolGate from './ToolGate';
 import { toolBySlug } from '@/lib/tools';
 
 // ⏳ تحميل كسول لكل أداة — مكتباتها الثقيلة لا تُحمّل إلا عند فتحها (بدون SSR)
@@ -46,5 +47,6 @@ const MAP: Record<string, any> = {
 export default function ToolLoader({ slug }: { slug: string }) {
   const Cmp = MAP[slug];
   if (!Cmp || !toolBySlug(slug)) return null;
-  return <ToolShell slug={slug}><Cmp /></ToolShell>;
+  // 🛡️ الحارس يقرر: خدمات التاجر للبائعين فقط، والبقية تتطلب دخول العميل
+  return <ToolShell slug={slug}><ToolGate slug={slug}><Cmp /></ToolGate></ToolShell>;
 }

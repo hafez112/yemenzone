@@ -24,6 +24,7 @@ const MENU: Record<string, { href: string; icon: string; label: string; feature?
   questions: { href: '/seller/questions', icon: '💬', label: 'أسئلة العملاء' },
   inventory: { href: '/seller/inventory', icon: '📦', label: 'المخزون', feature: 'inventory' },
   growth:    { href: '/seller/growth',    icon: '🚀', label: 'مساعد النمو' },
+  tools:     { href: '/seller/tools',     icon: '🧰', label: 'أدوات التاجر' },
   chats:     { href: '/seller/chats',     icon: '💬', label: 'المحادثات' },
   campaigns: { href: '/seller/campaigns', icon: '📣', label: 'حملاتي', feature: 'campaigns' },
   share:     { href: '/seller/share',     icon: '📱', label: 'مشاركة متجري' },
@@ -61,15 +62,15 @@ export default function SellerSidebar({ store }: { store: any }) {
   // 🧬 فصل كامل بين الأنشطة — لكل نوع متجر قائمته الخاصة، لا علاقة بينها وبين متاجر المنتجات
   const KIND_MODULES: Record<string, string[]> = {
     // متاجر المنتجات: المنظومة الكاملة (سلة/طلبات/مخزون/توصيل/مالية...)
-    products: ['products', 'categories', 'orders', 'returns', 'customers', 'coupons', 'ads', 'reviews', 'questions', 'inventory', 'growth', 'chats', 'campaigns', 'share', 'verification', 'achievements', 'domain', 'delivery', 'checkout', 'wallet', 'finance', 'analytics', 'api'],
+    products: ['products', 'categories', 'orders', 'returns', 'customers', 'coupons', 'ads', 'reviews', 'questions', 'inventory', 'growth', 'tools', 'chats', 'campaigns', 'share', 'verification', 'achievements', 'domain', 'delivery', 'checkout', 'wallet', 'finance', 'analytics', 'api'],
     // 🍽️ المطاعم: نفس منظومة المنتجات (المنيو = أصناف + طلبات + توصيل) بتسميات مطعمية
-    restaurants: ['products', 'categories', 'orders', 'returns', 'customers', 'coupons', 'ads', 'reviews', 'questions', 'inventory', 'growth', 'chats', 'campaigns', 'share', 'verification', 'achievements', 'domain', 'delivery', 'checkout', 'wallet', 'finance', 'analytics', 'api'],
+    restaurants: ['products', 'categories', 'orders', 'returns', 'customers', 'coupons', 'ads', 'reviews', 'questions', 'inventory', 'growth', 'tools', 'chats', 'campaigns', 'share', 'verification', 'achievements', 'domain', 'delivery', 'checkout', 'wallet', 'finance', 'analytics', 'api'],
     // 🏬 المولات التجارية: المنظومة الكاملة بأوسع نطاق — سوق إلكتروني شامل
-    malls: ['products', 'categories', 'orders', 'returns', 'customers', 'coupons', 'ads', 'reviews', 'questions', 'inventory', 'growth', 'chats', 'campaigns', 'share', 'verification', 'achievements', 'domain', 'delivery', 'checkout', 'wallet', 'finance', 'analytics', 'api'],
+    malls: ['products', 'categories', 'orders', 'returns', 'customers', 'coupons', 'ads', 'reviews', 'questions', 'inventory', 'growth', 'tools', 'chats', 'campaigns', 'share', 'verification', 'achievements', 'domain', 'delivery', 'checkout', 'wallet', 'finance', 'analytics', 'api'],
     // أنشطة الحجز: إدارة العناصر والحجوزات + التسويق الذاتي فقط — بلا طلبات/مخزون/توصيل/محفظة
-    rentals:  ['rentals', 'ads', 'reviews', 'chats', 'share', 'verification', 'achievements', 'domain'],
-    hotel:    ['rooms', 'ads', 'reviews', 'chats', 'share', 'verification', 'achievements', 'domain'],
-    services: ['services', 'ads', 'reviews', 'chats', 'share', 'verification', 'achievements', 'domain'],
+    rentals:  ['rentals', 'tools', 'ads', 'reviews', 'chats', 'share', 'verification', 'achievements', 'domain'],
+    hotel:    ['rooms', 'tools', 'ads', 'reviews', 'chats', 'share', 'verification', 'achievements', 'domain'],
+    services: ['services', 'tools', 'ads', 'reviews', 'chats', 'share', 'verification', 'achievements', 'domain'],
   };
   // 🏷️ تسميات وأيقونات خاصة بالمطاعم — المنيو بدل المنتجات، والمطبخ بدل المخزون
   const KIND_LABEL_OVERRIDES: Record<string, Record<string, { label: string; icon?: string }>> = {

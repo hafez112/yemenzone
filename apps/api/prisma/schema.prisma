@@ -1703,3 +1703,19 @@ model RequestReply {
   @@index([requestId, status])
   @@map("request_replies")
 }
+
+// 🧰 خدمات المستخدم — لكل مستخدم سجل بكل خدمة يضيفها إلى لوحته
+// حقل data هو «قاعدة البيانات الخاصة بالخدمة»: كل خدمة يستخدمها المستخدم تخزّن بياناتها هنا مستقلة عن غيرها
+model UserTool {
+  id        String   @id @default(cuid())
+  userType  String // seller | customer
+  userId    String
+  slug      String // مفتاح الخدمة (مثل debts / invoice / currency)
+  data      Json? // 🗄️ بيانات الخدمة الخاصة بهذا المستخدم فقط
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userType, userId, slug])
+  @@index([userType, userId])
+  @@map("user_tools")
+}

@@ -34,6 +34,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { ReturnsModule } from './modules/returns/returns.module';
 import { FilesModule } from './modules/files/files.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
+import { MyToolsModule } from './modules/mytools/mytools.module';
 import { QaModule } from './modules/qa/qa.module';
 import { CartModule } from './modules/cart/cart.module';
 import { RecoModule } from './modules/reco/reco.module';
@@ -45,7 +46,7 @@ import { ToolsModule } from './modules/tools/tools.module';
 import { MiddlewareConsumer, NestModule } from '@nestjs/common';
 
 @Module({
-  imports: [PrismaModule, SecurityModule, ShieldModule, AuthModule, PublicModule, ThemeModule, StoresModule, ProductsModule, OrdersModule, BookingsModule, ReviewsModule, AdminModule, PlansModule, DeliveryModule, MessagingModule, PaymentsModule, CardsModule, FinanceModule, SecurityCenterModule, PublicApiModule, PlatformModule, NearbyModule, ComplaintsModule, BackupModule, CouponsModule, AdsModule, NotificationsModule, ReferralsModule, PwaModule, AccountingModule, ChatModule, ReturnsModule, FilesModule, WishlistModule, QaModule, CartModule, RecoModule, AiCenterModule, StoreTypesModule, ToolsModule],
+  imports: [PrismaModule, SecurityModule, ShieldModule, AuthModule, PublicModule, ThemeModule, StoresModule, ProductsModule, OrdersModule, BookingsModule, ReviewsModule, AdminModule, PlansModule, DeliveryModule, MessagingModule, PaymentsModule, CardsModule, FinanceModule, SecurityCenterModule, PublicApiModule, PlatformModule, NearbyModule, ComplaintsModule, BackupModule, CouponsModule, AdsModule, NotificationsModule, ReferralsModule, PwaModule, AccountingModule, ChatModule, ReturnsModule, FilesModule, WishlistModule, QaModule, CartModule, RecoModule, AiCenterModule, StoreTypesModule, ToolsModule, MyToolsModule],
   providers: [{ provide: APP_INTERCEPTOR, useClass: AuditInterceptor }], // 📜 تدقيق الإجراءات الإدارية تلقائياً
 })
 export class AppModule implements NestModule {

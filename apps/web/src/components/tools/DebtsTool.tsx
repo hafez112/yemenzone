@@ -1,7 +1,8 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from '@/components/Toast';
 import { fmtN } from './pdfHelper';
+import { loadToolData, saveToolData, sessionType } from '@/lib/tool-db';
 
 interface Entry { id: number; who: string; phone: string; amount: number; kind: 'debt' | 'pay'; note: string; date: string }
 const KEY = 'yz-debts-v1';
@@ -17,11 +18,44 @@ export default function DebtsTool() {
   const [note, setNote] = useState('');
   const [filter, setFilter] = useState('');
 
+  // 🗄️ قاعدة بيانات الدفتر الخاصة بالمستخدم — تُزامن مع حسابه عند تسجيل الدخول
+  const cloudOn = useRef(false);
+  const saveTimer = useRef<any>(null);
+
   useEffect(() => {
-    try { setEntries(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch {}
-    setLoaded(true);
+    let local: Entry[] = [];
+    try { local = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch {}
+    if (sessionType()) {
+      // مسجل دخول: قاعدة بيانات الخدمة في الحساب هي المرجع، وتندمج معها النسخة المحلية
+      loadToolData<Entry[]>('debts').then((cloud) => {
+        cloudOn.current = true;
+        if (Array.isArray(cloud) && cloud.length) {
+          const ids = new Set(cloud.map((c) => c.id));
+          const merged = [...cloud, ...local.filter((l) => !ids.has(l.id))]
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          setEntries(merged);
+          if (merged.length !== cloud.length) saveToolData('debts', merged).catch(() => {});
+        } else {
+          setEntries(local);
+          if (local.length) saveToolData('debts', local).catch(() => {}); // أول رفع للدفتر المحلي
+        }
+        setLoaded(true);
+      }).catch(() => { setEntries(local); setLoaded(true); });
+    } else {
+      setEntries(local);
+      setLoaded(true);
+    }
   }, []);
-  useEffect(() => { if (loaded) localStorage.setItem(KEY, JSON.stringify(entries)); }, [entries, loaded]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    localStorage.setItem(KEY, JSON.stringify(entries));
+    // حفظ مؤجل في قاعدة بيانات الخدمة (يجمع التعديلات المتتالية)
+    if (cloudOn.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => { saveToolData('debts', entries).catch(() => {}); }, 800);
+    }
+  }, [entries, loaded]);
 
   const add = () => {
     if (!who.trim() || !(Number(amount) > 0)) { toast('✍️ أدخل الاسم والمبلغ', 'error'); return; }

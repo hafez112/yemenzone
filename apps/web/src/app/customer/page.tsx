@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api, getUser, logout } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { TOOLS } from '@/lib/tools';
+import { myTools, addMyTool, removeMyTool } from '@/lib/tool-db';
 import DashboardPwa from '@/components/DashboardPwa';
 import PushSubscribe from '@/components/PushSubscribe';
 
@@ -25,6 +27,18 @@ export default function CustomerDashboard() {
   const [hub, setHub] = useState<any>(null);
   const [reorderBusy, setReorderBusy] = useState(false);
   const [chats, setChats] = useState<any[] | null>(null);
+  const [mySrv, setMySrv] = useState<any[] | null>(null);
+
+  // 🧰 خدماتي — إضافة/إزالة مع قاعدة بيانات خاصة لكل خدمة في حساب العميل
+  const loadSrv = () => myTools().then(setMySrv).catch(e => toast(e.message, 'error'));
+  const addSrv = async (slug: string) => {
+    try { await addMyTool(slug); toast('✅ أُضيفت الخدمة إلى لوحتك — لها قاعدة بيانات خاصة في حسابك'); loadSrv(); }
+    catch (e: any) { toast(e.message, 'error'); }
+  };
+  const removeSrv = async (slug: string) => {
+    try { await removeMyTool(slug); toast('✕ أُزيلت الخدمة من لوحتك'); loadSrv(); }
+    catch (e: any) { toast(e.message, 'error'); }
+  };
 
   useEffect(() => {
     const u = getUser();
@@ -64,6 +78,8 @@ export default function CustomerDashboard() {
     if (tab === 'chats' && !chats) {
       api('/customer/chats').then(setChats).catch(e => toast(e.message, 'error'));
     }
+    // 🧰 خدماتي
+    if (tab === 'tools' && !mySrv) loadSrv();
   }, [tab]);
 
   const openNotif = async (n: any) => {
@@ -98,6 +114,7 @@ export default function CustomerDashboard() {
     { id: 'reviews', icon: '⭐', label: 'تقييماتي', count: data?.reviews?.length },
     { id: 'chats', icon: '💬', label: 'محادثاتي' },
     { id: 'likes', icon: '❤️', label: 'مفضلتي', count: data?.likes?.length },
+    { id: 'tools', icon: '🧰', label: 'خدماتي', count: mySrv?.length || undefined },
     { id: 'points', icon: '🎁', label: 'نقاطي' },
     { id: 'settings', icon: '⚙️', label: 'إعداداتي' },
   ];
@@ -400,6 +417,60 @@ export default function CustomerDashboard() {
                   </Link>
                 ))}
               </div>
+            )}
+
+            {/* 🧰 خدماتي — الخدمات التي أضفتها + قاعدة بيانات كل خدمة في حسابي */}
+            {tab === 'tools' && (
+              !mySrv ? <div className="glass rounded-3xl p-10 text-center skeleton h-40" /> : (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="font-extrabold mb-2">🧰 خدماتي ({mySrv.length})</h2>
+                    {mySrv.length === 0 && (
+                      <div className="glass rounded-3xl p-8 text-center">
+                        <div className="text-4xl mb-2">🧰</div>
+                        <p className="font-bold text-sm mb-1">لم تضف أي خدمة بعد</p>
+                        <p className="text-xs text-gray-500">أضف من القائمة بالأسفل — كل خدمة تضيفها تحصل على قاعدة بيانات خاصة بها في حسابك</p>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-2 stagger">
+                      {mySrv.map((r: any) => {
+                        const t = TOOLS.find((x: any) => x.slug === r.slug);
+                        if (!t) return null;
+                        return (
+                          <div key={r.slug} className="glass rounded-2xl p-3.5 relative">
+                            <Link href={`/tools/${t.slug}`} className="block text-center">
+                              <span className={`w-11 h-11 mx-auto rounded-xl bg-gradient-to-br ${t.grad} grid place-items-center text-xl shadow-md mb-2`}>{t.icon}</span>
+                              <div className="font-bold text-[13px] leading-snug">{t.title}</div>
+                              <div className="text-[10px] text-gray-500 mt-1">
+                                {r.hasData
+                                  ? <>🗄️ بيانات محفوظة — {new Date(r.updatedAt).toLocaleDateString('ar-YE')}</>
+                                  : '🗄️ قاعدتها جاهزة في حسابك'}
+                              </div>
+                            </Link>
+                            <button onClick={() => removeSrv(r.slug)}
+                              className="absolute top-2 left-2 w-7 h-7 rounded-full bg-red-50 text-red-500 text-xs font-bold">✕</button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h2 className="font-extrabold mb-2">➕ أضف خدمات إلى لوحتك</h2>
+                    <div className="grid grid-cols-3 gap-2">
+                      {TOOLS.filter((t: any) => t.cat !== 'merchant' && !mySrv.some((r: any) => r.slug === t.slug)).map((t: any) => (
+                        <button key={t.slug} onClick={() => addSrv(t.slug)}
+                          className="glass rounded-2xl p-3 text-center card-hover">
+                          <span className={`w-10 h-10 mx-auto rounded-xl bg-gradient-to-br ${t.grad} grid place-items-center text-lg shadow-sm mb-1.5`}>{t.icon}</span>
+                          <div className="font-bold text-[11px] leading-snug">{t.title}</div>
+                          <div className="text-[9px] text-emerald-600 font-bold mt-1">➕ أضفها</div>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-3 text-center">🛍️ أدوات التاجر متاحة في لوحة تحكم البائع — <Link href="/auth/seller-register" className="underline">أنشئ متجرك مجاناً</Link></p>
+                  </div>
+                </div>
+              )
             )}
 
             {/* 🎁 نقاطي وإحالاتي */}

@@ -1,10 +1,18 @@
+'use client';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { TOOLS } from '@/lib/tools';
+import { sessionType } from '@/lib/tool-db';
 
 // 🧰 قسم «الخدمات المجانية» في الصفحة الرئيسية
 // يظهر ضمن أقسام إدارة التصميم (/admin/design) — تتحكم الإدارة بموقعه وإظهاره/إخفائه
-// البطاقات بألوان الواجهة القياسية لتتلون تلقائياً مع ثيمات استوديو التطبيق والويب
+// 🛍️ خدمات التاجر تظهر للبائعين فقط — الزائر والعميل يريان الخدمات العامة
 export default function FreeServicesSection() {
+  const [tools, setTools] = useState(() => TOOLS.filter((t) => t.cat !== 'merchant'));
+
+  useEffect(() => {
+    if (sessionType() === 'seller') setTools(TOOLS);
+  }, []);
   return (
     <section className="py-6">
       <div className="flex items-end justify-between mb-5 px-3 max-w-6xl mx-auto">
@@ -12,7 +20,7 @@ export default function FreeServicesSection() {
           <span className="section-chip">🧰</span>
           <div>
             <h2 className="f-2xl font-black">الخدمات المجانية</h2>
-            <p className="text-gray-500 f-xs mt-0.5">{TOOLS.length} خدمة قوية ومجانية بالكامل — للتاجر والزائر</p>
+            <p className="text-gray-500 f-xs mt-0.5">{tools.length} خدمة قوية ومجانية بالكامل — سجّل دخولك واستخدمها فوراً</p>
           </div>
         </div>
         <Link href="/tools"
@@ -21,7 +29,7 @@ export default function FreeServicesSection() {
         </Link>
       </div>
       <div className="flex gap-3 overflow-x-auto px-3 pb-2 max-w-6xl mx-auto snap-x edge-fade" style={{ scrollbarWidth: 'none' }}>
-        {TOOLS.map((t) => (
+        {tools.map((t) => (
           <Link key={t.slug} href={`/tools/${t.slug}`}
             className="card-hover snap-start shrink-0 w-40 bg-white border border-gray-100 rounded-2xl p-4 flex flex-col items-center text-center">
             <span className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${t.grad} grid place-items-center text-2xl shadow-md mb-2.5`}>{t.icon}</span>

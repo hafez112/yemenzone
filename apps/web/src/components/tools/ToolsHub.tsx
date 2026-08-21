@@ -2,30 +2,39 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { TOOLS, TOOL_CATS, type ToolCategory } from '@/lib/tools';
+import { sessionType } from '@/lib/tool-db';
 import ToolsAds from './ToolsAds';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
 // 🧰 بوابة «تكنولوجيا المنصة» — كل الخدمات المجانية في مكان واحد
+// 🛍️ خدمات التاجر تظهر للبائعين فقط — بقية الزوار يرون الخدمات العامة
 export default function ToolsHub({ visible }: { visible: string[] }) {
   const [cat, setCat] = useState<ToolCategory | 'all'>('all');
   const [q, setQ] = useState('');
+  const [isSeller, setIsSeller] = useState(false);
 
   // 👁️ زيارة البوابة — صامتة
   useEffect(() => {
     fetch(`${API}/api/v1/tools/hub/view`, { method: 'POST' }).catch(() => {});
+    setIsSeller(sessionType() === 'seller');
   }, []);
 
   const tools = useMemo(() => {
     // إن وصلت قائمة الإدارة نلتزم بها (إظهار/إخفاء + ترتيب)، وإلا نعرض الكل
-    const base = visible.length
+    const base = (visible.length
       ? visible.map((k) => TOOLS.find((t) => t.slug === k)).filter(Boolean) as typeof TOOLS
-      : TOOLS;
+      : TOOLS
+    ).filter((t) => isSeller || t.cat !== 'merchant'); // 🛍️ خدمات التاجر للبائعين فقط
     const term = q.trim();
     return base.filter((t) =>
       (cat === 'all' || t.cat === cat) &&
       (!term || t.title.includes(term) || t.tagline.includes(term) || t.desc.includes(term)));
-  }, [visible, cat, q]);
+  }, [visible, cat, q, isSeller]);
+
+  // التصنيفات المعروضة — تصنيف «للتاجر» يظهر للبائعين فقط
+  const cats = TOOL_CATS.filter((c) => isSeller || c.id !== 'merchant');
+  const count = TOOLS.filter((t) => isSeller || t.cat !== 'merchant').length;
 
   return (
     <div className="min-h-screen bg-night text-white" dir="rtl">
@@ -41,9 +50,9 @@ export default function ToolsHub({ visible }: { visible: string[] }) {
             تكنولوجيا <span className="text-transparent bg-clip-text bg-gradient-to-l from-purple-400 via-fuchsia-400 to-amber-300">المنصة</span>
           </h1>
           <p className="text-white/70 text-sm sm:text-lg leading-relaxed mb-2">
-            {TOOLS.length} خدمة قوية ومجانية بالكامل — صُممت بأحدث التقنيات لتكون يدك اليمنى كل يوم
+            {count} خدمة قوية ومجانية بالكامل — صُممت بأحدث التقنيات لتكون يدك اليمنى كل يوم
           </p>
-          <p className="text-xs text-white/50">بدون تسجيل · بدون تحميل برامج · بياناتك تبقى في جهازك 🔒</p>
+          <p className="text-xs text-white/50">سجّل دخولك لتستخدم أي خدمة · بيانات كل خدمة تُحفظ في قاعدتها الخاصة بحسابك 🔒</p>
 
           {/* 🔍 بحث */}
           <div className="mt-7 max-w-md mx-auto relative">
@@ -60,7 +69,7 @@ export default function ToolsHub({ visible }: { visible: string[] }) {
       {/* التصنيفات */}
       <div className="sticky top-0 z-30 backdrop-blur-xl bg-black/40 border-y border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar">
-          {TOOL_CATS.map((c) => (
+          {cats.map((c) => (
             <button key={c.id} onClick={() => setCat(c.id)}
               className={`shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all ${cat === c.id ? 'bg-gradient-to-l from-purple-600 to-fuchsia-600 shadow-lg shadow-purple-500/30' : 'bg-white/10 text-white/70 hover:bg-white/15'}`}>
               {c.icon} {c.label}

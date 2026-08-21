@@ -1,7 +1,9 @@
 'use client';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { toolBySlug } from '@/lib/tools';
+import { addMyTool, myTools, removeMyTool, sessionType } from '@/lib/tool-db';
+import { toast } from '@/components/Toast';
 import ToolsAds from './ToolsAds';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
@@ -9,14 +11,39 @@ const API = process.env.NEXT_PUBLIC_API_URL || '';
 // 🧱 غلاف موحد لكل خدمات تكنولوجيا المنصة — ترويسة + محتوى + دعوة للانضمام
 export default function ToolShell({ slug, children }: { slug: string; children: ReactNode }) {
   const tool = toolBySlug(slug);
+  const [inMyPanel, setInMyPanel] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const isMerchant = tool?.cat === 'merchant';
+  const loggedType = typeof window !== 'undefined' ? sessionType() : null;
 
   // 📈 عدادا استخدام + زيارة صامتان
   useEffect(() => {
     fetch(`${API}/api/v1/tools/${slug}/use`, { method: 'POST' }).catch(() => {});
     fetch(`${API}/api/v1/tools/${slug}/view`, { method: 'POST' }).catch(() => {});
+    // هل الخدمة مضافة إلى لوحتي؟ (للمسجلين فقط)
+    if (sessionType()) {
+      myTools().then(rows => setInMyPanel(rows.some(r => r.slug === slug))).catch(() => {});
+    }
   }, [slug]);
 
   if (!tool) return null;
+
+  // ➕ إضافة/إزالة الخدمة من لوحة تحكم المستخدم — لها قاعدة بيانات خاصة في حسابه
+  const toggleMyPanel = async () => {
+    setBusy(true);
+    try {
+      if (inMyPanel) {
+        await removeMyTool(slug);
+        setInMyPanel(false);
+        toast('✕ أُزيلت الخدمة من لوحتك');
+      } else {
+        await addMyTool(slug);
+        setInMyPanel(true);
+        toast('✅ أُضيفت الخدمة إلى لوحة تحكمك — لها الآن قاعدة بيانات خاصة في حسابك');
+      }
+    } catch (e: any) { toast(e.message, 'error'); }
+    setBusy(false);
+  };
 
   return (
     <div className="min-h-screen bg-night text-white" dir="rtl">
@@ -29,6 +56,23 @@ export default function ToolShell({ slug, children }: { slug: string; children: 
             <h1 className="font-extrabold text-sm sm:text-base truncate">{tool.title}</h1>
             <p className="text-[11px] text-white/60 truncate">{tool.tagline}</p>
           </div>
+          {/* ➕ إضافة الخدمة إلى لوحة التحكم — خدمات التاجر تُدار من لوحة البائع تلقائياً */}
+          {isMerchant ? (
+            loggedType === 'seller' && (
+              <Link href="/seller/tools" className="text-xs font-bold border border-amber-300/40 text-amber-200 rounded-full px-3 py-1.5 hover:bg-amber-400/10 transition-colors shrink-0">🛍️ لوحة التاجر</Link>
+            )
+          ) : (
+            loggedType && (
+              <button onClick={toggleMyPanel} disabled={busy}
+                className={`text-xs font-bold rounded-full px-3 py-1.5 transition-colors shrink-0 border ${
+                  inMyPanel
+                    ? 'border-emerald-300/40 text-emerald-200 bg-emerald-400/10'
+                    : 'border-white/15 text-white/70 hover:text-white hover:bg-white/10'
+                }`}>
+                {busy ? '…' : inMyPanel ? '✓ في لوحتي' : '➕ أضف إلى لوحتي'}
+              </button>
+            )
+          )}
           <Link href="/" className="text-xs font-bold text-white/70 hover:text-white border border-white/15 rounded-full px-3 py-1.5 transition-colors">يمن زون 🇾🇪</Link>
         </div>
       </header>
