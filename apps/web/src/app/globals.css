@@ -1391,11 +1391,11 @@ html.native-app[data-app-view="grid"] .yz-main [data-section] .flex.overflow-x-a
 /* قائمة: بطاقة واحدة بعرض الشاشة */
 html.native-app[data-app-view="list"] .yz-main [data-section] .flex.overflow-x-auto { display: grid; grid-template-columns: 1fr; overflow: visible; gap: .6rem; }
 html.native-app[data-app-view="list"] .yz-main [data-section] .flex.overflow-x-auto > * { width: auto !important; min-width: 0; flex: none; }
-/* شريط أفقي: الشبكات تصبح سلايدرات لمسية */
-html.native-app[data-app-view="carousel"] .yz-main [data-section] .grid[class*="grid-cols-2"],
-html.native-app[data-app-view="carousel"] .yz-main [data-section] .grid[class*="grid-cols-3"],
-html.native-app[data-app-view="carousel"] .yz-main [data-section] .grid[class*="grid-cols-4"] { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: .4rem; }
-html.native-app[data-app-view="carousel"] .yz-main [data-section] .grid[class*="grid-cols"] > * { min-width: 44%; scroll-snap-align: start; }
+/* شريط أفقي: الشبكات تصبح سلايدرات لمسية (أزرار الخدمات تبقى شبكة ثابتة) */
+html.native-app[data-app-view="carousel"] .yz-main [data-section]:not([data-section="quickActions"]) .grid[class*="grid-cols-2"],
+html.native-app[data-app-view="carousel"] .yz-main [data-section]:not([data-section="quickActions"]) .grid[class*="grid-cols-3"],
+html.native-app[data-app-view="carousel"] .yz-main [data-section]:not([data-section="quickActions"]) .grid[class*="grid-cols-4"] { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: .4rem; }
+html.native-app[data-app-view="carousel"] .yz-main [data-section]:not([data-section="quickActions"]) .grid[class*="grid-cols"] > * { min-width: 44%; scroll-snap-align: start; }
 /* شريط المتاجر المتحرك: يتحول لسلايدر لمسي داخل التطبيق (أوضح وأهدأ) */
 html.native-app .yz-main .marquee-track { animation: none; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: .7rem; }
 html.native-app .yz-main .marquee-track > * { scroll-snap-align: start; }
@@ -1416,3 +1416,34 @@ html.native-app .yz-main [class*="card-hover"]:active { transform: scale(.97); }
 html.native-app .yz-main .overflow-x-auto { scroll-snap-type: x proximity; }
 /* مبدّل أنماط المعاينة أداة ويب — يُخفى داخل التطبيق */
 html.native-app .yz-styleswitcher { display: none !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   🔧 إصلاحات دقة العرض — اكتمال تحويل الليلي + تقارب التقسيمات
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── اكتمال تحويل الصفحات الليلية: الرماديات الفاتحة كانت تختفي على الثيمات الفاتحة ── */
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night .text-gray-100,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night .text-gray-200,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night .text-gray-300 { color: var(--app-ink); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night .text-gray-400,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night .text-gray-500 { color: var(--app-ink2); }
+/* الأسطح الزجاجية الداكنة (بطاقات/أزرار/حقول البطل والخدمات) → بطاقات الثيم */
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night .glass-dark { background: var(--app-card); border-color: var(--app-line); color: var(--app-ink); }
+/* عناصر نائب النص داخل الحقول الليلية */
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night [class*="placeholder-gray"]::placeholder { color: var(--app-ink2); opacity: .75; }
+
+/* ── تقارب تقسيمات الرئيسية — ويب + تطبيق (البطل يحتفظ بحشوته للترويسة) ── */
+[data-section]:not([data-section="hero"]) > section { padding-top: 1.15rem; padding-bottom: 1.15rem; }
+[data-section]:not([data-section="hero"]) > section.py-8 { padding-top: 1.15rem; padding-bottom: 1.15rem; }
+
+/* داخل التطبيق: إيقاع أشد تقارباً — بلا فراغات ميتة */
+html.native-app .yz-main [data-section] { margin-top: 0; margin-bottom: 0; }
+html.native-app .yz-main [data-section]:not([data-section="hero"]) > section,
+html.native-app .yz-main [data-section]:not([data-section="hero"]) > section.py-8 { padding-top: .7rem; padding-bottom: .7rem; }
+
+/* قسم البطل المضغوط: ارتفاع حسب المحتوى — لا فراغ فارغ ضخم */
+html.native-app[data-app-hero="compact"] .yz-main section.min-h-\[94vh\] {
+  min-height: 0;
+  padding-top: calc(4.2rem + var(--sa-top));
+  padding-bottom: 1.4rem;
+}
