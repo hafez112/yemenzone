@@ -41,7 +41,8 @@ jobs:
           set -e
           echo "===== 1) البيئة ====="
           echo "📂 $(pwd) | node=$(node -v) | npm=$(npm -v)"
-          echo "===== 2) التثبيت ====="
+          echo "===== 2) تصحيح روابط السجل والتثبيت ====="
+          sed -i 's|https://npm.mirrors.msh.team|https://registry.npmjs.org|g' package-lock.json
           npm ci --include=dev --workspaces=false --no-audit --no-fund || true
           if [ ! -f node_modules/@capacitor/cli/bin/capacitor ]; then
             echo "⚠️ التثبيت ناقص — حذف وإعادة المحاولة"
