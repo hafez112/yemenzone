@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { SERVER_API as API } from '@/lib/server-api';
+import { SERVER_API as API, pubImg } from '@/lib/server-api';
 import QsActions from '@/components/tools/QsActions';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://yemenzone1.com';
@@ -83,11 +83,11 @@ export default async function QuickSellPage({ params }: { params: Promise<{ slug
         {/* 🖼️ معرض الصور */}
         {images.length > 0 ? (
           <div className="rounded-3xl overflow-hidden border border-white/10 shadow-2xl mb-5">
-            <img src={`${API}${images[0]}`} alt={item.name} className="w-full aspect-square object-cover" />
+            <img src={pubImg(images[0])} alt={item.name} className="w-full aspect-square object-cover" />
             {images.length > 1 && (
               <div className="flex gap-2 p-2 bg-black/30 overflow-x-auto">
                 {images.map((im, i) => (
-                  <img key={im} src={`${API}${im}`} alt={`${item.name} ${i + 1}`} loading="lazy" decoding="async"
+                  <img key={im} src={pubImg(im)} alt={`${item.name} ${i + 1}`} loading="lazy" decoding="async"
                     className={`w-16 h-16 rounded-xl object-cover shrink-0 border ${i === 0 ? 'border-emerald-400' : 'border-white/15'}`} />
                 ))}
               </div>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { SERVER_API as API } from '@/lib/server-api';
+import { SERVER_API as API, pubImg } from '@/lib/server-api';
 import UActions from '@/components/tools/UActions';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://yemenzone1.com';
@@ -89,11 +89,11 @@ export default async function UsedPage({ params }: { params: Promise<{ slug: str
         {/* 🖼️ معرض الصور */}
         {images.length > 0 ? (
           <div className="rounded-3xl overflow-hidden border border-white/10 shadow-2xl mb-5">
-            <img src={`${API}${images[0]}`} alt={item.title} className="w-full aspect-square object-cover" />
+            <img src={pubImg(images[0])} alt={item.title} className="w-full aspect-square object-cover" />
             {images.length > 1 && (
               <div className="flex gap-2 p-2 bg-black/30 overflow-x-auto">
                 {images.map((im, i) => (
-                  <img key={im} src={`${API}${im}`} alt={`${item.title} ${i + 1}`} loading="lazy" decoding="async"
+                  <img key={im} src={pubImg(im)} alt={`${item.title} ${i + 1}`} loading="lazy" decoding="async"
                     className={`w-16 h-16 rounded-xl object-cover shrink-0 border ${i === 0 ? 'border-lime-400' : 'border-white/15'}`} />
                 ))}
               </div>
@@ -157,7 +157,7 @@ export default async function UsedPage({ params }: { params: Promise<{ slug: str
                   className="rounded-2xl overflow-hidden border border-white/10 bg-white/5 hover:border-lime-400/40 transition-all">
                   <div className="aspect-square bg-black/30">
                     {s.images?.[0]
-                      ? <img src={`${API}${s.images[0]}`} alt={s.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                      ? <img src={pubImg(s.images[0])} alt={s.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                       : <div className="w-full h-full grid place-items-center text-3xl opacity-40">♻️</div>}
                   </div>
                   <div className="p-2.5">
