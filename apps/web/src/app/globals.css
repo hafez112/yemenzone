@@ -1437,9 +1437,9 @@ html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-them
 [data-section]:not([data-section="hero"]) > section.py-8 { padding-top: 1.15rem; padding-bottom: 1.15rem; }
 
 /* داخل التطبيق: إيقاع أشد تقارباً — بلا فراغات ميتة */
-html.native-app .yz-main [data-section] { margin-top: 0; margin-bottom: 0; }
-html.native-app .yz-main [data-section]:not([data-section="hero"]) > section,
-html.native-app .yz-main [data-section]:not([data-section="hero"]) > section.py-8 { padding-top: .7rem; padding-bottom: .7rem; }
+html.native-app[data-app-density="compact"] .yz-main [data-section] { margin-top: 0; margin-bottom: 0; }
+html.native-app[data-app-density="compact"] .yz-main [data-section]:not([data-section="hero"]) > section,
+html.native-app[data-app-density="compact"] .yz-main [data-section]:not([data-section="hero"]) > section.py-8 { padding-top: .7rem; padding-bottom: .7rem; }
 
 /* قسم البطل المضغوط: ارتفاع حسب المحتوى — لا فراغ فارغ ضخم */
 html.native-app[data-app-hero="compact"] .yz-main section.min-h-\[94vh\] {
@@ -1452,21 +1452,83 @@ html.native-app[data-app-hero="compact"] .yz-main section.min-h-\[94vh\] {
    📐 إيقاع الرئيسية المدمج داخل التطبيق — فراغات صغيرة بين التقسيمات
    ═══════════════════════════════════════════════════════════════ */
 
-/* حشوة موحدة صغيرة لكل أقسام الرئيسية */
-html.native-app .yz-main [data-section]:not([data-section="hero"]) > section { padding-top: .45rem; padding-bottom: .45rem; }
+/* حشوة موحدة صغيرة لكل أقسام الرئيسية — الكثافة المضغوطة (افتراضي التطبيق) */
+html.native-app[data-app-density="compact"] .yz-main [data-section]:not([data-section="hero"]) > section { padding-top: .45rem; padding-bottom: .45rem; }
 
 /* هوامش عناوين الأقسام — مدمجة */
-html.native-app .yz-main [data-section] .mb-14 { margin-bottom: .75rem; }
-html.native-app .yz-main [data-section] .mb-10 { margin-bottom: .6rem; }
-html.native-app .yz-main [data-section] .mb-8 { margin-bottom: .5rem; }
-html.native-app .yz-main [data-section] .mb-6 { margin-bottom: .45rem; }
-html.native-app .yz-main [data-section] .mb-5 { margin-bottom: .4rem; }
+html.native-app[data-app-density="compact"] .yz-main [data-section] .mb-14 { margin-bottom: .75rem; }
+html.native-app[data-app-density="compact"] .yz-main [data-section] .mb-10 { margin-bottom: .6rem; }
+html.native-app[data-app-density="compact"] .yz-main [data-section] .mb-8 { margin-bottom: .5rem; }
+html.native-app[data-app-density="compact"] .yz-main [data-section] .mb-6 { margin-bottom: .45rem; }
+html.native-app[data-app-density="compact"] .yz-main [data-section] .mb-5 { margin-bottom: .4rem; }
 
 /* البطل: إحكام إضافي */
 html.native-app[data-app-hero="compact"] .yz-main section.min-h-\[94vh\] { padding-top: calc(3.9rem + var(--sa-top)); padding-bottom: .9rem; }
 
 /* أزرار الخدمات تلتصق بما فوقها وما تحتها */
-html.native-app .yz-main [data-section="quickActions"] > section { padding-top: .35rem; padding-bottom: .2rem; }
+html.native-app[data-app-density="compact"] .yz-main [data-section="quickActions"] > section { padding-top: .35rem; padding-bottom: .2rem; }
+
+/* ── إيقاع الرئيسية لبقية الكثافات — كل كثافة لها إيقاعها الفعلي ── */
+
+/* فائق الإدماج — ultra: أضيق إيقاع */
+html.native-app[data-app-density="ultra"] .yz-main [data-section] { margin-top: 0; margin-bottom: 0; }
+html.native-app[data-app-density="ultra"] .yz-main [data-section]:not([data-section="hero"]) > section,
+html.native-app[data-app-density="ultra"] .yz-main [data-section]:not([data-section="hero"]) > section.py-8 { padding-top: .3rem; padding-bottom: .3rem; }
+html.native-app[data-app-density="ultra"] .yz-main [data-section] .mb-14 { margin-bottom: .55rem; }
+html.native-app[data-app-density="ultra"] .yz-main [data-section] .mb-10 { margin-bottom: .45rem; }
+html.native-app[data-app-density="ultra"] .yz-main [data-section] .mb-8 { margin-bottom: .35rem; }
+html.native-app[data-app-density="ultra"] .yz-main [data-section] .mb-6 { margin-bottom: .3rem; }
+html.native-app[data-app-density="ultra"] .yz-main [data-section] .mb-5 { margin-bottom: .25rem; }
+html.native-app[data-app-density="ultra"][data-app-hero="compact"] .yz-main section.min-h-\[94vh\] { padding-top: calc(3.7rem + var(--sa-top)); padding-bottom: .7rem; }
+html.native-app[data-app-density="ultra"] .yz-main [data-section="quickActions"] > section { padding-top: .25rem; padding-bottom: .15rem; }
+
+/* مريح — cozy: إيقاع متوازن أوسع من المضغوط */
+html.native-app[data-app-density="cozy"] .yz-main [data-section] { margin-top: 0; margin-bottom: 0; }
+html.native-app[data-app-density="cozy"] .yz-main [data-section]:not([data-section="hero"]) > section,
+html.native-app[data-app-density="cozy"] .yz-main [data-section]:not([data-section="hero"]) > section.py-8 { padding-top: .85rem; padding-bottom: .85rem; }
+html.native-app[data-app-density="cozy"] .yz-main [data-section] .mb-14 { margin-bottom: 1rem; }
+html.native-app[data-app-density="cozy"] .yz-main [data-section] .mb-10 { margin-bottom: .85rem; }
+html.native-app[data-app-density="cozy"] .yz-main [data-section] .mb-8 { margin-bottom: .7rem; }
+html.native-app[data-app-density="cozy"] .yz-main [data-section] .mb-6 { margin-bottom: .6rem; }
+html.native-app[data-app-density="cozy"] .yz-main [data-section] .mb-5 { margin-bottom: .5rem; }
+html.native-app[data-app-density="cozy"] .yz-main [data-section="quickActions"] > section { padding-top: .5rem; padding-bottom: .35rem; }
+
+/* واسع — relaxed: أوسع إيقاع */
+html.native-app[data-app-density="relaxed"] .yz-main [data-section] { margin-top: 0; margin-bottom: 0; }
+html.native-app[data-app-density="relaxed"] .yz-main [data-section]:not([data-section="hero"]) > section,
+html.native-app[data-app-density="relaxed"] .yz-main [data-section]:not([data-section="hero"]) > section.py-8 { padding-top: 1.3rem; padding-bottom: 1.3rem; }
+html.native-app[data-app-density="relaxed"] .yz-main [data-section] .mb-14 { margin-bottom: 1.4rem; }
+html.native-app[data-app-density="relaxed"] .yz-main [data-section] .mb-10 { margin-bottom: 1.1rem; }
+html.native-app[data-app-density="relaxed"] .yz-main [data-section] .mb-8 { margin-bottom: .9rem; }
+html.native-app[data-app-density="relaxed"] .yz-main [data-section] .mb-6 { margin-bottom: .75rem; }
+html.native-app[data-app-density="relaxed"] .yz-main [data-section] .mb-5 { margin-bottom: .65rem; }
+html.native-app[data-app-density="relaxed"] .yz-main [data-section="quickActions"] > section { padding-top: .6rem; padding-bottom: .45rem; }
+
+/* ── طقم قاعدة الكثافة المريحة cozy (الحشوات والفجوات العامة) ── */
+html.native-app[data-app-density="cozy"] .yz-main section { padding-top: 1.15rem; padding-bottom: 1.15rem; }
+html.native-app[data-app-density="cozy"] .yz-main section:first-child { padding-top: calc(3.5rem + var(--sa-top)); padding-bottom: 1.6rem; }
+html.native-app[data-app-density="cozy"] .yz-main .p-10 { padding: 1.6rem; }
+html.native-app[data-app-density="cozy"] .yz-main .p-8 { padding: 1.3rem; }
+html.native-app[data-app-density="cozy"] .yz-main .py-16 { padding-top: 2.2rem; padding-bottom: 2.2rem; }
+html.native-app[data-app-density="cozy"] .yz-main .py-12 { padding-top: 1.7rem; padding-bottom: 1.7rem; }
+html.native-app[data-app-density="cozy"] .yz-main .py-8 { padding-top: 1.4rem; padding-bottom: 1.4rem; }
+html.native-app[data-app-density="cozy"] .yz-main .mt-16 { margin-top: 2.5rem; }
+html.native-app[data-app-density="cozy"] .yz-main .mb-16 { margin-bottom: 2.5rem; }
+html.native-app[data-app-density="cozy"] .yz-main .mb-12 { margin-bottom: 1.9rem; }
+html.native-app[data-app-density="cozy"] .yz-main .mb-10 { margin-bottom: 1.6rem; }
+html.native-app[data-app-density="cozy"] .yz-main .mb-8 { margin-bottom: 1.25rem; }
+html.native-app[data-app-density="cozy"] .yz-main .grid.gap-6,
+html.native-app[data-app-density="cozy"] .yz-main .gap-6 { gap: 1.15rem; }
+html.native-app[data-app-density="cozy"] .yz-main .grid.gap-4,
+html.native-app[data-app-density="cozy"] .yz-main .gap-4 { gap: .8rem; }
+html.native-app[data-app-density="cozy"] .yz-main .gap-3 { gap: .6rem; }
+html.native-app[data-app-density="cozy"] .yz-main .mb-6 { margin-bottom: 1rem; }
+html.native-app[data-app-density="cozy"] .yz-main .mb-4 { margin-bottom: .75rem; }
+html.native-app[data-app-density="cozy"] .yz-main .mt-8 { margin-top: 1.6rem; }
+html.native-app[data-app-density="cozy"] .yz-main .pt-10 { padding-top: 1.9rem; }
+html.native-app[data-app-density="cozy"] .yz-main .pb-10 { padding-bottom: 1.9rem; }
+html.native-app[data-app-density="cozy"] .card { padding: 1.25rem; margin-bottom: .9rem; }
+html.native-app[data-app-density="cozy"] .page { padding-top: calc(4.2rem + var(--sa-top)); }
 
 /* ═══════════════════════════════════════════════════════════════
    🌐 استوديو الويب — نفس محرك تصميم التطبيق يعمل على المتصفح
