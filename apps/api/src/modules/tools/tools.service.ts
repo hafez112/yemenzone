@@ -30,7 +30,7 @@ const CONFIG_KEY = 'tools.config';
 
 @Injectable()
 export class ToolsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private cards: CardsService) {}
 
   // يضمن وجود صف لكل أداة معروفة (يُنشئ الناقص بالترتيب الافتراضي)
   private async ensureRows() {

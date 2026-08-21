@@ -491,7 +491,7 @@ export class CardsService {
     }
     await this.prisma.$transaction(ops);
     // 🔔 إشعار المالك بنتيجة طلبه
-    this.notifications.push(req.ownerType, req.ownerId, {
+    this.notifications.push(req.ownerType as 'seller' | 'customer', req.ownerId, {
       icon: approve ? '✅' : '❌',
       title: approve ? 'عُدّلت بيانات بطاقتك' : 'رُفض طلب تعديل بطاقتك',
       body: approve
