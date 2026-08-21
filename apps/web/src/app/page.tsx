@@ -10,6 +10,7 @@ import StoreTemplates from '@/components/home/StoreTemplates';
 import Footer from '@/components/home/Footer';
 import AdBanner from '@/components/home/AdBanner';
 import AppQuickButtons from '@/components/home/AppQuickButtons';
+import FreeServicesSection from '@/components/home/FreeServicesSection';
 import StyleSwitcher from '@/components/StyleSwitcher';
 import Reveal from '@/components/Reveal';
 import AiAssistant from '@/components/AiAssistant';
@@ -19,7 +20,7 @@ import { SERVER_API as API } from '@/lib/server-api';
 // ترتيب أقسام الرئيسية الافتراضي — الإدارة تعيد ترتيبها من /admin/design
 const DEFAULT_ORDER = [
   'hero', 'slider', 'quickActions', 'flashSale', 'ads_top', 'trending', 'rising',
-  'features', 'newest', 'templates', 'ads_mid', 'stores', 'services', 'blog', 'cta',
+  'features', 'freeServices', 'newest', 'templates', 'ads_mid', 'stores', 'services', 'blog', 'cta',
 ];
 
 // جلب البيانات من الخادم (SSR — ممتاز للـ SEO)
@@ -90,6 +91,8 @@ export default async function Home() {
     trending: <Reveal><TrendingSection products={spotlight.trending} /></Reveal>,
     rising: <Reveal delay={60}><RisingSection stores={spotlight.rising} /></Reveal>,
     features: <Reveal><Features /></Reveal>,
+    // 🧰 عرض الخدمات المجانية — موقعه وإظهاره من إدارة التصميم
+    freeServices: <Reveal><FreeServicesSection /></Reveal>,
     newest: <Reveal><NewestSection products={spotlight.newest} /></Reveal>,
     templates: <Reveal delay={80}><StoreTemplates /></Reveal>,
     ads_mid: <AdBanner ads={midAds} compact />,
