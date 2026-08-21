@@ -9,6 +9,7 @@ import BlogSection from '@/components/home/BlogSection';
 import StoreTemplates from '@/components/home/StoreTemplates';
 import Footer from '@/components/home/Footer';
 import AdBanner from '@/components/home/AdBanner';
+import AppQuickButtons from '@/components/home/AppQuickButtons';
 import StyleSwitcher from '@/components/StyleSwitcher';
 import Reveal from '@/components/Reveal';
 import AiAssistant from '@/components/AiAssistant';
@@ -17,7 +18,7 @@ import { SERVER_API as API } from '@/lib/server-api';
 
 // ترتيب أقسام الرئيسية الافتراضي — الإدارة تعيد ترتيبها من /admin/design
 const DEFAULT_ORDER = [
-  'hero', 'slider', 'flashSale', 'ads_top', 'trending', 'rising',
+  'hero', 'slider', 'quickActions', 'flashSale', 'ads_top', 'trending', 'rising',
   'features', 'newest', 'templates', 'ads_mid', 'stores', 'services', 'blog', 'cta',
 ];
 
@@ -82,6 +83,8 @@ export default async function Home() {
   const sections: Record<string, any> = {
     hero: <Hero platform={platform} stats={spotlight.stats} />,
     slider: <Slider slides={theme?.slides || []} />,
+    // 🔘 أزرار الخدمات السريعة — تظهر داخل تطبيق أندرويد فقط (تُدار من تبويب التطبيق)
+    quickActions: <AppQuickButtons buttons={theme?.app?.serviceButtons} />,
     flashSale: theme?.flashSale ? <FlashSaleBanner flash={theme.flashSale} /> : null,
     ads_top: <AdBanner ads={topAds} />,
     trending: <Reveal><TrendingSection products={spotlight.trending} /></Reveal>,
@@ -127,7 +130,7 @@ export default async function Home() {
   return (
     <main>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      {order.map((key) => visible(key) && sections[key] ? <div key={key}>{sections[key]}</div> : null)}
+      {order.map((key) => visible(key) && sections[key] ? <div key={key} data-section={key}>{sections[key]}</div> : null)}
       {/* 📢 إعلانات أسفل الرئيسية — قبل التذييل */}
       {sec.ads !== false && <AdBanner ads={bottomAds} />}
 

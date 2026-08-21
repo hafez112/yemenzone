@@ -4,6 +4,16 @@ import AdminSidebar from "../../../components/AdminSidebar";
 import ImageUpload from "../../../components/ImageUpload";
 import { api, imgUrl } from "../../../lib/api";
 import { toast } from "../../../components/Toast";
+import { DEFAULT_APP_BUTTONS } from "@/components/home/AppQuickButtons";
+
+// 🧩 تقسيمات الرئيسية القابلة للإخفاء داخل التطبيق
+const APP_SECTIONS: [string, string][] = [
+  ["quickActions", "🔘 أزرار الخدمات"], ["hero", "🎯 قسم البطل"], ["slider", "🖼️ السلايدر"],
+  ["flashSale", "⚡ عرض الفلاش"], ["trending", "🔥 يُباع الآن"], ["rising", "📈 متاجر صاعدة"],
+  ["features", "✨ المميزات"], ["newest", "🆕 وصل حديثاً"], ["templates", "🎨 قوالب المتاجر"],
+  ["stores", "🏪 شريط المتاجر"], ["services", "🧩 خدمات المنصة"], ["blog", "📰 المدونة"],
+  ["cta", "🚀 الدعوة الأخيرة"], ["ads", "📢 الإعلانات"],
+];
 
 const STYLES = [
   { id: "neon-purple", name: "نيون بنفسجي", primary: "#6C3DF5", secondary: "#00E5C7", accent: "#FFB800" },
@@ -64,7 +74,7 @@ export default function AdminDesignPage() {
   const [fonts, setFonts] = useState<any>({});
   const [customCode, setCustomCode] = useState<any>({ headScripts: "", bodyScripts: "", customCss: "" });
   // 📱 إعدادات استوديو التطبيق — تُطبق داخل تطبيق أندرويد فقط
-  const [appCfg, setAppCfg] = useState<any>({ theme: "original", density: "compact", headerStyle: "glass", heroHeight: "compact", fontSize: "medium", navStyle: "capsule", textColor: "", floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "" });
+  const [appCfg, setAppCfg] = useState<any>({ theme: "original", density: "compact", headerStyle: "glass", heroHeight: "compact", fontSize: "medium", navStyle: "capsule", textColor: "", homeView: "carousel", hiddenSections: [] as string[], serviceButtons: DEFAULT_APP_BUTTONS, floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "" });
   const [slideForm, setSlideForm] = useState<any>({ title: "", subtitle: "", image: "", link: "", sort: 0 });
   const [editingSlide, setEditingSlide] = useState<string | null>(null);
   const [backupName, setBackupName] = useState("");
@@ -76,7 +86,7 @@ export default function AdminDesignPage() {
     setLayout(d.settings.layout || {});
     setFonts(d.settings.fonts || {});
     setCustomCode({ headScripts: "", bodyScripts: "", customCss: "", ...(d.settings.customCode || {}) });
-    setAppCfg({ theme: "original", density: "compact", headerStyle: "glass", heroHeight: "compact", fontSize: "medium", navStyle: "capsule", textColor: "", floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "", ...(d.settings.app || {}) });
+    setAppCfg({ theme: "original", density: "compact", headerStyle: "glass", heroHeight: "compact", fontSize: "medium", navStyle: "capsule", textColor: "", homeView: "carousel", hiddenSections: [] as string[], serviceButtons: DEFAULT_APP_BUTTONS, floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "", ...(d.settings.app || {}) });
   }).catch((e) => toast(e.message, "error"));
   useEffect(() => { load(); }, []);
 
@@ -463,6 +473,77 @@ export default function AdminDesignPage() {
                       </div>
                     </button>
                   ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-1">🖼️ طريقة عرض مكونات الرئيسية</h3>
+                <p className="text-xs text-gray-400 mb-3">كيف تظهر المنتجات والمتاجر داخل التطبيق</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {([
+                    ["carousel", "شريط أفقي", "سلايدرات لمسية كالتطبيقات"],
+                    ["grid", "شبكة", "عمودان مرتبان"],
+                    ["list", "قائمة", "بطاقة كاملة العرض"],
+                  ] as const).map(([k, l, dsc]) => (
+                    <button key={k} onClick={() => setAppCfg({ ...appCfg, homeView: k })}
+                      className="rounded-2xl overflow-hidden text-center transition-transform active:scale-95 bg-white"
+                      style={{ border: appCfg.homeView === k ? "3px solid #6C3DF5" : "1px solid #e5e7eb", boxShadow: appCfg.homeView === k ? "0 8px 24px -8px rgba(108,61,245,.4)" : "none" }}>
+                      <div className="h-14 p-2 flex gap-1 items-center justify-center" style={{ background: "#f7f7fc" }}>
+                        {k === "carousel" && (<><div className="w-8 h-9 rounded-lg bg-white border border-gray-200" /><div className="w-8 h-9 rounded-lg bg-white border border-gray-200" /><div className="w-4 h-9 rounded-lg bg-gray-100 border border-gray-200" /></>)}
+                        {k === "grid" && (<div className="grid grid-cols-2 gap-1"><div className="w-6 h-4 rounded bg-white border border-gray-200" /><div className="w-6 h-4 rounded bg-white border border-gray-200" /><div className="w-6 h-4 rounded bg-white border border-gray-200" /><div className="w-6 h-4 rounded bg-white border border-gray-200" /></div>)}
+                        {k === "list" && (<div className="flex flex-col gap-1 w-full px-2"><div className="h-3 rounded bg-white border border-gray-200" /><div className="h-3 rounded bg-white border border-gray-200" /><div className="h-3 rounded bg-white border border-gray-200" /></div>)}
+                      </div>
+                      <div className="px-2 py-1.5">
+                        <div className="text-xs font-black">{appCfg.homeView === k ? "✅ " : ""}{l}</div>
+                        <div className="text-[10px] text-gray-400">{dsc}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-1">🧩 تقسيمات الرئيسية بالتطبيق</h3>
+                <p className="text-xs text-gray-400 mb-3">أظهر أو أخفِ أي قسم من الرئيسية داخل التطبيق فقط — الموقع لا يتأثر</p>
+                <div className="flex gap-2 flex-wrap">
+                  {APP_SECTIONS.map(([k, l]) => {
+                    const hidden = (appCfg.hiddenSections || []).includes(k);
+                    return (
+                      <button key={k} className="badge cursor-pointer"
+                        style={{ background: hidden ? "#e5e7eb" : "#059669", color: hidden ? "#6b7280" : "#fff" }}
+                        onClick={() => setAppCfg({ ...appCfg, hiddenSections: hidden ? (appCfg.hiddenSections || []).filter((x: string) => x !== k) : [...(appCfg.hiddenSections || []), k] })}>
+                        {hidden ? "🚫 " : "✅ "}{l}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-1">🔘 أزرار الخدمات على الرئيسية</h3>
+                <p className="text-xs text-gray-400 mb-3">أزرار سريعة تظهر أعلى الرئيسية داخل التطبيق — أضف خدماتك وروابطك الخاصة</p>
+                {(Array.isArray(appCfg.serviceButtons) ? appCfg.serviceButtons : []).map((b: any, i: number) => (
+                  <div key={i} className="flex gap-1.5 items-center mb-1.5">
+                    <input className="input text-center" style={{ width: "3rem", padding: "6px" }} value={b.icon || ""} placeholder="⭐"
+                      onChange={(e) => { const arr = [...appCfg.serviceButtons]; arr[i] = { ...arr[i], icon: e.target.value }; setAppCfg({ ...appCfg, serviceButtons: arr }); }} />
+                    <input className="input flex-1" style={{ padding: "6px 10px" }} value={b.label || ""} placeholder="الاسم"
+                      onChange={(e) => { const arr = [...appCfg.serviceButtons]; arr[i] = { ...arr[i], label: e.target.value }; setAppCfg({ ...appCfg, serviceButtons: arr }); }} />
+                    <input dir="ltr" className="input flex-1 font-mono text-xs" style={{ padding: "6px 10px" }} value={b.href || ""} placeholder="/tools"
+                      onChange={(e) => { const arr = [...appCfg.serviceButtons]; arr[i] = { ...arr[i], href: e.target.value }; setAppCfg({ ...appCfg, serviceButtons: arr }); }} />
+                    <button className="badge cursor-pointer" title="إظهار/إخفاء"
+                      style={{ background: b.on !== false ? "#059669" : "#e5e7eb", color: b.on !== false ? "#fff" : "#6b7280" }}
+                      onClick={() => { const arr = [...appCfg.serviceButtons]; arr[i] = { ...arr[i], on: arr[i].on === false }; setAppCfg({ ...appCfg, serviceButtons: arr }); }}>
+                      {b.on !== false ? "👁️" : "🚫"}
+                    </button>
+                    <button className="badge cursor-pointer" style={{ background: "#fee2e2", color: "#b91c1c" }} title="حذف"
+                      onClick={() => setAppCfg({ ...appCfg, serviceButtons: appCfg.serviceButtons.filter((_: any, x: number) => x !== i) })}>🗑️</button>
+                  </div>
+                ))}
+                <div className="flex gap-2 mt-2">
+                  <button className="badge cursor-pointer flex-1" style={{ background: "#6C3DF5", color: "#fff", padding: "9px" }}
+                    onClick={() => setAppCfg({ ...appCfg, serviceButtons: [...(appCfg.serviceButtons || []), { icon: "⭐", label: "زر جديد", href: "/", on: true }] })}>➕ إضافة زر</button>
+                  <button className="badge cursor-pointer" style={{ background: "#f3f4f6", color: "#374151", padding: "9px" }}
+                    onClick={() => setAppCfg({ ...appCfg, serviceButtons: DEFAULT_APP_BUTTONS })}>↩️ الافتراضية</button>
                 </div>
               </div>
 

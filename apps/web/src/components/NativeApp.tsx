@@ -45,6 +45,14 @@ export default function NativeApp() {
       root.dataset.appAnnounce = app.showAnnouncement === false ? 'off' : 'on';
       root.dataset.appCurrency = app.showCurrency === false ? 'off' : 'on';
       root.dataset.appCta = app.showCta === false ? 'off' : 'on';
+      root.dataset.appView = app.homeView || 'carousel';         // طريقة عرض الرئيسية: carousel | grid | list
+
+      // 🧩 إخفاء تقسيمات مختارة من الرئيسية داخل التطبيق (تُدار من لوحة التحكم)
+      const hidden: string[] = Array.isArray(app.hiddenSections) ? app.hiddenSections : [];
+      const hideCss = hidden
+        .filter((k) => /^[a-zA-Z_]+$/.test(k))
+        .map((k) => `html.native-app .yz-main [data-section="${k}"]{display:none!important}`)
+        .join('\n');
 
       // 🌈 ثيم التطبيق الجاهز — فاتحة: original | sand | sky | mint | rose | lavender | peach — داكنة: midnight | amoled | ocean
       const theme = app.theme || 'original';
@@ -73,11 +81,12 @@ export default function NativeApp() {
       window.addEventListener('yz-theme-applied', reapply);
       cleanups.push(() => window.removeEventListener('yz-theme-applied', reapply));
 
-      // 🖌️ CSS مخصص للتطبيق من لوحة التحكم
-      if (app.customCss && typeof app.customCss === 'string') {
+      // 🖌️ CSS مخصص للتطبيق من لوحة التحكم + قواعد إخفاء التقسيمات
+      const injectCss = [hideCss, (typeof app.customCss === 'string' ? app.customCss : '')].filter(Boolean).join('\n');
+      if (injectCss) {
         const st = document.createElement('style');
         st.id = 'yz-app-css';
-        st.textContent = app.customCss;
+        st.textContent = injectCss;
         document.head.appendChild(st);
         cleanups.push(() => st.remove());
       }

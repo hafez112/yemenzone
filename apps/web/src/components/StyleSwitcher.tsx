@@ -14,7 +14,7 @@ export default function StyleSwitcher() {
   }, []);
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 left-4 z-50">
+    <div className="yz-styleswitcher fixed bottom-20 md:bottom-6 left-4 z-50">
       {open && (
         <div className="glass rounded-2xl p-3 mb-2 shadow-xl anim-bounce-in">
           <p className="text-xs font-bold text-gray-500 mb-2">🎨 نمط الواجهة</p>

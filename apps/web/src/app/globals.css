@@ -1345,3 +1345,74 @@ html.native-app .yz-main textarea { border-radius: calc(var(--radius) * .7); }
 html.native-app .yz-main .badge { border-radius: 999px; }
 html.native-app .yz-main img:not([class*="rounded-full"]) { border-radius: calc(var(--radius) * .65); }
 html.native-app .yz-main [class*="rounded-3xl"]:not(.card) { border-radius: calc(var(--radius) * 1.2); }
+
+/* ═══════════════════════════════════════════════════════════════
+   📱 واقعية التطبيق الكاملة — أزرار خدمات · تغطية صفحات الخدمات
+   طرق عرض الرئيسية · لمسات التطبيقات الأصلية
+   ═══════════════════════════════════════════════════════════════ */
+
+/* عناصر خاصة بالتطبيق — مخفية في المتصفح تماماً */
+.yz-app-only { display: none !important; }
+html.native-app .yz-app-only { display: block !important; }
+
+/* ── ① تغطية الثيمات لصفحات الخدمات المجانية (نظام bg-night الليلي) ──
+   تتحول الأسطح الليلية إلى ألوان الثيم المختار — فاتحاً كان أو داكناً */
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night { background: var(--app-bg); color: var(--app-ink); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night .text-white { color: var(--app-ink); }
+/* النصوص الشبه شفافة → لون الثيم الثانوي */
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night [class*="text-white/"] { color: var(--app-ink2); }
+/* البطاقات الزجاجية → بطاقات الثيم */
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night [class*="bg-white/5"],
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night [class*="bg-white/10"] { background: var(--app-card); color: var(--app-ink); border-color: var(--app-line); }
+/* الحدود الزجاجية → حدود الثيم */
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night [class*="border-white/"] { border-color: var(--app-line); }
+/* الشريط اللاصق الداكن → زجاجي بلون الثيم */
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night [class*="bg-black/"] { background: color-mix(in srgb, var(--app-card) 88%, transparent); }
+/* حقول الإدخال داخل صفحات الخدمات */
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night input,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night textarea,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night select { background: var(--app-card2); color: var(--app-ink); border-color: var(--app-line); }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night input::placeholder,
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"],[data-app-theme="midnight"],[data-app-theme="amoled"],[data-app-theme="ocean"]) .yz-main .bg-night textarea::placeholder { color: var(--app-ink2); opacity: .7; }
+/* حماية: النص الأبيض فوق التدرجات الملونة والأزرار يبقى أبيض */
+html.native-app .yz-main [class*="from-"] .text-white,
+html.native-app .yz-main [class*="from-"].text-white,
+html.native-app .yz-main .bg-night :is(.btn, .btn-primary, button)[class*="text-white"],
+html.native-app .yz-main .bg-night [class*="bg-emerald"] .text-white,
+html.native-app .yz-main .bg-night [class*="bg-purple"] .text-white { color: #fff; }
+/* توهجات أورورا الزخرفية تخف في الثيمات الفاتحة */
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .bg-aurora { opacity: .16; }
+html.native-app:is([data-app-theme="sand"],[data-app-theme="sky"],[data-app-theme="mint"],[data-app-theme="rose"],[data-app-theme="lavender"],[data-app-theme="peach"]) .yz-main .anim-blob { opacity: .12; }
+
+/* ── ② طرق عرض مكونات الرئيسية — data-app-view ── */
+/* شبكة: الصفوف الأفقية تصبح شبكة عمودين */
+html.native-app[data-app-view="grid"] .yz-main [data-section] .flex.overflow-x-auto { display: grid; grid-template-columns: repeat(2, 1fr); overflow: visible; gap: .6rem; }
+html.native-app[data-app-view="grid"] .yz-main [data-section] .flex.overflow-x-auto > * { width: auto !important; min-width: 0; flex: none; }
+/* قائمة: بطاقة واحدة بعرض الشاشة */
+html.native-app[data-app-view="list"] .yz-main [data-section] .flex.overflow-x-auto { display: grid; grid-template-columns: 1fr; overflow: visible; gap: .6rem; }
+html.native-app[data-app-view="list"] .yz-main [data-section] .flex.overflow-x-auto > * { width: auto !important; min-width: 0; flex: none; }
+/* شريط أفقي: الشبكات تصبح سلايدرات لمسية */
+html.native-app[data-app-view="carousel"] .yz-main [data-section] .grid[class*="grid-cols-2"],
+html.native-app[data-app-view="carousel"] .yz-main [data-section] .grid[class*="grid-cols-3"],
+html.native-app[data-app-view="carousel"] .yz-main [data-section] .grid[class*="grid-cols-4"] { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: .4rem; }
+html.native-app[data-app-view="carousel"] .yz-main [data-section] .grid[class*="grid-cols"] > * { min-width: 44%; scroll-snap-align: start; }
+/* شريط المتاجر المتحرك: يتحول لسلايدر لمسي داخل التطبيق (أوضح وأهدأ) */
+html.native-app .yz-main .marquee-track { animation: none; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: .7rem; }
+html.native-app .yz-main .marquee-track > * { scroll-snap-align: start; }
+
+/* ── ③ لمسات الواقعية الأصلية 100% ── */
+/* إخفاء أشرطة التمرير — مثل التطبيقات الأصلية */
+html.native-app *::-webkit-scrollbar { display: none; width: 0; height: 0; }
+html.native-app * { scrollbar-width: none; }
+/* إزالة وميض اللمس الرمادي */
+html.native-app .yz-main a,
+html.native-app .yz-main button { -webkit-tap-highlight-color: transparent; }
+/* انضغاط فيزيائي عند اللمس */
+html.native-app .yz-main .card,
+html.native-app .yz-main [class*="card-hover"] { transition: transform .12s ease; }
+html.native-app .yz-main .card:active,
+html.native-app .yz-main [class*="card-hover"]:active { transform: scale(.97); }
+/* صفوف التمرير الأفقي تلتقط البطاقات */
+html.native-app .yz-main .overflow-x-auto { scroll-snap-type: x proximity; }
+/* مبدّل أنماط المعاينة أداة ويب — يُخفى داخل التطبيق */
+html.native-app .yz-styleswitcher { display: none !important; }
