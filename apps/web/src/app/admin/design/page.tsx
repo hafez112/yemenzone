@@ -66,7 +66,7 @@ const ORDER_LABELS: Record<string, string> = {
 const DEFAULT_ORDER = Object.keys(ORDER_LABELS);
 
 export default function AdminDesignPage() {
-  const [tab, setTab] = useState<"identity" | "typography" | "slider" | "sections" | "app" | "code" | "backups">("identity");
+  const [tab, setTab] = useState<"identity" | "typography" | "slider" | "sections" | "app" | "webx" | "code" | "backups">("identity");
   const [data, setData] = useState<any>(null);
   const [platform, setPlatform] = useState<any>({});
   const [colors, setColors] = useState<any>({});
@@ -75,6 +75,8 @@ export default function AdminDesignPage() {
   const [customCode, setCustomCode] = useState<any>({ headScripts: "", bodyScripts: "", customCss: "" });
   // 📱 إعدادات استوديو التطبيق — تُطبق داخل تطبيق أندرويد فقط
   const [appCfg, setAppCfg] = useState<any>({ theme: "original", density: "compact", headerStyle: "glass", heroHeight: "compact", fontSize: "medium", navStyle: "capsule", textColor: "", homeView: "carousel", hiddenSections: [] as string[], serviceButtons: DEFAULT_APP_BUTTONS, floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "" });
+  // 🌐 إعدادات استوديو الويب — نفس خيارات التطبيق لكن للمتصفح (الفارغ = تصميم الموقع الحالي)
+  const [webxCfg, setWebxCfg] = useState<any>({ theme: "", fontSize: "", density: "", textColor: "", headerStyle: "", navStyle: "", homeView: "", heroHeight: "", quickButtons: false });
   const [slideForm, setSlideForm] = useState<any>({ title: "", subtitle: "", image: "", link: "", sort: 0 });
   const [editingSlide, setEditingSlide] = useState<string | null>(null);
   const [backupName, setBackupName] = useState("");
@@ -87,6 +89,7 @@ export default function AdminDesignPage() {
     setFonts(d.settings.fonts || {});
     setCustomCode({ headScripts: "", bodyScripts: "", customCss: "", ...(d.settings.customCode || {}) });
     setAppCfg({ theme: "original", density: "compact", headerStyle: "glass", heroHeight: "compact", fontSize: "medium", navStyle: "capsule", textColor: "", homeView: "carousel", hiddenSections: [] as string[], serviceButtons: DEFAULT_APP_BUTTONS, floatingNav: true, showAnnouncement: true, showCurrency: true, showCta: true, pullToRefresh: true, haptics: true, primaryColor: "", radius: "", customCss: "", ...(d.settings.app || {}) });
+    setWebxCfg({ theme: "", fontSize: "", density: "", textColor: "", headerStyle: "", navStyle: "", homeView: "", heroHeight: "", quickButtons: false, ...(d.settings.webx || {}) });
   }).catch((e) => toast(e.message, "error"));
   useEffect(() => { load(); }, []);
 
@@ -151,7 +154,7 @@ export default function AdminDesignPage() {
           )}
 
           <div className="tabs">
-            {([["identity", "🎨 الهوية والألوان"], ["typography", "✍️ الخطوط والأشكال"], ["slider", "🖼️ السلايدر"], ["sections", "🧩 أقسام الرئيسية"], ["app", "📱 التطبيق"], ["code", "⚡ سكربتات مخصصة"], ["backups", "💾 النسخ"]] as const).map(([k, l]) => (
+            {([["identity", "🎨 الهوية والألوان"], ["typography", "✍️ الخطوط والأشكال"], ["slider", "🖼️ السلايدر"], ["sections", "🧩 أقسام الرئيسية"], ["app", "📱 التطبيق"], ["webx", "🌐 استوديو الويب"], ["code", "⚡ سكربتات مخصصة"], ["backups", "💾 النسخ"]] as const).map(([k, l]) => (
               <button key={k} className={"tab" + (tab === k ? " active" : "")} onClick={() => setTab(k as any)}>{l}</button>
             ))}
           </div>
@@ -610,6 +613,154 @@ export default function AdminDesignPage() {
               </div>
 
               <button className="btn w-full" onClick={() => save([{ key: "app", value: appCfg, group: "theme" }], "✅ حُفظت إعدادات التطبيق — اسحب للتحديث داخل التطبيق")}>💾 حفظ إعدادات التطبيق</button>
+            </div>
+          )}
+
+          {tab === "webx" && (
+            <div>
+              <div className="card mb-3" style={{ border: "1px solid #bae6fd", background: "#f0f9ff" }}>
+                <b className="text-sm">🌐 استوديو تصميم الويب</b>
+                <p className="text-xs text-gray-500 mt-1">كل خيارات استوديو التطبيق — لكن للمتصفح. أي خيار تتركه على «الافتراضي» يبقى كتصميم الموقع الحالي. التغييرات تظهر فور الحفظ والتحديث.</p>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-1">🌈 ثيمات الويب الجاهزة</h3>
+                <p className="text-xs text-gray-400 mb-3">نفس ثيمات التطبيق العشرة — تُعيد تلوين الموقع كاملاً في المتصفح</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <button onClick={() => setWebxCfg({ ...webxCfg, theme: "" })}
+                    className="rounded-2xl overflow-hidden text-right transition-transform active:scale-95 bg-white"
+                    style={{ border: !webxCfg.theme ? "3px solid #0EA5E9" : "1px solid #e5e7eb", boxShadow: !webxCfg.theme ? "0 8px 24px -8px rgba(14,165,233,.4)" : "none" }}>
+                    <div className="h-16 grid place-items-center" style={{ background: "linear-gradient(135deg,#f7f7fc,#e0f2fe)" }}>
+                      <span className="text-2xl">🌐</span>
+                    </div>
+                    <div className="px-2 py-1.5">
+                      <div className="text-xs font-black">{!webxCfg.theme ? "✅ " : ""}الموقع الحالي</div>
+                      <div className="text-[10px] text-gray-400">التصميم الافتراضي للمنصة</div>
+                    </div>
+                  </button>
+                  {APP_THEMES.map((th) => (
+                    <button key={th.id} onClick={() => setWebxCfg({ ...webxCfg, theme: th.id })}
+                      className="rounded-2xl overflow-hidden text-right transition-transform active:scale-95"
+                      style={{ border: webxCfg.theme === th.id ? "3px solid #0EA5E9" : "1px solid #e5e7eb", boxShadow: webxCfg.theme === th.id ? "0 8px 24px -8px rgba(14,165,233,.4)" : "none" }}>
+                      <div className="p-2" style={{ background: th.bg }}>
+                        <div className="h-2.5 rounded-full mb-1.5 mx-1" style={{ background: th.card, border: "1px solid rgba(128,128,128,.15)" }} />
+                        <div className="rounded-lg p-1.5 mb-1.5" style={{ background: th.card }}>
+                          <div className="h-1.5 rounded-full w-2/3 mb-1" style={{ background: th.ink, opacity: .8 }} />
+                          <div className="h-1.5 rounded-full w-1/3" style={{ background: th.ink, opacity: .3 }} />
+                        </div>
+                        <div className="flex gap-1">
+                          <div className="h-6 rounded-lg flex-1" style={{ background: th.card }} />
+                          <div className="h-6 rounded-lg flex-1" style={{ background: th.card }} />
+                        </div>
+                      </div>
+                      <div className="px-2 py-1.5 bg-white">
+                        <div className="text-xs font-black">{webxCfg.theme === th.id ? "✅ " : ""}{th.name}</div>
+                        <div className="text-[10px] text-gray-400">{th.desc}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">🔠 حجم الخط في الويب</h3>
+                <div className="grid grid-cols-5 gap-2">
+                  {[["", "افتراضي", "16px"], ["small", "صغير", "13px"], ["medium", "وسط", "16px"], ["large", "كبير", "19px"], ["xlarge", "ضخم", "23px"]].map(([k, l, s]) => (
+                    <button key={k || "def"} className="badge cursor-pointer flex flex-col items-center gap-0.5"
+                      style={{ background: (webxCfg.fontSize || "") === k ? "#0EA5E9" : "#f3f4f6", color: (webxCfg.fontSize || "") === k ? "#fff" : "#374151", padding: "8px 4px" }}
+                      onClick={() => setWebxCfg({ ...webxCfg, fontSize: k })}>
+                      <span style={{ fontSize: s, fontWeight: 900, lineHeight: 1.2 }}>أ</span>
+                      <span className="text-[10px]">{l}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">📐 كثافة الهوامش في الويب</h3>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  {[["", "🌐 افتراضي"], ["ultra", "⚡ فائقة الإدماج"], ["compact", "✨ مضغوطة"], ["cozy", "🌿 متوازنة"], ["relaxed", "🍃 مريحة"]].map(([k, l]) => (
+                    <button key={k || "def"} className="badge cursor-pointer"
+                      style={{ background: (webxCfg.density || "") === k ? "#0EA5E9" : "#f3f4f6", color: (webxCfg.density || "") === k ? "#fff" : "#374151", padding: "10px" }}
+                      onClick={() => setWebxCfg({ ...webxCfg, density: k })}>{l}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">🖊️ لون الخط في الويب</h3>
+                <p className="text-xs text-gray-400 mb-2">لون نصوص المحتوى (اتركه فارغاً ليتبع الثيم)</p>
+                <div className="flex gap-2 items-center flex-wrap mb-2">
+                  {["#111827", "#1e3a5f", "#3b2f2f", "#4a044e", "#052e16", "#7c2d12"].map((c) => (
+                    <button key={c} className="w-9 h-9 rounded-full transition-transform active:scale-90"
+                      style={{ background: c, border: webxCfg.textColor === c ? "3px solid #0EA5E9" : "2px solid #e5e7eb" }}
+                      onClick={() => setWebxCfg({ ...webxCfg, textColor: c })} />
+                  ))}
+                  <input type="color" className="w-9 h-9 rounded-full cursor-pointer border-2 border-dashed border-gray-300" value={webxCfg.textColor || "#111827"} onChange={(e) => setWebxCfg({ ...webxCfg, textColor: e.target.value })} />
+                </div>
+                {webxCfg.textColor && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold" style={{ color: webxCfg.textColor }}>نص تجريبي بلونك {webxCfg.textColor}</span>
+                    <button className="badge cursor-pointer" style={{ background: "#f3f4f6", color: "#374151" }} onClick={() => setWebxCfg({ ...webxCfg, textColor: "" })}>↩️ لون الثيم</button>
+                  </div>
+                )}
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">🎩 نمط الترويسة العلوية في الويب</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {[["", "🌐 افتراضي"], ["glass", "🫧 زجاجية"], ["solid", "⬜ بيضاء صلبة"], ["tinted", "🎨 مموّهة باللون"], ["gradient", "🌈 متدرجة باللون"], ["minimal", "▫️ شفافة بسيطة"]].map(([k, l]) => (
+                    <button key={k || "def"} className="badge cursor-pointer"
+                      style={{ background: (webxCfg.headerStyle || "") === k ? "#0EA5E9" : "#f3f4f6", color: (webxCfg.headerStyle || "") === k ? "#fff" : "#374151", padding: "10px" }}
+                      onClick={() => setWebxCfg({ ...webxCfg, headerStyle: k })}>{l}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">🧭 شكل الشريط السفلي (جوال الويب)</h3>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  {[["", "🌐 افتراضي"], ["bar", "▬ شريط كلاسيكي"], ["capsule", "🫧 كبسولة عائمة"], ["curved", "◠ منحني الأعلى"], ["minimal", "▫️ مصغّر أنيق"]].map(([k, l]) => (
+                    <button key={k || "def"} className="badge cursor-pointer"
+                      style={{ background: (webxCfg.navStyle || "") === k ? "#0EA5E9" : "#f3f4f6", color: (webxCfg.navStyle || "") === k ? "#fff" : "#374151", padding: "10px" }}
+                      onClick={() => setWebxCfg({ ...webxCfg, navStyle: k })}>{l}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">🖼️ طريقة عرض مكونات الرئيسية في الويب</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {[["", "🌐 افتراضي"], ["carousel", "🎠 شريط أفقي"], ["grid", "▦ شبكة"], ["list", "☰ قائمة"]].map(([k, l]) => (
+                    <button key={k || "def"} className="badge cursor-pointer"
+                      style={{ background: (webxCfg.homeView || "") === k ? "#0EA5E9" : "#f3f4f6", color: (webxCfg.homeView || "") === k ? "#fff" : "#374151", padding: "10px" }}
+                      onClick={() => setWebxCfg({ ...webxCfg, homeView: k })}>{l}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">🎯 قسم البطل في الويب</h3>
+                <div className="flex gap-2">
+                  {[["", "🌐 افتراضي — كامل"], ["compact", "مضغوط — محتوى أكثر"], ["full", "كامل الارتفاع"]].map(([k, l]) => (
+                    <button key={k || "def"} className="badge cursor-pointer flex-1"
+                      style={{ background: (webxCfg.heroHeight || "") === k ? "#0EA5E9" : "#f3f4f6", color: (webxCfg.heroHeight || "") === k ? "#fff" : "#374151", padding: "10px" }}
+                      onClick={() => setWebxCfg({ ...webxCfg, heroHeight: k })}>{l}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card mb-3">
+                <h3 className="font-black mb-2">🔘 أزرار الخدمات في الويب</h3>
+                <p className="text-xs text-gray-400 mb-2">إظهار صف أزرار الخدمات السريعة أعلى الرئيسية في المتصفح أيضاً (نفس الأزرار المُدارة من تبويب التطبيق)</p>
+                <button className="badge cursor-pointer"
+                  style={{ background: webxCfg.quickButtons ? "#059669" : "#e5e7eb", color: webxCfg.quickButtons ? "#fff" : "#374151", padding: "10px" }}
+                  onClick={() => setWebxCfg({ ...webxCfg, quickButtons: !webxCfg.quickButtons })}>
+                  {webxCfg.quickButtons ? "✅ مفعّلة — تظهر في الويب" : "🚫 مخفية — للتطبيق فقط"}
+                </button>
+              </div>
+
+              <button className="btn w-full" onClick={() => save([{ key: "webx", value: webxCfg, group: "theme" }], "✅ حُفظت إعدادات الويب — حدّث الموقع في المتصفح")}>💾 حفظ إعدادات الويب</button>
             </div>
           )}
 

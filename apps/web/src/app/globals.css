@@ -1467,3 +1467,501 @@ html.native-app[data-app-hero="compact"] .yz-main section.min-h-\[94vh\] { paddi
 
 /* أزرار الخدمات تلتصق بما فوقها وما تحتها */
 html.native-app .yz-main [data-section="quickActions"] > section { padding-top: .35rem; padding-bottom: .2rem; }
+
+/* ═══════════════════════════════════════════════════════════════
+   🌐 استوديو الويب — نفس محرك تصميم التطبيق يعمل على المتصفح
+   يُدار من /admin/design ← تبويب «🌐 استوديو الويب»
+   سمات data-webx-* على <html> — لا تعمل إلا خارج التطبيق الأصلي
+   ═══════════════════════════════════════════════════════════════ */
+
+/* إظهار أزرار الخدمات في الويب عند تفعيلها من لوحة التحكم */
+html:not(.native-app)[data-webx-quick="on"] .yz-app-only { display: block !important; }
+
+
+
+/* ═══ 🎨 استوديو تصميم التطبيق — يُدار من /admin/design ← تبويب «التطبيق» ═══ */
+
+/* كثافة الهوامش المضغوطة (افتراضي التطبيق) — إيقاع عمودي أنيق يشبه التطبيقات الأصلية */
+html:not(.native-app)[data-webx-density="compact"] .yz-main section { padding-top: .9rem; padding-bottom: .9rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .p-10 { padding: 1.25rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .p-8 { padding: 1rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .py-16 { padding-top: 1.75rem; padding-bottom: 1.75rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .py-12 { padding-top: 1.35rem; padding-bottom: 1.35rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .py-8 { padding-top: 1.1rem; padding-bottom: 1.1rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .mt-16 { margin-top: 2rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .mb-16 { margin-bottom: 2rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .mb-12 { margin-bottom: 1.5rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .mb-10 { margin-bottom: 1.25rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .mb-8 { margin-bottom: 1rem; }
+
+
+/* قسم البطل مضغوط — عنوان أقرب للمحتوى */
+html:not(.native-app)[data-webx-hero="compact"] .yz-main section.min-h-\[94vh\] { min-height: 62vh; }
+
+
+/* أنماط الترويسة داخل التطبيق */
+html:not(.native-app)[data-webx-header="solid"] .yz-topbar { background: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+html:not(.native-app)[data-webx-header="tinted"] .yz-topbar {
+  background: color-mix(in srgb, var(--primary) 9%, #fff);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  border-bottom-color: color-mix(in srgb, var(--primary) 22%, #fff);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   🎨 نظام تصميم التطبيق الشامل — كثافة + ثيمات جاهزة
+   تُدار بالكامل من /admin/design ← تبويب «📱 التطبيق»
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── الكثافة المضغوطة: تغطي كل الصفحات (المنصة + المتاجر + اللوحات) ── */
+html:not(.native-app)[data-webx-density="compact"] .yz-main .grid.gap-6,
+html:not(.native-app)[data-webx-density="compact"] .yz-main .gap-6 { gap: .9rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .grid.gap-4,
+html:not(.native-app)[data-webx-density="compact"] .yz-main .gap-4 { gap: .6rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .gap-3 { gap: .45rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .mb-6 { margin-bottom: .8rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .mb-4 { margin-bottom: .6rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .mt-8 { margin-top: 1.25rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .pt-10 { padding-top: 1.5rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .yz-main .pb-10 { padding-bottom: 1.5rem; }
+
+html:not(.native-app)[data-webx-density="compact"] .card { padding: 1rem; margin-bottom: .75rem; }
+
+
+/* ─────────────────────────────────────────────
+   الثيمات الجاهزة للتطبيق — data-webx-theme على <html>
+   ───────────────────────────────────────────── */
+
+/* 🏜️ رملي دافئ — فاتح بلمسة ترابية أنيقة */
+html:not(.native-app)[data-webx-theme="sand"] body { background: #faf6ef; }
+
+html:not(.native-app)[data-webx-theme="sand"] .yz-topbar { background: rgba(250,246,239,.85); }
+
+html:not(.native-app)[data-webx-theme="sand"] .yz-bottomnav { background: rgba(250,246,239,.95); }
+
+html:not(.native-app)[data-webx-theme="sand"] .page { background: linear-gradient(135deg, #faf6ef, #fdf9f0); }
+
+
+/* 🌌 ليلي بنفسجي — midnight */
+html:not(.native-app)[data-webx-theme="midnight"] { --app-bg: #0d0d1a; --app-card: #161628; --app-card2: #1c1c33; --app-ink: #e8e8f5; --app-ink2: #a3a3c2; --app-line: rgba(255,255,255,.09); }
+
+
+/* ⚫ AMOLED أسود خالص — amoled */
+html:not(.native-app)[data-webx-theme="amoled"] { --app-bg: #000; --app-card: #101010; --app-card2: #181818; --app-ink: #f2f2f2; --app-ink2: #9d9d9d; --app-line: rgba(255,255,255,.1); }
+
+
+/* 🌊 أزرق ليلي عميق — ocean */
+html:not(.native-app)[data-webx-theme="ocean"] { --app-bg: #071018; --app-card: #0d1b26; --app-card2: #122433; --app-ink: #e3f0f8; --app-ink2: #8fb3c7; --app-line: rgba(160,210,235,.12); }
+
+
+/* محرك الثيمات الداكنة — يطبق متغيرات الثيم على كل مكونات الواجهة داخل التطبيق */
+html:not(.native-app)[data-webx-theme="midnight"] body,
+html:not(.native-app)[data-webx-theme="amoled"] body,
+html:not(.native-app)[data-webx-theme="ocean"] body { background: var(--app-bg); color: var(--app-ink); }
+
+
+html:not(.native-app)[data-webx-theme="midnight"] .page,
+html:not(.native-app)[data-webx-theme="amoled"] .page,
+html:not(.native-app)[data-webx-theme="ocean"] .page { background: var(--app-bg); }
+
+
+/* البطاقات والأسطح الفاتحة تصبح داكنة */
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main .bg-white,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main .bg-white,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main .bg-white,
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main .card,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main .card,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main .card { background: var(--app-card); color: var(--app-ink); }
+
+
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main .bg-gray-50,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main .bg-gray-50,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main .bg-gray-50,
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main .bg-gray-100,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main .bg-gray-100,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main .bg-gray-100,
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main .bg-slate-50,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main .bg-slate-50,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main .bg-slate-50 { background: var(--app-card2); }
+
+
+/* النصوص الداكنة تصبح فاتحة */
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main .text-gray-900,
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main .text-gray-800,
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main .text-gray-700,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main .text-gray-900,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main .text-gray-800,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main .text-gray-700,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main .text-gray-900,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main .text-gray-800,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main .text-gray-700 { color: var(--app-ink); }
+
+
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main .text-gray-600,
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main .text-gray-500,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main .text-gray-600,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main .text-gray-500,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main .text-gray-600,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main .text-gray-500 { color: var(--app-ink2); }
+
+
+/* الحدود */
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main [class*="border-gray"],
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main [class*="border-slate"],
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main [class*="border-gray"],
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main [class*="border-slate"],
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main [class*="border-gray"],
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main [class*="border-slate"] { border-color: var(--app-line); }
+
+
+/* حقول الإدخال والأزرار والتبويبات */
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main input,
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main select,
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main textarea,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main input,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main select,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main textarea,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main input,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main select,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main textarea { background: var(--app-card2); color: var(--app-ink); border-color: var(--app-line); }
+
+
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main .tabs button,
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main .btn.ghost,
+html:not(.native-app)[data-webx-theme="midnight"] .yz-main .badge,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main .tabs button,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main .btn.ghost,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-main .badge,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main .tabs button,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main .btn.ghost,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-main .badge { background: var(--app-card2); color: var(--app-ink); border-color: var(--app-line); }
+
+
+/* الترويسة والتنقل السفلي والقائمة الجانبية — داكنة زجاجية */
+html:not(.native-app)[data-webx-theme="midnight"] .yz-topbar,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-topbar,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-topbar { background: color-mix(in srgb, var(--app-bg) 78%, transparent); border-bottom-color: var(--app-line); }
+
+html:not(.native-app)[data-webx-theme="midnight"] .yz-topbar span,
+html:not(.native-app)[data-webx-theme="midnight"] .yz-topbar a,
+html:not(.native-app)[data-webx-theme="midnight"] .yz-topbar button,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-topbar span,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-topbar a,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-topbar button,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-topbar span,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-topbar a,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-topbar button { color: var(--app-ink); }
+
+
+html:not(.native-app)[data-webx-theme="midnight"] .yz-bottomnav,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-bottomnav,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-bottomnav { background: color-mix(in srgb, var(--app-card) 92%, transparent); border-color: var(--app-line); }
+
+
+html:not(.native-app)[data-webx-theme="midnight"] .yz-topbar ~ div .bg-white,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-topbar ~ div .bg-white,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-topbar ~ div .bg-white { background: var(--app-card); }
+
+
+/* القائمة الجانبية في الثيمات الداكنة */
+html:not(.native-app)[data-webx-theme="midnight"] .yz-drawer,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-drawer,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-drawer { background: var(--app-card); color: var(--app-ink); }
+
+html:not(.native-app)[data-webx-theme="midnight"] .yz-drawer .border-gray-100,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-drawer .border-gray-100,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-drawer .border-gray-100 { border-color: var(--app-line); }
+
+html:not(.native-app)[data-webx-theme="midnight"] .yz-drawer .text-gray-700,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-drawer .text-gray-700,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-drawer .text-gray-700 { color: var(--app-ink); }
+
+html:not(.native-app)[data-webx-theme="midnight"] .yz-drawer .yz-menu-ic,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-drawer .yz-menu-ic,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-drawer .yz-menu-ic { background: var(--app-card2); }
+
+html:not(.native-app)[data-webx-theme="midnight"] .yz-drawer .bg-gray-100,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-drawer .bg-gray-100,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-drawer .bg-gray-100 { background: var(--app-card2); }
+
+html:not(.native-app)[data-webx-theme="midnight"] .yz-drawer .text-gray-500,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-drawer .text-gray-500,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-drawer .text-gray-500 { color: var(--app-ink2); }
+
+html:not(.native-app)[data-webx-theme="midnight"] .yz-drawer .bg-purple-50,
+html:not(.native-app)[data-webx-theme="amoled"] .yz-drawer .bg-purple-50,
+html:not(.native-app)[data-webx-theme="ocean"] .yz-drawer .bg-purple-50 { background: color-mix(in srgb, var(--primary) 18%, transparent); }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   🎛️ استوديو التطبيق الموسّع — حجم الخط · كثافات إضافية · ثيمات فاتحة
+   لون خط مخصص · أشكال الأشرطة · توحيد المكونات
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── ① حجم الخط — تحجيم جذري يشمل النصوص والمسافات (وحدات rem) ── */
+html:not(.native-app)[data-webx-fontsize="small"] { font-size: 14px; }
+
+html:not(.native-app)[data-webx-fontsize="medium"] { font-size: 16px; }
+
+html:not(.native-app)[data-webx-fontsize="large"] { font-size: 17.5px; }
+
+html:not(.native-app)[data-webx-fontsize="xlarge"] { font-size: 19px; }
+
+
+/* ── ② كثافة فائقة الإدماج — ultra ── */
+html:not(.native-app)[data-webx-density="ultra"] .yz-main section { padding-top: .55rem; padding-bottom: .55rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .p-10 { padding: .8rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .p-8 { padding: .7rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .py-16 { padding-top: 1.1rem; padding-bottom: 1.1rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .py-12 { padding-top: .9rem; padding-bottom: .9rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .py-8 { padding-top: .75rem; padding-bottom: .75rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .mt-16 { margin-top: 1.25rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .mb-16 { margin-bottom: 1.25rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .mb-12 { margin-bottom: 1rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .mb-10 { margin-bottom: .85rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .mb-8 { margin-bottom: .7rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .grid.gap-6,
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .gap-6 { gap: .6rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .grid.gap-4,
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .gap-4 { gap: .45rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .gap-3 { gap: .35rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .mb-6 { margin-bottom: .55rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .mb-4 { margin-bottom: .45rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .mt-8 { margin-top: .85rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .pt-10 { padding-top: 1rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .yz-main .pb-10 { padding-bottom: 1rem; }
+
+html:not(.native-app)[data-webx-density="ultra"] .card { padding: .8rem; margin-bottom: .5rem; }
+
+
+/* ── كثافة مريحة واسعة — relaxed ── */
+html:not(.native-app)[data-webx-density="relaxed"] .yz-main section { padding-top: 1.6rem; padding-bottom: 1.6rem; }
+
+html:not(.native-app)[data-webx-density="relaxed"] .yz-main .card { padding: 1.5rem; margin-bottom: 1.1rem; }
+
+html:not(.native-app)[data-webx-density="relaxed"] .yz-main .gap-6 { gap: 1.5rem; }
+
+html:not(.native-app)[data-webx-density="relaxed"] .yz-main .gap-4 { gap: 1.1rem; }
+
+
+/* ── ③ ثيمات فاتحة جديدة — متغيرات الألوان ── */
+html:not(.native-app)[data-webx-theme="sand"] { --app-bg: #faf6ef; --app-card: #fffdf8; --app-card2: #f3ecdc; --app-ink: #3d2f1d; --app-ink2: #7a6a52; --app-line: #e9dec7; }
+
+html:not(.native-app)[data-webx-theme="sky"] { --app-bg: #eef6ff; --app-card: #ffffff; --app-card2: #deeeff; --app-ink: #0b2545; --app-ink2: #3d5a80; --app-line: #cfe4ff; }
+
+html:not(.native-app)[data-webx-theme="mint"] { --app-bg: #edf9f3; --app-card: #ffffff; --app-card2: #d9f4e7; --app-ink: #053b2c; --app-ink2: #2f6f5b; --app-line: #c4ecdc; }
+
+html:not(.native-app)[data-webx-theme="rose"] { --app-bg: #fff3f6; --app-card: #ffffff; --app-card2: #ffe0e8; --app-ink: #4a0e20; --app-ink2: #94495f; --app-line: #ffd0dc; }
+
+html:not(.native-app)[data-webx-theme="lavender"] { --app-bg: #f5f3ff; --app-card: #ffffff; --app-card2: #eae6ff; --app-ink: #2b1a5e; --app-ink2: #5b4b9e; --app-line: #ddd6fe; }
+
+html:not(.native-app)[data-webx-theme="peach"] { --app-bg: #fff6ee; --app-card: #ffffff; --app-card2: #ffe8d4; --app-ink: #4a1d05; --app-ink2: #96603a; --app-line: #ffd8b8; }
+
+
+/* محرك الثيمات الفاتحة — يعيد تلوين مكونات الواجهة بألوان الثيم */
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) body { background: var(--app-bg); color: var(--app-ink); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .page { background: linear-gradient(160deg, var(--app-bg), var(--app-card2)); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .bg-white,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .card { background: var(--app-card); color: var(--app-ink); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .bg-gray-50,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .bg-gray-100,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .bg-slate-50 { background: var(--app-card2); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .text-gray-900,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .text-gray-800,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .text-gray-700 { color: var(--app-ink); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .text-gray-600,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .text-gray-500 { color: var(--app-ink2); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main [class*="border-gray"],
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main [class*="border-slate"] { border-color: var(--app-line); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main input,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main select,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main textarea { background: var(--app-card); color: var(--app-ink); border-color: var(--app-line); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .tabs button,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .btn.ghost,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .badge { background: var(--app-card2); color: var(--app-ink); border-color: var(--app-line); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-topbar { background: color-mix(in srgb, var(--app-bg) 82%, transparent); border-bottom-color: var(--app-line); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-topbar span,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-topbar a,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-topbar button { color: var(--app-ink); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-bottomnav { background: color-mix(in srgb, var(--app-card) 94%, transparent); border-color: var(--app-line); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-drawer { background: var(--app-card); color: var(--app-ink); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-drawer .yz-menu-ic,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-drawer .bg-gray-100 { background: var(--app-card2); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-drawer .text-gray-700 { color: var(--app-ink); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-drawer .text-gray-500 { color: var(--app-ink2); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-drawer .border-gray-100 { border-color: var(--app-line); }
+
+
+/* ── ④ لون خط مخصص — يغطي لون نص الثيم (يُضبط inline من NativeApp) ── */
+html:not(.native-app)[data-webx-ink="custom"] .yz-main { color: var(--app-ink); }
+
+html:not(.native-app)[data-webx-ink="custom"] .yz-main .text-gray-900,
+html:not(.native-app)[data-webx-ink="custom"] .yz-main .text-gray-800,
+html:not(.native-app)[data-webx-ink="custom"] .yz-main .text-gray-700 { color: var(--app-ink); }
+
+html:not(.native-app)[data-webx-ink="custom"] .yz-drawer { color: var(--app-ink); }
+
+html:not(.native-app)[data-webx-ink="custom"] .yz-drawer .text-gray-700 { color: var(--app-ink); }
+
+
+/* ── ⑤ أشكال الشريط السفلي — data-webx-navstyle ── */
+/* شريط كلاسيكي ممتد — يلغي الكبسولة */
+html:not(.native-app)[data-webx-navstyle="bar"] .yz-bottomnav {
+  margin: 0; width: 100%; border-radius: 0; border: 0;
+  border-top: 1px solid rgba(0,0,0,.08);
+}
+
+/* منحني الأعلى — لوحة سفلية عصرية */
+html:not(.native-app)[data-webx-navstyle="curved"] .yz-bottomnav {
+  margin: 0; width: 100%; border-radius: 1.6rem 1.6rem 0 0;
+  border: 1px solid rgba(0,0,0,.06); border-bottom: 0; overflow: hidden;
+  box-shadow: 0 -12px 30px -12px rgba(15,15,40,.22);
+}
+
+html:not(.native-app)[data-webx-navstyle="minimal"] .yz-bottomnav .grid { height: 2.9rem; }
+
+html:not(.native-app)[data-webx-navstyle="minimal"] .yz-bottomnav a span { font-size: 1.05rem; }
+
+html:not(.native-app)[data-webx-navstyle="minimal"] .yz-bottomnav a { font-size: 8px; gap: 0; }
+
+
+/* ── ⑥ أنماط ترويسة إضافية ── */
+/* متدرج بلون المنصة */
+html:not(.native-app)[data-webx-header="gradient"] .yz-topbar {
+  background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 72%, #1b1035));
+  border-bottom-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+
+html:not(.native-app)[data-webx-header="gradient"] .yz-topbar a,
+html:not(.native-app)[data-webx-header="gradient"] .yz-topbar button,
+html:not(.native-app)[data-webx-header="gradient"] .yz-topbar span,
+html:not(.native-app)[data-webx-header="gradient"] .yz-topbar div { color: #fff; border-color: rgba(255,255,255,.35); }
+
+/* شفاف بسيط */
+html:not(.native-app)[data-webx-header="minimal"] .yz-topbar {
+  background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none;
+  border-bottom-color: transparent; box-shadow: none;
+}
+
+
+/* ── ① تغطية الثيمات لصفحات الخدمات المجانية (نظام bg-night الليلي) ──
+   تتحول الأسطح الليلية إلى ألوان الثيم المختار — فاتحاً كان أو داكناً */
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night { background: var(--app-bg); color: var(--app-ink); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night .text-white { color: var(--app-ink); }
+
+/* النصوص الشبه شفافة → لون الثيم الثانوي */
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night [class*="text-white/"] { color: var(--app-ink2); }
+
+/* البطاقات الزجاجية → بطاقات الثيم */
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night [class*="bg-white/5"],
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night [class*="bg-white/10"] { background: var(--app-card); color: var(--app-ink); border-color: var(--app-line); }
+
+/* الحدود الزجاجية → حدود الثيم */
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night [class*="border-white/"] { border-color: var(--app-line); }
+
+/* الشريط اللاصق الداكن → زجاجي بلون الثيم */
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night [class*="bg-black/"] { background: color-mix(in srgb, var(--app-card) 88%, transparent); }
+
+/* حقول الإدخال داخل صفحات الخدمات */
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night input,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night textarea,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night select { background: var(--app-card2); color: var(--app-ink); border-color: var(--app-line); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night input::placeholder,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night textarea::placeholder { color: var(--app-ink2); opacity: .7; }
+
+/* توهجات أورورا الزخرفية تخف في الثيمات الفاتحة */
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .bg-aurora { opacity: .16; }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"]) .yz-main .anim-blob { opacity: .12; }
+
+
+/* ── ② طرق عرض مكونات الرئيسية — data-webx-view ── */
+/* شبكة: الصفوف الأفقية تصبح شبكة عمودين */
+html:not(.native-app)[data-webx-view="grid"] .yz-main [data-section] .flex.overflow-x-auto { display: grid; grid-template-columns: repeat(2, 1fr); overflow: visible; gap: .6rem; }
+
+html:not(.native-app)[data-webx-view="grid"] .yz-main [data-section] .flex.overflow-x-auto > * { width: auto !important; min-width: 0; flex: none; }
+
+/* قائمة: بطاقة واحدة بعرض الشاشة */
+html:not(.native-app)[data-webx-view="list"] .yz-main [data-section] .flex.overflow-x-auto { display: grid; grid-template-columns: 1fr; overflow: visible; gap: .6rem; }
+
+html:not(.native-app)[data-webx-view="list"] .yz-main [data-section] .flex.overflow-x-auto > * { width: auto !important; min-width: 0; flex: none; }
+
+/* شريط أفقي: الشبكات تصبح سلايدرات لمسية (أزرار الخدمات تبقى شبكة ثابتة) */
+html:not(.native-app)[data-webx-view="carousel"] .yz-main [data-section]:not([data-section="quickActions"]) .grid[class*="grid-cols-2"],
+html:not(.native-app)[data-webx-view="carousel"] .yz-main [data-section]:not([data-section="quickActions"]) .grid[class*="grid-cols-3"],
+html:not(.native-app)[data-webx-view="carousel"] .yz-main [data-section]:not([data-section="quickActions"]) .grid[class*="grid-cols-4"] { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: .4rem; }
+
+html:not(.native-app)[data-webx-view="carousel"] .yz-main [data-section]:not([data-section="quickActions"]) .grid[class*="grid-cols"] > * { min-width: 44%; scroll-snap-align: start; }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   🔧 إصلاحات دقة العرض — اكتمال تحويل الليلي + تقارب التقسيمات
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── اكتمال تحويل الصفحات الليلية: الرماديات الفاتحة كانت تختفي على الثيمات الفاتحة ── */
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night .text-gray-100,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night .text-gray-200,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night .text-gray-300 { color: var(--app-ink); }
+
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night .text-gray-400,
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night .text-gray-500 { color: var(--app-ink2); }
+
+/* الأسطح الزجاجية الداكنة (بطاقات/أزرار/حقول البطل والخدمات) → بطاقات الثيم */
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night .glass-dark { background: var(--app-card); border-color: var(--app-line); color: var(--app-ink); }
+
+/* عناصر نائب النص داخل الحقول الليلية */
+html:not(.native-app):is([data-webx-theme="sand"],[data-webx-theme="sky"],[data-webx-theme="mint"],[data-webx-theme="rose"],[data-webx-theme="lavender"],[data-webx-theme="peach"],[data-webx-theme="midnight"],[data-webx-theme="amoled"],[data-webx-theme="ocean"]) .yz-main .bg-night [class*="placeholder-gray"]::placeholder { color: var(--app-ink2); opacity: .75; }

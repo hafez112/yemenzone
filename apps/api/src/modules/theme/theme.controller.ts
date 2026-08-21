@@ -34,6 +34,8 @@ export class ThemeController {
       customCode: map['customCode'] ?? {},
       // 📱 إعدادات تصميم التطبيق الأصلي — تُدار من /admin/design تبويب «التطبيق»
       app: map['app'] ?? {},
+      // 🌐 إعدادات استوديو الويب — تُدار من /admin/design تبويب «استوديو الويب»
+      webx: map['webx'] ?? {},
       slides,
       flashSale,
     };
