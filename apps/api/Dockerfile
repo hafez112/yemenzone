@@ -19,4 +19,5 @@ RUN mkdir -p uploads
 EXPOSE 4000
 # 🛡️ الإقلاع المرن: فشل db push (تحذيرات حذر البيانات) لا يمنع تشغيل الخادم —
 # يُسجَّل تنبيه ويُكمل الإقلاع، ويُطبَّق المخطط يدوياً بأمر واحد عند الحاجة
-CMD ["sh", "-c", "npx prisma db push --skip-generate || echo '⚠️ db-push: رُفض تطبيق المخطط (تحذير بيانات) — طبّقه يدوياً: docker compose exec api npx prisma db push --accept-data-loss'; node prisma/seed.js || echo '⚠️ seed: تم تخطيه'; exec node dist/main.js"]
+# ⚠️ Prisma 7 أزال خيار --skip-generate من db push — وجوده يجعل الأمر يفشل دائماً!
+CMD ["sh", "-c", "npx prisma db push || echo '⚠️ db-push: رُفض تطبيق المخطط (تحذير بيانات) — طبّقه يدوياً: docker compose exec api npx prisma db push --accept-data-loss'; node prisma/seed.js || echo '⚠️ seed: تم تخطيه'; exec node dist/main.js"]
