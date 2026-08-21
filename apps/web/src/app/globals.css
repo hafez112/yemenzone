@@ -1024,7 +1024,10 @@ html.native-app[data-app-currency="off"] .yz-currency { display: none; }
 html.native-app[data-app-cta="off"] .yz-cta { display: none; }
 
 /* انتقال ناعم بين الصفحات داخل التطبيق */
-html.native-app .yz-main > *:first-child { animation: fadeUp .32s ease both; }
+/* ⚠️ backwards فقط — لا forwards/both: الإطار الأخير من fadeUp فيه transform: translateY(0)،
+   ولو احتُفظ به بعد انتهاء الحركة لأصبح <main> حاوية مرجعية تكسر position: fixed
+   لأبنائه — أيقونة الذكاء الاصطناعي كانت تفقد تثبيتها في الرئيسية بسبب هذا! */
+html.native-app .yz-main > *:first-child { animation: fadeUp .32s ease backwards; }
 
 /* مؤشر السحب للتحديث */
 .yz-ptr {
@@ -1396,9 +1399,19 @@ html.native-app[data-app-view="carousel"] .yz-main [data-section]:not([data-sect
 html.native-app[data-app-view="carousel"] .yz-main [data-section]:not([data-section="quickActions"]) .grid[class*="grid-cols-3"],
 html.native-app[data-app-view="carousel"] .yz-main [data-section]:not([data-section="quickActions"]) .grid[class*="grid-cols-4"] { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: .4rem; }
 html.native-app[data-app-view="carousel"] .yz-main [data-section]:not([data-section="quickActions"]) .grid[class*="grid-cols"] > * { min-width: 44%; scroll-snap-align: start; }
-/* شريط المتاجر المتحرك: يتحول لسلايدر لمسي داخل التطبيق (أوضح وأهدأ) */
-html.native-app .yz-main .marquee-track { animation: none; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: .7rem; }
-html.native-app .yz-main .marquee-track > * { scroll-snap-align: start; }
+/* شريط المتاجر المتحرك: يعمل بالحركة التلقائية داخل التطبيق أيضاً (نفس سلوك الويب) —
+   القاعدة الأساسية .marquee-track تكفي، واللمس يوقفها مؤقتاً عبر :hover/active */
+html.native-app .yz-main .marquee-track:active { animation-play-state: paused; }
+
+/* 📏 إيقاع موحّد بين أقسام الرئيسية داخل التطبيق حسب الكثافة —
+   يتقدّم على كلاسات الحشو الداخلية (py-6 / py-8) ويصفّر هوامش ذيل الأقسام (مثل mb-14 بعد السلايدر)
+   حتى لا تتراكم مسافات كبيرة بين قسم وقسم */
+html.native-app[data-app-density="ultra"] .yz-main [data-section]:not([data-section="hero"]) section { padding-top: .55rem; padding-bottom: .55rem; margin-bottom: 0; }
+html.native-app[data-app-density="compact"] .yz-main [data-section]:not([data-section="hero"]) section { padding-top: .95rem; padding-bottom: .95rem; margin-bottom: 0; }
+html.native-app[data-app-density="cozy"] .yz-main [data-section]:not([data-section="hero"]) section { padding-top: 1.4rem; padding-bottom: 1.4rem; margin-bottom: 0; }
+html.native-app[data-app-density="relaxed"] .yz-main [data-section]:not([data-section="hero"]) section { padding-top: 1.9rem; padding-bottom: 1.9rem; margin-bottom: 0; }
+/* قسم البطل يحتفظ بخلوصه العلوي تحت شريط التطبيق العائم — يُصفَّر هامشه السفلي فقط */
+html.native-app .yz-main [data-section="hero"] section { margin-bottom: 0; }
 
 /* ── ③ لمسات الواقعية الأصلية 100% ── */
 /* إخفاء أشرطة التمرير — مثل التطبيقات الأصلية */
