@@ -9,6 +9,7 @@ import { addToCart, saveCart } from '@/lib/cart';
 import { useCurrency } from '@/lib/currency';
 import { toast } from '@/components/Toast';
 import { KIND_INFO, type StoreKind } from '@/lib/activity';
+import { adImgUrl } from '@/lib/api';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -213,7 +214,7 @@ export default function StoreClient({ store }: { store: any }) {
                 <a key={b.id} href={b.link || undefined} target={b.link?.startsWith('http') ? '_blank' : undefined}
                   onClick={() => fetch(`${API}/api/v1/ads/${b.id}/click`, { method: 'POST' }).catch(() => {})}
                   className="relative w-full shrink-0 aspect-[16/5] block">
-                  <img src={`${API}${b.image}`} alt={b.title} loading={bi === 0 ? 'eager' : 'lazy'} decoding="async" className="absolute inset-0 w-full h-full object-cover" />
+                  <img src={adImgUrl(b.image)} alt={b.title} loading={bi === 0 ? 'eager' : 'lazy'} decoding="async" className="absolute inset-0 w-full h-full object-cover" />
                   <div className="absolute inset-x-0 bottom-0 h-2/5"
                     style={{ background: 'linear-gradient(0deg, rgba(0,0,0,.65), transparent)' }} />
                   <div className="absolute bottom-2.5 right-3 text-white font-extrabold text-sm drop-shadow">{b.title}</div>

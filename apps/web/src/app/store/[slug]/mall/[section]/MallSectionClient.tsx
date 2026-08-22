@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import MallProductCard from '@/components/mall/MallProductCard';
+import { adImgUrl } from '@/lib/api';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 const PER_PAGE = 24;
@@ -11,6 +12,21 @@ export default function MallSectionClient({ store, primary, section, meta }: any
   const [data, setData] = useState<any>(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  // 🖼️ بانرات المول الإعلانية — تظهر داخل صفحات الأقسام أيضاً
+  const [banners, setBanners] = useState<any[]>([]);
+  const [bannerIdx, setBannerIdx] = useState(0);
+
+  useEffect(() => {
+    fetch(`${API}/api/v1/ads/store/${store.slug}`).then(r => r.json())
+      .then(d => setBanners(Array.isArray(d) ? d : [])).catch(() => {});
+  }, [store.slug]);
+
+  // تدوير تلقائي كل 5 ثوانٍ
+  useEffect(() => {
+    if (banners.length < 2) return;
+    const t = setInterval(() => setBannerIdx(i => (i + 1) % banners.length), 5000);
+    return () => clearInterval(t);
+  }, [banners.length]);
 
   useEffect(() => {
     setLoading(true);
@@ -43,6 +59,32 @@ export default function MallSectionClient({ store, primary, section, meta }: any
             </p>
           )}
         </div>
+
+        {/* 🖼️ بانرات المول الإعلانية */}
+        {banners.length > 0 && (
+          <div className="relative rounded-3xl overflow-hidden shadow-xl mt-4">
+            <div className="flex transition-transform duration-700 ease-out" style={{ transform: `translateX(${bannerIdx * 100}%)` }}>
+              {banners.map((b: any, bi: number) => (
+                <a key={b.id} href={b.link || undefined} target={b.link?.startsWith('http') ? '_blank' : undefined}
+                  onClick={() => fetch(`${API}/api/v1/ads/${b.id}/click`, { method: 'POST' }).catch(() => {})}
+                  className="relative w-full shrink-0 aspect-[16/5] block">
+                  <img src={adImgUrl(b.image)} alt={b.title} loading={bi === 0 ? 'eager' : 'lazy'} decoding="async" className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="absolute inset-x-0 bottom-0 h-2/5" style={{ background: 'linear-gradient(0deg, rgba(0,0,0,.65), transparent)' }} />
+                  <div className="absolute bottom-2.5 right-3 text-white font-extrabold text-sm drop-shadow">{b.title}</div>
+                </a>
+              ))}
+            </div>
+            {banners.length > 1 && (
+              <div className="absolute bottom-2 left-3 flex gap-1.5">
+                {banners.map((_: any, i: number) => (
+                  <button key={i} onClick={() => setBannerIdx(i)} aria-label={`بانر ${i + 1}`}
+                    className="w-2 h-2 rounded-full transition-all"
+                    style={{ background: i === bannerIdx ? '#fff' : 'rgba(255,255,255,.45)', transform: i === bannerIdx ? 'scale(1.3)' : 'none' }} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* المنتجات */}
         {loading ? (

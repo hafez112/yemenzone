@@ -525,6 +525,36 @@ export class AdminService {
     return this.prisma.store.delete({ where: { id } });
   }
 
+  // 🧹 حذف متاجر العرض التجريبي (yz-demo-*) بضغطة واحدة — عند انضمام البائعين الحقيقيين
+  async purgeDemoShowcase() {
+    const demoStores = await this.prisma.store.findMany({
+      where: { slug: { startsWith: 'yz-demo-' } },
+      select: { id: true },
+    });
+    if (!demoStores.length) {
+      return { removed: 0, message: 'لا توجد متاجر عرض تجريبي' };
+    }
+    const ids = demoStores.map((s) => s.id);
+    // إعلانات المتاجر التجريبية — storeId نصي بلا علاقة قاعدة بيانات فتُحذف يدوياً
+    await this.prisma.ad.deleteMany({ where: { storeId: { in: ids } } });
+    // حذف المتاجر — المنتجات والوحدات والغرف والخدمات والأصناف تُحذف تلقائياً (Cascade)
+    await this.prisma.store.deleteMany({ where: { id: { in: ids } } });
+    // حساب البائع التجريبي — يُحذف فقط إن لم يعد يملك أي متجر
+    const demoSeller = await this.prisma.seller.findFirst({ where: { phone: '700000000' } });
+    if (demoSeller) {
+      const remaining = await this.prisma.store.count({ where: { sellerId: demoSeller.id } });
+      if (!remaining) await this.prisma.seller.delete({ where: { id: demoSeller.id } });
+    }
+    // علامة «حُذف نهائياً» — حتى لا يعيد السيد إنشاءها عند إقلاع الحاوية
+    const flag = { status: 'purged', at: new Date().toISOString() };
+    await this.prisma.setting.upsert({
+      where: { key: 'demoShowcase' },
+      create: { group: 'general', key: 'demoShowcase', value: flag },
+      update: { value: flag },
+    });
+    return { removed: demoStores.length };
+  }
+
   // ═══ 🎖️ طلبات توثيق المتاجر ═══
   async verificationRequests(status?: string) {
     return this.prisma.verificationRequest.findMany({

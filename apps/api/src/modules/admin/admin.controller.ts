@@ -170,6 +170,11 @@ export class AdminController {
   @Delete('stores/:id')
   deleteStore(@Param('id') id: string) { return this.admin.deleteStore(id); }
 
+  // 🧹 حذف متاجر العرض التجريبي كلها بضغطة واحدة — بعد انضمام البائعين الحقيقيين
+  @UseGuards(PermsGuard('stores'))
+  @Delete('demo-showcase')
+  purgeDemoShowcase() { return this.admin.purgeDemoShowcase(); }
+
   // 🎖️ طلبات توثيق المتاجر — مراجعة الوثائق ومنح الشارة
   @UseGuards(PermsGuard('stores'))
   @Get('verification')

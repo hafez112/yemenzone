@@ -50,6 +50,15 @@ export function imgUrl(path?: string | null): string {
   return `${API}${path}`;
 }
 
+// 🖼️ رابط صورة إعلان — صور البائعين المرفوعة /uploads تُجلب من الخادم،
+// وصور المنصة الجاهزة /ads تُقدَّم من الواجهة مباشرة (إصلاح اختفاء بانرات المتاجر والمولات)
+export function adImgUrl(path?: string | null): string {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  if (path.startsWith('/uploads/')) return `${API}${path}`;
+  return path;
+}
+
 // رفع ملفات (FormData) — بدون Content-Type يدوي ليضبط المتصفح الحدود تلقائياً
 export async function apiUpload(path: string, field: string, file: File, retry = true, extra?: Record<string, string>): Promise<any> {
   const token = localStorage.getItem('yz_token');

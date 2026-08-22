@@ -132,10 +132,14 @@ export default async function Home() {
   // الترتيب من لوحة التحكم مع ضمان اكتمال كل الأقسام
   const saved: string[] = Array.isArray(theme?.layout?.sectionOrder) ? theme.layout.sectionOrder : [];
   const order = [...saved.filter((k) => DEFAULT_ORDER.includes(k)), ...DEFAULT_ORDER.filter((k) => !saved.includes(k))];
+  // 🛠️ إصلاح: أول قسم ظاهر ليس الهيرو (الهيرو يعوّض الشريط العلوي الثابت داخلياً)
+  // → أضف مساحة بارتفاع الشريط حتى لا يختفي السلايدر أو أي قسم تحته
+  const firstKey = order.find((k) => visible(k) && sections[k]);
 
   return (
     <main>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {firstKey && firstKey !== 'hero' && <div className="h-14" aria-hidden="true" />}
       {order.map((key) => visible(key) && sections[key] ? <div key={key} data-section={key}>{sections[key]}</div> : null)}
       {/* 📢 إعلانات أسفل الرئيسية — قبل التذييل */}
       {sec.ads !== false && <AdBanner ads={bottomAds} />}
