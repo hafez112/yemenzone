@@ -158,6 +158,7 @@ export default function SellerSidebar({ store }: { store: any }) {
       {[
         { href: '/seller/invite', icon: '🤝', label: 'ادعُ التجار واكسب' },
         { href: '/seller/notifications', icon: '🔔', label: 'التنبيهات', badge: unread },
+        { href: '/seller/support', icon: '🎧', label: 'الدعم الفني' },
         { href: '/seller/subscription', icon: '💎', label: 'اشتراكي', star: store?.isFeatured },
         { href: '/seller/settings', icon: '⚙️', label: `إعدادات ${kn.noun === 'متجر' ? 'المتجر' : kn.pageWord}` },
       ].map((l: any) => {

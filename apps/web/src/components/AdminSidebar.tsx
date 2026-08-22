@@ -40,6 +40,7 @@ const SECTIONS: { id: string; title: string; icon: string; items: { href: string
       { href: '/admin/referrals', icon: '🎁', label: 'الإحالات والنقاط' },
       { href: '/admin/reviews', icon: '⭐', label: 'التقييمات' },
       { href: '/admin/complaints', icon: '📣', label: 'الشكاوى' },
+      { href: '/admin/support', icon: '🎧', label: 'الدعم الفني' },
     ],
   },
   {

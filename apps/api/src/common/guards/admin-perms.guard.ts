@@ -29,6 +29,7 @@ export function PermsGuard(...perms: string[]) {
 export const ADMIN_PERMISSIONS: Record<string, string> = {
   stores: 'المتاجر والتجار',
   customers: 'العملاء',
+  support: 'الدعم الفني',
   reviews: 'التقييمات',
   supervision: 'الإشراف (إيجارات/فنادق/خدمات)',
   plans: 'الخطط والاشتراكات',

@@ -183,6 +183,11 @@ export default function CustomerDashboard() {
                     <div className="text-lg font-black grad-text">منتجاتي</div>
                     <div className="text-[10px] text-gray-500 font-bold">المحفوظة</div>
                   </Link>
+                  <Link href="/customer/support" className="glass rounded-3xl p-3.5 text-center card-hover block">
+                    <div className="text-xl mb-1">🎧</div>
+                    <div className="text-lg font-black grad-text">الدعم</div>
+                    <div className="text-[10px] text-gray-500 font-bold">راسل الإدارة</div>
+                  </Link>
                 </div>
 
                 {/* 🔔 الإشعارات الفورية */}
@@ -491,6 +496,10 @@ export default function CustomerDashboard() {
                 <Link href="/customer/card"
                   className="block text-center py-3 rounded-2xl bg-purple-100 text-purple-700 font-extrabold">
                   💳 بطاقتي وشحنها
+                </Link>
+                <Link href="/customer/support"
+                  className="block text-center py-3 rounded-2xl bg-violet-100 text-violet-700 font-extrabold">
+                  🎧 الدعم الفني — راسل إدارة المنصة
                 </Link>
                 <Link href="/complaint/track"
                   className="block text-center py-3 rounded-2xl bg-gray-100 text-gray-600 font-extrabold">

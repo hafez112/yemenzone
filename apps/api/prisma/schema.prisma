@@ -1788,3 +1788,28 @@ model SharedDoc {
   @@index([ownerType, ownerId])
   @@map("shared_docs")
 }
+
+// 🎧 تذاكر الدعم الفني — محادثة كاملة بين العميل/البائع وإدارة المنصة
+model SupportTicket {
+  id          String   @id @default(cuid())
+  userType    String // customer | seller
+  userId      String
+  userName    String   @default("")
+  userPhone   String   @default("")
+  category    String // support | inquiry | suggestion | complaint
+  subject     String
+  status      String   @default("open") // open | answered | closed
+  priority    String   @default("normal") // normal | high
+  messages    Json // [{from:'user'|'admin'|'ai', text, at, by?}]
+  aiDraft     String? // مسودة الرد الذكي المخزنة (محلي أو خارجي)
+  aiDraftSrc  String? // local | external
+  autoReplied Boolean  @default(false)
+  ideaStatus  String? // للاقتراحات: new | studying | planned | done | declined
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userType, userId])
+  @@index([status])
+  @@index([category])
+  @@map("support_tickets")
+}
