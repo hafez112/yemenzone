@@ -156,6 +156,7 @@ export default function SellerSidebar({ store }: { store: any }) {
       })}
       <hr className="my-2 border-gray-200/50" />
       {[
+        { href: '/seller/reports', icon: '📊', label: 'تقريري الأسبوعي' },
         { href: '/seller/invite', icon: '🤝', label: 'ادعُ التجار واكسب' },
         { href: '/seller/notifications', icon: '🔔', label: 'التنبيهات', badge: unread },
         { href: '/seller/support', icon: '🎧', label: 'الدعم الفني' },

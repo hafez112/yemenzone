@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import AdminSidebar from '@/components/AdminSidebar';
+import WeeklyReportsPanel from '@/components/admin/WeeklyReportsPanel';
 
 // 📈 تحليلات المنصة — نمو 6 أشهر + توزيع + نصائح ذكية محلية
 function Bar({ value, max, color, label, hint }: { value: number; max: number; color: string; label: string; hint?: string }) {
@@ -66,6 +67,9 @@ export default function AdminAnalyticsPage() {
               </div>
             ))}
           </div>
+
+          {/* 📊 التقارير الأسبوعية الذكية + ملخص المنصة */}
+          <WeeklyReportsPanel />
 
           {/* نصائح ذكية */}
           <div className="glass-dark rounded-3xl p-4">

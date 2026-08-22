@@ -58,11 +58,27 @@ export default function StoreSettings() {
         messageTemplates: (s.messageTemplates as any) || {},
         lat: s.lat ?? null, lng: s.lng ?? null, address: s.address || '', city: s.city || '',
       });
+      setPaused(!!s.pausedAt);
+      setPauseNote(s.pauseNote || '');
     }).catch(() => router.push('/seller/setup'));
   }, []);
 
   // 🔒 تخصيص التصميم ميزة مدفوعة — تُفتح بترقية الخطة أو منحة من الإدارة
   const designLocked = store?.features && !store.features.customDesign;
+
+  // ⏸️ الإغلاق المؤقت — إيقاف استقبال الطلبات/الحجوزات دون إخفاء المتجر
+  const [paused, setPaused] = useState(false);
+  const [pauseNote, setPauseNote] = useState('');
+  const [pauseBusy, setPauseBusy] = useState(false);
+  async function savePause(next: boolean) {
+    setPauseBusy(true);
+    try {
+      await api('/stores/my', { method: 'PATCH', body: JSON.stringify({ paused: next, pauseNote }) });
+      setPaused(next);
+      toast(next ? '⏸️ أُغلق مؤقتاً — لن تصلك طلبات جديدة حتى تعود' : '🟢 أهلاً بعودتك! أنت تستقبل الطلبات الآن');
+    } catch (err: any) { toast(err.message, 'error'); }
+    setPauseBusy(false);
+  }
 
   async function save() {
     setSaving(true);
@@ -160,6 +176,32 @@ export default function StoreSettings() {
         <SellerSidebar store={store} />
         <div className="flex-1 space-y-4">
           <h1 className="text-2xl font-black">⚙️ إعدادات {nounLabel}</h1>
+
+          {/* ⏸️ الإغلاق المؤقت — إجازة؟ ظرف طارئ؟ أوقف الطلبات دون أن تفقد متجرك */}
+          <div className={`rounded-3xl p-5 border-2 transition ${paused ? 'bg-amber-50 border-amber-300' : 'glass border-transparent'}`}>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <h2 className="font-extrabold">⏸️ الإغلاق المؤقت {paused && <span className="text-xs font-black text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full mr-1">مغلق الآن</span>}</h2>
+                <p className="text-xs text-gray-500 mt-1">
+                  {paused
+                    ? 'زوّارك يرون لافتة الإغلاق ولا يستطيعون الطلب أو الحجز حتى تعود — أزل الإغلاق متى جاهز'
+                    : 'في إجازة أو ظرف طارئ؟ أوقف استقبال الطلبات مؤقتاً — متجرك ومنتجاتك تبقى ظاهرة للزوار'}
+                </p>
+              </div>
+              <button onClick={() => savePause(!paused)} disabled={pauseBusy}
+                className={`px-5 py-2.5 rounded-full text-sm font-black text-white transition disabled:opacity-50 ${paused ? 'bg-emerald-500' : 'bg-amber-500'}`}>
+                {pauseBusy ? '⏳...' : paused ? '🟢 إزالة الإغلاق والعودة' : '⏸️ إغلاق مؤقتاً'}
+              </button>
+            </div>
+            {!paused && (
+              <input value={pauseNote} onChange={e => setPauseNote(e.target.value)} maxLength={140}
+                placeholder="رسالة للزوار أثناء الإغلاق (اختياري): نعود يوم السبت بإذن الله 🌙"
+                className="w-full mt-3 px-4 py-3 rounded-xl border border-amber-200 bg-white input-theme text-gray-900 text-sm" />
+            )}
+            {paused && store?.pauseNote && (
+              <div className="mt-3 text-xs font-bold text-amber-700 bg-amber-100 rounded-xl px-3 py-2">💬 رسالتك للزوار: {store.pauseNote}</div>
+            )}
+          </div>
 
           {/* 🖼️ شعار وغلاف — رفع من الجهاز */}
           <div className="glass rounded-3xl p-5 space-y-3">

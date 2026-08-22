@@ -250,6 +250,11 @@ export class StoresService {
               .map(([k, v]: any) => [k, v.slice(0, 300)])
           ),
         } : {}),
+        // ⏸️ الإغلاق المؤقت — البائع يوقف الطلبات مؤقتاً ويعود متى شاء
+        ...(body.paused !== undefined ? {
+          pausedAt: body.paused ? (store.pausedAt || new Date()) : null,
+          pauseNote: body.paused ? String(body.pauseNote || '').slice(0, 140) || null : null,
+        } : {}),
       },
     });
     this.bust(store.slug);

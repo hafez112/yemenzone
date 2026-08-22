@@ -173,6 +173,27 @@ export default function StoreClient({ store }: { store: any }) {
         </div>
       </header>
 
+      {/* ⏸️ لافتة الإغلاق المؤقت — يضعها البائع من إعداداته */}
+      {store.pausedAt && (
+        <div className="max-w-5xl mx-auto px-3 mt-4">
+          <div className="rounded-3xl p-4 bg-gradient-to-l from-amber-400 to-orange-400 text-white shadow-lg flex items-center gap-3 anim-bounce-in">
+            <span className="text-3xl">⏸️</span>
+            <div className="flex-1">
+              <div className="font-black">مغلق مؤقتاً</div>
+              <p className="text-xs font-bold text-white/90 mt-0.5">
+                {store.pauseNote || 'يعود لاستقبال الطلبات قريباً — تصفّح ما يحلو لك وعد لاحقاً 🌙'}
+              </p>
+            </div>
+            {store.whatsapp && (
+              <a href={`https://wa.me/${store.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank"
+                className="shrink-0 bg-white text-amber-600 text-xs font-black px-4 py-2 rounded-full shadow">
+                💬 اسألنا
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 🕌 شريط زخرفي للثيم التراثي اليمني */}
       {isHeritage && (
         <div className="heritage-band" style={{ background: `linear-gradient(90deg, ${primary}, ${secondary}, ${primary})` }} />
@@ -525,6 +546,7 @@ function ProductCard({ p, st, primary, isDark, store }: any) {
             ) : (
             <button
               onClick={() => {
+                if (store.pausedAt) { toast(store.pauseNote ? `⏸️ مغلق مؤقتاً — ${store.pauseNote}` : '⏸️ مغلق مؤقتاً — يعود قريباً', 'error'); return; }
                 addToCart(store.slug, {
                   productId: p.id, name: p.name,
                   price: Number(p.salePrice || p.price), image: p.images?.[0],
@@ -533,7 +555,7 @@ function ProductCard({ p, st, primary, isDark, store }: any) {
               }}
               className="theme-glow flex-1 py-2 rounded-xl text-white text-xs font-extrabold transition-all hover:opacity-90"
               style={{ background: `linear-gradient(135deg, ${primary}, ${primary}CC)` }}>
-              🛒 أضف للسلة
+              {store.pausedAt ? '⏸️ مغلق مؤقتاً' : '🛒 أضف للسلة'}
             </button>
             )}
             <Link href={`/store/${store.slug}/product/${p.id}`}

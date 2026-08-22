@@ -40,6 +40,10 @@ export class OrdersService {
       include: { seller: true },
     });
     if (!store || store.status !== 'active') throw new NotFoundException('المتجر غير موجود');
+    // ⏸️ متجر مغلق مؤقتاً — لا يستقبل طلبات جديدة حتى عودته
+    if (store.pausedAt) {
+      throw new BadRequestException(store.pauseNote ? `⏸️ مغلق مؤقتاً — ${store.pauseNote}` : '⏸️ المتجر مغلق مؤقتاً — يعود قريباً');
+    }
     if (!body.items?.length) throw new BadRequestException('السلة فارغة');
     if (!body.customerName?.trim() || !body.customerPhone?.trim()) {
       throw new BadRequestException('الاسم ورقم الجوال مطلوبان');

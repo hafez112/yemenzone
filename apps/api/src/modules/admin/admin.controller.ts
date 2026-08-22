@@ -224,6 +224,13 @@ export class AdminController {
   @UseGuards(PermsGuard('reviews'))
   @Delete('reviews/:id')
   deleteReview(@Param('id') id: string) { return this.admin.deleteReview(id); }
+  // 🧾 إعداد التقييم الموثوق — تقييد التقييمات بالمشترين الفعليين فقط
+  @UseGuards(PermsGuard('reviews'))
+  @Get('reviews-config')
+  reviewsConfig() { return this.admin.reviewsConfig(); }
+  @UseGuards(PermsGuard('reviews'))
+  @Post('reviews-config')
+  saveReviewsConfig(@Body() b: { onlyBuyers?: boolean }) { return this.admin.saveReviewsConfig(b); }
 
   // الإشراف: rentals | hotel | services
   @UseGuards(PermsGuard('supervision'))

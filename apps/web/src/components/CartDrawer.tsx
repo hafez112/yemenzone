@@ -398,9 +398,10 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
                         if (dms.length) setDeliveryId(dms[0].id);
                         setCheckout(true);
                       }}
-                      className="w-full py-4 rounded-2xl text-white font-extrabold text-lg shadow-xl"
-                      style={{ background: primary }}>
-                      إتمام الطلب ←
+                      disabled={!!store.pausedAt}
+                      className="w-full py-4 rounded-2xl text-white font-extrabold text-lg shadow-xl disabled:opacity-50 disabled:grayscale"
+                      style={{ background: store.pausedAt ? '#b45309' : primary }}>
+                      {store.pausedAt ? '⏸️ مغلق مؤقتاً — لا يستقبل طلبات' : 'إتمام الطلب ←'}
                     </button>
                   </div>
                 )}

@@ -326,6 +326,9 @@ model Store {
   commissionPercent  Float?
   likesCount         Int        @default(0)
   viewsCount         Int        @default(0)
+  // ⏸️ الإغلاق المؤقت — البائع يوقف استقبال الطلبات/الحجوزات مؤقتاً دون حذف المتجر
+  pausedAt           DateTime?
+  pauseNote          String? // رسالة تظهر للزوار: "مغلق مؤقتاً — نعود يوم الأحد"
   // SEO
   metaTitle          String?
   metaDesc           String?

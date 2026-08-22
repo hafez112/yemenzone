@@ -11,7 +11,7 @@ export default function ReviewsSection({ store, primary, isDark }: any) {
   const [likes, setLikes] = useState(store.likesCount || 0);
   const [liked, setLiked] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', rating: 5, comment: '' });
+  const [form, setForm] = useState({ name: '', phone: '', rating: 5, comment: '', orderNumber: '' });
   const [sending, setSending] = useState(false);
   const [imgs, setImgs] = useState<string[]>([]); // 📸 صور التقييم
   const [uploadingImg, setUploadingImg] = useState(false);
@@ -54,7 +54,7 @@ export default function ReviewsSection({ store, primary, isDark }: any) {
       });
       setReviews([{ ...r.review, customer: { name: form.name }, images: imgs }, ...reviews]);
       setShowForm(false);
-      setForm({ name: '', phone: '', rating: 5, comment: '' });
+      setForm({ name: '', phone: '', rating: 5, comment: '', orderNumber: '' });
       setImgs([]);
       toast(`🌟 شكراً لتقييمك! درجة ${kn.pageWord} الآن ${r.smartScore}`);
     } catch (e: any) { toast(e.message, 'error'); }
@@ -114,6 +114,13 @@ export default function ReviewsSection({ store, primary, isDark }: any) {
           <textarea value={form.comment} onChange={e => setForm({ ...form, comment: e.target.value })}
             placeholder="رأيك في المتجر (اختياري)" rows={2}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 input-theme text-gray-900" />
+          {/* 🧾 رقم الطلب — يمنح شارة «مشترٍ موثّق ✅» وقد يكون إلزامياً حسب سياسة المنصة */}
+          <input value={form.orderNumber} onChange={e => setForm({ ...form, orderNumber: e.target.value })}
+            placeholder="🧾 رقم طلبك (اختياري — لشارة مشترٍ موثوق ✅)" dir="ltr"
+            className="w-full px-4 py-3 rounded-xl border border-emerald-200 bg-emerald-50/50 input-theme text-gray-900 placeholder:text-right" />
+          <p className={`text-[10px] -mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+            اشتريت من {kn.thisNoun}؟ أدخل رقم طلبك (مثل ORD-123456) ليظهر تقييمك بشارة ✅ مشترٍ موثّق
+          </p>
           {/* 📸 صور المشتري — حتى صورتين */}
           <div className="flex items-center gap-2">
             <label className="flex-1 py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-center text-xs font-bold text-gray-500 cursor-pointer hover:border-purple-300 transition-all">

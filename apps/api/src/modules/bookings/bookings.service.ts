@@ -204,6 +204,10 @@ export class BookingsService {
   }) {
     const store = await this.prisma.store.findUnique({ where: { slug }, include: { type: true } });
     if (!store || store.status !== 'active') throw new NotFoundException('المتجر غير موجود');
+    // ⏸️ مغلق مؤقتاً — لا يستقبل حجوزات جديدة حتى عودته
+    if (store.pausedAt) {
+      throw new BadRequestException(store.pauseNote ? `⏸️ مغلق مؤقتاً — ${store.pauseNote}` : '⏸️ مغلق مؤقتاً — يعود قريباً');
+    }
     // 🛡️ تعقيم مدخلات العميل قبل الحفظ (مكتبة libs/security)
     const customerName = sanitizeText(body.customerName, 80);
     const customerPhone = sanitizePhone(body.customerPhone);

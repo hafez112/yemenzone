@@ -65,6 +65,14 @@ export class ReviewsController {
       });
     }
 
+    // 🧾 وضع "تقييم المشترين فقط" — تفعّله الإدارة فلا يُقبل تقييم بلا طلب مكتمل
+    if (!body.orderNumber?.trim()) {
+      const cfg = await this.prisma.setting.findUnique({ where: { key: 'reviews.config' } });
+      if ((cfg?.value as any)?.onlyBuyers) {
+        throw new BadRequestException('التقييم متاح للمشترين فقط — أدخل رقم طلبك المكتمل لتحصل على شارة مشترٍ موثوق ✅');
+      }
+    }
+
     // 🧾 تقييم ما بعد الشراء: التحقق من الطلب وربطه (شارة مشترٍ موثّق ✅)
     let orderId: string | null = null;
     let orderNumber: string | null = null;

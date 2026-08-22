@@ -41,6 +41,21 @@ export class PublicController {
     };
   }
 
+  // 💎 الباقات النشطة — لصفحة الهبوط (قراءة عامة، بيانات حقيقية من الإدارة)
+  @Get('plans')
+  @Header('Cache-Control', 'public, max-age=300, stale-while-revalidate=600')
+  async publicPlans() {
+    const plans = await this.prisma.plan.findMany({
+      where: { isActive: true, kind: null },
+      orderBy: [{ sort: 'asc' }, { priceMonthly: 'asc' }],
+      select: {
+        id: true, name: true, slug: true,
+        priceMonthly: true, priceYearly: true, currency: true, features: true,
+      },
+    });
+    return plans.map(p => ({ ...p, priceMonthly: Number(p.priceMonthly), priceYearly: p.priceYearly === null ? null : Number(p.priceYearly) }));
+  }
+
   @Get('stores')
   @Header('Cache-Control', 'public, max-age=30, stale-while-revalidate=60')
   async stores(@Query('governorate') gov?: string, @Query('featured') featured?: string) {

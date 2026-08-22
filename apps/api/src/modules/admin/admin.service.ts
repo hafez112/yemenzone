@@ -635,6 +635,22 @@ export class AdminService {
     return this.prisma.review.delete({ where: { id } });
   }
 
+  // 🧾 إعداد التقييم الموثوق: عند التفعيل لا يُقبل تقييم بلا طلب مكتمل مطابق
+  async reviewsConfig() {
+    const row = await this.prisma.setting.findUnique({ where: { key: 'reviews.config' } });
+    return { onlyBuyers: !!(row?.value as any)?.onlyBuyers };
+  }
+
+  async saveReviewsConfig(b: { onlyBuyers?: boolean }) {
+    const value = { onlyBuyers: !!b.onlyBuyers };
+    await this.prisma.setting.upsert({
+      where: { key: 'reviews.config' },
+      update: { value },
+      create: { group: 'general', key: 'reviews.config', value },
+    });
+    return value;
+  }
+
   // ═══ الإشراف على الإيجارات/الغرف/الخدمات ═══
   private supervisionModel(kind: string) {
     if (kind === 'rentals') return this.prisma.rentalUnit;

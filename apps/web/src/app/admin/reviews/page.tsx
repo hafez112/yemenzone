@@ -10,6 +10,7 @@ export default function AdminReviews() {
   const router = useRouter();
   const [reviews, setReviews] = useState<any[]>([]);
   const [filter, setFilter] = useState('');
+  const [cfg, setCfg] = useState<any>(null); // 🧾 إعداد التقييم الموثوق
 
   async function load() {
     setReviews(await api(`/admin/reviews?approved=${filter}`));
@@ -18,7 +19,16 @@ export default function AdminReviews() {
   useEffect(() => {
     if (!getUser()) { router.push('/auth/admin-login'); return; }
     load().catch(() => router.push('/auth/admin-login'));
+    api('/admin/reviews-config').then(setCfg).catch(() => {});
   }, [filter]);
+
+  async function toggleOnlyBuyers() {
+    try {
+      const next = await api('/admin/reviews-config', { method: 'POST', body: JSON.stringify({ onlyBuyers: !cfg.onlyBuyers }) });
+      setCfg(next);
+      toast(next.onlyBuyers ? '🧾 فُعّل وضع تقييم المشترين فقط' : '✅ التقييم مفتوح للجميع');
+    } catch (e: any) { toast(e.message, 'error'); }
+  }
 
   async function act(fn: () => Promise<any>, msg: string) {
     try { await fn(); toast(msg); await load(); }
@@ -31,6 +41,20 @@ export default function AdminReviews() {
         <AdminSidebar />
         <div className="flex-1">
           <h1 className="text-2xl font-black text-white mb-4">⭐ الإشراف على التقييمات ({reviews.length})</h1>
+
+          {/* 🧾 وضع التقييم الموثوق — تقييد التقييمات بالمشترين الفعليين */}
+          {cfg && (
+            <div className="glass-dark rounded-2xl p-3.5 mb-4 flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <div className="text-white font-extrabold text-xs">🧾 تقييم المشترين فقط</div>
+                <div className="text-[10px] text-gray-500 mt-0.5">عند التفعيل لا يُقبل أي تقييم إلا برقم طلب مكتمل — كل تقييم يحمل شارة ✅ مشترٍ موثّق</div>
+              </div>
+              <button onClick={toggleOnlyBuyers}
+                className={`px-4 py-2 rounded-full text-xs font-black transition ${cfg.onlyBuyers ? 'bg-emerald-500 text-white' : 'bg-white/10 text-gray-400'}`}>
+                {cfg.onlyBuyers ? '🟢 مفعّل' : '⚪ متوقف'}
+              </button>
+            </div>
+          )}
 
           <div className="flex gap-2 mb-4">
             {[['', 'الكل'], ['1', '✅ معروض'], ['0', '🙈 مخفي']].map(([v, l]) => (
