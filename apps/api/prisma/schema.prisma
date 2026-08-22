@@ -234,9 +234,9 @@ model OtpCode {
   usedAt     DateTime?
   createdAt  DateTime  @default(now())
   sellerId   String?
-  seller     Seller?   @relation(fields: [sellerId], references: [id])
+  seller     Seller?   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   customerId String?
-  customer   Customer? @relation(fields: [customerId], references: [id])
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@index([phone, purpose])
   @@map("otp_codes")
@@ -252,10 +252,12 @@ model Session {
   revokedAt  DateTime?
   createdAt  DateTime  @default(now())
   sellerId   String?
-  seller     Seller?   @relation(fields: [sellerId], references: [id])
+  seller     Seller?   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   customerId String?
-  customer   Customer? @relation(fields: [customerId], references: [id])
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
+  @@index([sellerId])
+  @@index([customerId])
   @@map("sessions")
 }
 
@@ -555,6 +557,7 @@ model Order {
   @@index([customerPhone, createdAt])
   @@index([driverId, status])
   @@index([storeId, createdAt])
+  @@index([customerId, createdAt])
   @@map("orders")
 }
 
@@ -758,6 +761,8 @@ model Review {
 
   @@index([storeId])
   @@index([storeId, createdAt])
+  @@index([customerId, createdAt])
+  @@index([productId, createdAt])
   @@map("reviews")
 }
 
@@ -1168,6 +1173,8 @@ model Complaint {
   createdAt  DateTime        @default(now())
   repliedAt  DateTime?
 
+  @@index([customerId, createdAt])
+  @@index([status, createdAt])
   @@map("complaints")
 }
 
@@ -1608,6 +1615,8 @@ model CartItem {
 
   @@index([customerId, updatedAt])
   @@index([sessionId, updatedAt])
+  @@index([storeId])
+  @@index([productId])
   @@map("cart_items")
 }
 

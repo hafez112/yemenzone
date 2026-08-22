@@ -61,17 +61,45 @@ export default function SellerSidebar({ store }: { store: any }) {
     return () => { live = false; clearInterval(t); window.removeEventListener('yz-seller-menu', openMenu); };
   }, []);
   // 🧬 فصل كامل بين الأنشطة — لكل نوع متجر قائمته الخاصة، لا علاقة بينها وبين متاجر المنتجات
-  const KIND_MODULES: Record<string, string[]> = {
+  // 📂 مُجمَّعة بترتيب سير العمل: العمليات اليومية أولاً، ثم التسويق، ثم المال، ثم الحساب
+  const KIND_MODULES: Record<string, { title: string; items: string[] }[]> = {
     // متاجر المنتجات: المنظومة الكاملة (سلة/طلبات/مخزون/توصيل/مالية...)
-    products: ['products', 'categories', 'orders', 'returns', 'customers', 'coupons', 'ads', 'reviews', 'questions', 'inventory', 'growth', 'tools', 'chats', 'campaigns', 'share', 'verification', 'achievements', 'domain', 'delivery', 'checkout', 'wallet', 'card', 'finance', 'analytics', 'api'],
+    products: [
+      { title: '📦 العمليات اليومية', items: ['orders', 'chats', 'products', 'categories', 'inventory', 'returns', 'questions', 'reviews'] },
+      { title: '📣 التسويق والنمو', items: ['coupons', 'ads', 'campaigns', 'share', 'growth', 'tools'] },
+      { title: '💰 المال والتشغيل', items: ['wallet', 'card', 'finance', 'analytics', 'checkout', 'delivery'] },
+      { title: '🏪 متجري وحسابي', items: ['customers', 'verification', 'achievements', 'domain', 'api'] },
+    ],
     // 🍽️ المطاعم: نفس منظومة المنتجات (المنيو = أصناف + طلبات + توصيل) بتسميات مطعمية
-    restaurants: ['products', 'categories', 'orders', 'returns', 'customers', 'coupons', 'ads', 'reviews', 'questions', 'inventory', 'growth', 'tools', 'chats', 'campaigns', 'share', 'verification', 'achievements', 'domain', 'delivery', 'checkout', 'wallet', 'card', 'finance', 'analytics', 'api'],
+    restaurants: [
+      { title: '🍽️ العمليات اليومية', items: ['orders', 'chats', 'products', 'categories', 'inventory', 'returns', 'questions', 'reviews'] },
+      { title: '📣 التسويق والنمو', items: ['coupons', 'ads', 'campaigns', 'share', 'growth', 'tools'] },
+      { title: '💰 المال والتشغيل', items: ['wallet', 'card', 'finance', 'analytics', 'checkout', 'delivery'] },
+      { title: '🍽️ مطعمي وحسابي', items: ['customers', 'verification', 'achievements', 'domain', 'api'] },
+    ],
     // 🏬 المولات التجارية: المنظومة الكاملة بأوسع نطاق — سوق إلكتروني شامل
-    malls: ['products', 'categories', 'orders', 'returns', 'customers', 'coupons', 'ads', 'reviews', 'questions', 'inventory', 'growth', 'tools', 'chats', 'campaigns', 'share', 'verification', 'achievements', 'domain', 'delivery', 'checkout', 'wallet', 'card', 'finance', 'analytics', 'api'],
+    malls: [
+      { title: '🏬 العمليات اليومية', items: ['orders', 'chats', 'products', 'categories', 'inventory', 'returns', 'questions', 'reviews'] },
+      { title: '📣 التسويق والنمو', items: ['coupons', 'ads', 'campaigns', 'share', 'growth', 'tools'] },
+      { title: '💰 المال والتشغيل', items: ['wallet', 'card', 'finance', 'analytics', 'checkout', 'delivery'] },
+      { title: '🏬 المول وحسابي', items: ['customers', 'verification', 'achievements', 'domain', 'api'] },
+    ],
     // أنشطة الحجز: إدارة العناصر والحجوزات + التسويق الذاتي فقط — بلا طلبات/مخزون/توصيل/محفظة
-    rentals:  ['rentals', 'tools', 'ads', 'reviews', 'chats', 'share', 'verification', 'achievements', 'domain', 'card'],
-    hotel:    ['rooms', 'tools', 'ads', 'reviews', 'chats', 'share', 'verification', 'achievements', 'domain', 'card'],
-    services: ['services', 'tools', 'ads', 'reviews', 'chats', 'share', 'verification', 'achievements', 'domain', 'card'],
+    rentals: [
+      { title: '📅 العمليات اليومية', items: ['rentals', 'chats', 'reviews'] },
+      { title: '📣 التسويق والنمو', items: ['ads', 'tools', 'share'] },
+      { title: '🏠 نشاطي وحسابي', items: ['card', 'verification', 'achievements', 'domain'] },
+    ],
+    hotel: [
+      { title: '🛎️ العمليات اليومية', items: ['rooms', 'chats', 'reviews'] },
+      { title: '📣 التسويق والنمو', items: ['ads', 'tools', 'share'] },
+      { title: '🏨 فندقي وحسابي', items: ['card', 'verification', 'achievements', 'domain'] },
+    ],
+    services: [
+      { title: '🛠️ العمليات اليومية', items: ['services', 'chats', 'reviews'] },
+      { title: '📣 التسويق والنمو', items: ['ads', 'tools', 'share'] },
+      { title: '🛠️ نشاطي وحسابي', items: ['card', 'verification', 'achievements', 'domain'] },
+    ],
   };
   // 🏷️ تسميات وأيقونات خاصة بالمطاعم — المنيو بدل المنتجات، والمطبخ بدل المخزون
   const KIND_LABEL_OVERRIDES: Record<string, Record<string, { label: string; icon?: string }>> = {
@@ -95,7 +123,7 @@ export default function SellerSidebar({ store }: { store: any }) {
     },
   };
   const storeKind: string = store?.type?.kind || 'products';
-  const modules: string[] = KIND_MODULES[storeKind] || KIND_MODULES.products;
+  const groups = KIND_MODULES[storeKind] || KIND_MODULES.products;
   const labelOverrides = KIND_LABEL_OVERRIDES[storeKind] || {};
   const kn = kindInfo(store); // 🏷️ تسمية النشاط — فندق/عقارات/خدمات/مطعم، لا «متجر» للجميع
 
@@ -129,31 +157,37 @@ export default function SellerSidebar({ store }: { store: any }) {
         }`}>🏠</span>
         الرئيسية
       </Link>
-      {modules.map(m => {
-        const item = MENU[m];
-        if (!item) return null;
-        const active = path.startsWith(item.href);
-        // 🔒 الميزة مقفلة إن لم تمنحها الخطة أو الإدارة
-        const locked = item.feature && store?.features && !store.features[item.feature];
-        return (
-          <Link key={m} href={item.href} onClick={close}
-            className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl font-bold f-sm mb-1 transition-all ${
-              active ? 'text-white theme-glow' : 'hover:bg-white/60 text-gray-600'
-            }`}
-            style={active ? { background: 'linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 60%, var(--secondary)))' } : {}}>
-            <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0 transition-all ${
-              active ? 'bg-white/20 scale-105' : 'bg-purple-50'
-            }`}>{labelOverrides[m]?.icon || item.icon}</span>
-            <span className="truncate">{labelOverrides[m]?.label || item.label}</span>
-            {locked && <span className="mr-auto text-[10px] opacity-70">🔒</span>}
-            {m === 'chats' && chatUnread > 0 && (
-              <span className="mr-auto text-[10px] font-extrabold bg-red-500 text-white min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center anim-soft-pulse">
-                {chatUnread > 99 ? '99+' : chatUnread}
-              </span>
-            )}
-          </Link>
-        );
-      })}
+      {groups.map((g, gi) => (
+        <div key={g.title}>
+          {gi > 0 && <hr className="my-1.5 border-gray-200/50" />}
+          <div className="px-2.5 pt-1.5 pb-1 text-[10px] font-extrabold text-gray-400">{g.title}</div>
+          {g.items.map(m => {
+            const item = MENU[m];
+            if (!item) return null;
+            const active = path.startsWith(item.href);
+            // 🔒 الميزة مقفلة إن لم تمنحها الخطة أو الإدارة
+            const locked = item.feature && store?.features && !store.features[item.feature];
+            return (
+              <Link key={m} href={item.href} onClick={close}
+                className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl font-bold f-sm mb-1 transition-all ${
+                  active ? 'text-white theme-glow' : 'hover:bg-white/60 text-gray-600'
+                }`}
+                style={active ? { background: 'linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 60%, var(--secondary)))' } : {}}>
+                <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0 transition-all ${
+                  active ? 'bg-white/20 scale-105' : 'bg-purple-50'
+                }`}>{labelOverrides[m]?.icon || item.icon}</span>
+                <span className="truncate">{labelOverrides[m]?.label || item.label}</span>
+                {locked && <span className="mr-auto text-[10px] opacity-70">🔒</span>}
+                {m === 'chats' && chatUnread > 0 && (
+                  <span className="mr-auto text-[10px] font-extrabold bg-red-500 text-white min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center anim-soft-pulse">
+                    {chatUnread > 99 ? '99+' : chatUnread}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      ))}
       <hr className="my-2 border-gray-200/50" />
       {[
         { href: '/seller/reports', icon: '📊', label: 'تقريري الأسبوعي' },

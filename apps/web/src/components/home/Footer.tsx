@@ -21,6 +21,7 @@ export default function Footer({ platform, pages = [] }: { platform: any; pages?
         { href: '/start', label: 'كيف تبدأ متجرك' },
         { href: '/auth/seller-register', label: 'أنشئ متجرك مجاناً' },
         { href: '/auth/login', label: 'دخول البائعين' },
+        { href: '/driver/login', label: '🛵 دخول السائقين' },
         { href: '/seller/invite', label: '🤝 ادعُ التجار واكسب' },
         { href: '/#pricing', label: 'الخطط والأسعار' },
       ],
