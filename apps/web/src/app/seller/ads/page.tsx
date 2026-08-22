@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, getUser, imgUrl } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 import SellerSidebar from '@/components/SellerSidebar';
 import ImageUpload from '@/components/ImageUpload';
 
@@ -15,6 +16,8 @@ const STATUS_AR: Record<string, { label: string; cls: string }> = {
 };
 
 export default function SellerAdsPage() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [tab, setTab] = useState<'store' | 'platform'>('store');
@@ -216,7 +219,7 @@ export default function SellerAdsPage() {
                   className="px-4 py-3 rounded-xl border border-gray-200 outline-none bg-white">
                   {Object.entries(positions || {}).map(([k, label]) => (
                     <option key={k} value={k}>
-                      {String(label)} — {(pricing?.[k] || 0).toLocaleString()} ر.ي/أسبوع
+                      {String(label)} — {(pricing?.[k] || 0).toLocaleString()} {dsym()}/أسبوع
                     </option>
                   ))}
                 </select>
@@ -227,7 +230,7 @@ export default function SellerAdsPage() {
               </div>
               <div className="flex items-center justify-between bg-purple-50 rounded-2xl px-4 py-3">
                 <span className="text-sm font-bold text-gray-600">الإجمالي</span>
-                <span className="text-xl font-black grad-text">{total.toLocaleString()} ر.ي</span>
+                <span className="text-xl font-black grad-text">{total.toLocaleString()} {dsym()}</span>
               </div>
               <button onClick={create} disabled={sending}
                 className="btn-primary w-full py-3.5 rounded-2xl text-white font-extrabold disabled:opacity-40">

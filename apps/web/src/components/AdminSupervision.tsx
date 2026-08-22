@@ -3,10 +3,13 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 import AdminSidebar from '@/components/AdminSidebar';
 
 // إشراف المدير على الإيجارات/الغرف/الخدمات — فلترة/إخفاء/حذف + الحجوزات
 export default function AdminSupervision({ kind, title, icon }: { kind: string; title: string; icon: string }) {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const router = useRouter();
   const [items, setItems] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
@@ -67,7 +70,7 @@ export default function AdminSupervision({ kind, title, icon }: { kind: string; 
                       <span className="font-extrabold text-white text-sm">{it.title}</span>
                       {it.isHidden && <span className="text-[10px] bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded-full font-bold mr-2">🙈 مخفي</span>}
                       <div className="text-xs text-gray-500 mt-1">
-                        🏪 {it.store.name} • 💰 {Number(it.pricePerDay || it.pricePerNight || it.price).toLocaleString()} ر.ي • 📅 {it._count.bookings} حجز
+                        🏪 {it.store.name} • 💰 {Number(it.pricePerDay || it.pricePerNight || it.price).toLocaleString()} {dsym(it.currency)} • 📅 {it._count.bookings} حجز
                       </div>
                     </div>
                     <div className="flex gap-1.5">
@@ -97,7 +100,7 @@ export default function AdminSupervision({ kind, title, icon }: { kind: string; 
                     </div>
                     <div className="text-xs text-gray-500">
                       🏪 {item?.store?.name} • 👤 {b.customerName} • 📱 <span dir="ltr">{b.customerPhone}</span>
-                      • 💰 {Number(b.total).toLocaleString()} ر.ي
+                      • 💰 {Number(b.total).toLocaleString()} {dsym(b.currency)}
                     </div>
                   </div>
                 );

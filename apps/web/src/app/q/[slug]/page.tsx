@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { SERVER_API as API, pubImg } from '@/lib/server-api';
+import { SERVER_API as API, pubImg, serverCurSymbol } from '@/lib/server-api';
 import QsActions from '@/components/tools/QsActions';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://yemenzone1.com';
@@ -19,13 +19,12 @@ async function getItem(slug: string): Promise<Qs | null> {
   } catch { return null; }
 }
 
-const curLabel = (c: string) => (c === 'SAR' ? 'ر.س' : c === 'USD' ? '$' : 'ر.ي');
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const item = await getItem(slug);
   if (!item) return {};
-  const price = `${Number(item.price).toLocaleString()} ${curLabel(item.currency)}`;
+  const price = `${Number(item.price).toLocaleString()} ${await serverCurSymbol(item.currency)}`;
   const desc = (item.desc || `${item.name} بسعر ${price}${item.governorate ? ` — ${item.governorate}` : ''} — اطلب الآن واتساب`).slice(0, 160);
   const img = item.images?.[0] ? `${SITE}${item.images[0]}` : undefined;
   return {
@@ -46,7 +45,7 @@ export default async function QuickSellPage({ params }: { params: Promise<{ slug
   const item = await getItem(slug);
   if (!item) notFound();
 
-  const price = `${Number(item.price).toLocaleString()} ${curLabel(item.currency)}`;
+  const price = `${Number(item.price).toLocaleString()} ${await serverCurSymbol(item.currency)}`;
   const waNum = item.whatsapp.replace(/[^0-9]/g, '');
   const waIntl = waNum.startsWith('967') ? waNum : '967' + waNum.replace(/^0/, '');
   const waMsg = encodeURIComponent(`السلام عليكم 🌹\nأريد طلب: ${item.name}\nالسعر: ${price}\n${SITE}/q/${item.slug}`);

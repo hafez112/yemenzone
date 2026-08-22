@@ -3,9 +3,12 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { imgUrl } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 
 // 🔥 عروض اليوم — العرض التفاعلي: عداد منتصف الليل + فلترة بالمحافظة + فرز + مشاركة
 export default function OffersClient({ data }: { data: { items: any[]; stats: any } }) {
+  const { list } = useCurrency();
+  const psym = (code?: string) => list.find((c) => c.code === String(code || 'YER').toUpperCase())?.symbol || code || 'ر.ي';
   const [gov, setGov] = useState('');
   const [sort, setSort] = useState<'discount' | 'price' | 'new'>('discount');
   const [left, setLeft] = useState('');
@@ -120,7 +123,7 @@ export default function OffersClient({ data }: { data: { items: any[]; stats: an
                 <div className="p-3">
                   <div className="font-extrabold text-[13px] truncate">{p.name}</div>
                   <div className="flex items-center gap-1.5 mt-1">
-                    <span className="font-black text-sm text-red-500">{Number(p.salePrice).toLocaleString()} {p.currency === 'SAR' ? 'ر.س' : p.currency === 'USD' ? '$' : 'ر.ي'}</span>
+                    <span className="font-black text-sm text-red-500">{Number(p.salePrice).toLocaleString()} {psym(p.currency)}</span>
                     <span className="text-[10px] text-gray-400 line-through">{Number(p.price).toLocaleString()}</span>
                   </div>
                   <div className="text-[10px] text-gray-400 mt-1 truncate">🏪 {p.store.name} {p.store.isVerified && '✅'}</div>

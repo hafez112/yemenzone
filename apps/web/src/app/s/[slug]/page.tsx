@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { shareGet, shareVote, type SharedDoc } from '@/lib/tool-db';
 import { elementToPdf } from '@/components/tools/pdfHelper';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 
 // 📢 صفحة العرض العامة للمستندات المشتركة — منيو / اختبار / استطلاع / فعالية
 // تعمل بدون تسجيل دخول — يراها كل من يملك الرابط
@@ -265,6 +266,8 @@ function PollView({ doc, onVoted }: { doc: SharedDoc; onVoted: (d: SharedDoc) =>
 
 // 🎫 صفحة الفعالية
 function TicketView({ doc }: { doc: SharedDoc }) {
+  const { list } = useCurrency();
+  const csym = (code?: string) => list.find((c) => c.code === String(code || 'YER').toUpperCase())?.symbol || code || 'ر.ي';
   const p = doc.payload || {};
   return (
     <div className="text-center space-y-5">
@@ -278,7 +281,7 @@ function TicketView({ doc }: { doc: SharedDoc }) {
       </div>
       <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
         <p className="text-white/50 text-xs mb-1">سعر التذكرة</p>
-        <p className="text-3xl font-black text-emerald-300">{Number(p.price) > 0 ? `${Number(p.price).toLocaleString()} ر.ي` : 'مجانية 🎉'}</p>
+        <p className="text-3xl font-black text-emerald-300">{Number(p.price) > 0 ? `${Number(p.price).toLocaleString()} ${csym(p.currency)}` : 'مجانية 🎉'}</p>
       </div>
       {p.whatsapp && (
         <a href={`https://wa.me/${p.whatsapp}?text=${encodeURIComponent(`السلام عليكم 🌹\nأريد حجز تذكرة لفعالية: ${p.name || ''}`)}`} target="_blank" rel="noreferrer"

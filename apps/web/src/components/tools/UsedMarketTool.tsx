@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from '@/components/Toast';
 import { apiUpload } from '@/lib/api';
+import { useCurrency } from '@/lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -22,14 +23,8 @@ export const USED_CONDS = [
   { id: 'used-fair', icon: '🔧', label: 'مستعمل مقبول' },
 ];
 const GOVS = ['أمانة العاصمة', 'صنعاء', 'عدن', 'تعز', 'الحديدة', 'إب', 'ذمار', 'حضرموت', 'مأرب', 'عمران', 'حجة', 'صعدة', 'المحويت', 'البيضاء', 'الضالع', 'لحج', 'أبين', 'شبوة', 'المهرة', 'الجوف', 'ريمة', 'سقطرى'];
-const CURS = [
-  { id: 'YER', label: 'ريال يمني 🇾🇪' },
-  { id: 'SAR', label: 'ريال سعودي 🇸🇦' },
-  { id: 'USD', label: 'دولار أمريكي 💵' },
-];
 const LS_KEY = 'yz-my-used-v1';
 
-export const curSym = (c: string) => (c === 'YER' ? 'ر.ي' : c === 'SAR' ? 'ر.س' : '$');
 export const catOf = (id: string) => USED_CATS.find((c) => c.id === id) || USED_CATS[6];
 export const condOf = (id: string) => USED_CONDS.find((c) => c.id === id) || USED_CONDS[1];
 
@@ -47,6 +42,9 @@ function ago(iso: string) {
 }
 
 export default function UsedMarketTool() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const curSym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || 'ر.ي';
+  useEffect(() => { if (!currency && defCur) setCurrency(defCur.code); }, [defCur]);
   const [tab, setTab] = useState<'browse' | 'post'>('browse');
 
   // ─── التصفح ───
@@ -85,7 +83,7 @@ export default function UsedMarketTool() {
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   const [price, setPrice] = useState('');
-  const [currency, setCurrency] = useState('YER');
+  const [currency, setCurrency] = useState('');
   const [category, setCategory] = useState('phones');
   const [condition, setCondition] = useState('used-good');
   const [whatsapp, setWhatsapp] = useState('');
@@ -290,7 +288,7 @@ export default function UsedMarketTool() {
             <div className="flex gap-2">
               <input value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ''))} inputMode="decimal" placeholder="السعر" className={inp + ' flex-1'} />
               <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inp + ' !w-auto shrink-0 bg-night'}>
-                {CURS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+                {CURS.map((c) => <option key={c.code} value={c.code}>{c.name} — {c.symbol}</option>)}
               </select>
             </div>
             <select value={pgov} onChange={(e) => setPGov(e.target.value)} className={inp + ' bg-night'}>

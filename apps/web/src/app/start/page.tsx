@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import { CountUpStat, TestimonialsMarquee } from '@/components/info/InfoWidgets';
 
-import { SERVER_API as API } from '@/lib/server-api';
+import { SERVER_API as API, serverCurSymbols } from '@/lib/server-api';
 
 export const metadata: Metadata = {
   title: 'كيف تبدأ متجرك — يمن زون',
@@ -60,6 +60,8 @@ const FAQS = [
 
 // 🚀 كيف تبدأ متجرك — خطوات بصرية + مزايا + آراء حقيقية
 export default async function StartPage() {
+  const SYMS = await serverCurSymbols();
+  const dsym = (code?: string) => SYMS[String(code || 'YER').toUpperCase()] || code || 'ر.ي';
   const { stats, testimonials, plans } = await getData();
 
   return (
@@ -140,12 +142,12 @@ export default async function StartPage() {
                           <div className="text-3xl font-black text-emerald-500">مجاناً 🎁</div>
                         ) : (
                           <div className="text-3xl font-black" style={highlight ? {} : { color: 'var(--primary)' }}>
-                            {monthly.toLocaleString('en-US')} <span className="text-xs font-bold opacity-70">{p.currency === 'YER' ? 'ر.ي/شهر' : p.currency}</span>
+                            {monthly.toLocaleString('en-US')} <span className="text-xs font-bold opacity-70">{dsym(p.currency)}/شهر</span>
                           </div>
                         )}
                         {yearly !== null && yearly > 0 && (
                           <div className={`text-[11px] font-bold mt-1 ${highlight ? 'text-amber-300' : 'text-amber-600'}`}>
-                            أو {yearly.toLocaleString('en-US')} {p.currency === 'YER' ? 'ر.ي/سنة' : p.currency} — وفّر {Math.max(0, Math.round((1 - yearly / (monthly * 12)) * 100))}% 🔥
+                            أو {yearly.toLocaleString('en-US')} {dsym(p.currency)}/سنة — وفّر {Math.max(0, Math.round((1 - yearly / (monthly * 12)) * 100))}% 🔥
                           </div>
                         )}
                       </div>

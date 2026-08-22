@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import AdminSidebar from "../../../components/AdminSidebar";
 import { api, getUser } from "../../../lib/api";
 import { toast } from "../../../components/Toast";
+import { useCurrency } from '../../../lib/currency';
 import { useRouter } from "next/navigation";
 
 // 🎟️ كوبونات المنصة + عروض الفلاش — حملات مركزية مجدولة بقياس أداء
@@ -16,6 +17,8 @@ const couponStatus = (c: any) => {
 };
 
 export default function AdminCouponsPage() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const router = useRouter();
   const [list, setList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +122,7 @@ export default function AdminCouponsPage() {
                 <option value="fixed">💵 مبلغ ثابت</option>
               </select>
               <input type="number" min={0} value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })}
-                placeholder={form.type === "percent" ? "النسبة %" : "المبلغ ر.ي"} dir="ltr" />
+                placeholder={form.type === "percent" ? "النسبة %" : `المبلغ ${dsym()}`} dir="ltr" />
               <input type="number" min={0} value={form.minTotal} onChange={(e) => setForm({ ...form, minTotal: e.target.value })} placeholder="أدنى إجمالي (0=بلا)" dir="ltr" />
               <input type="number" min={1} value={form.maxUses} onChange={(e) => setForm({ ...form, maxUses: e.target.value })} placeholder="أقصى استخدامات (∞)" dir="ltr" />
               <label className="text-[10px] muted">🗓️ يبدأ<input type="datetime-local" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} style={{ marginBottom: 0 }} /></label>
@@ -157,7 +160,7 @@ export default function AdminCouponsPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <code className="font-black text-base px-3 py-1 rounded-xl" style={{ background: "rgba(108,61,245,.1)", color: "#6C3DF5" }} dir="ltr">{c.code}</code>
                       <span className="font-black text-sm">
-                        {c.type === "percent" ? `${c.value}%` : `${c.value.toLocaleString()} ر.ي`}
+                        {c.type === "percent" ? `${c.value}%` : `${c.value.toLocaleString()} ${dsym()}`}
                       </span>
                       <span className={`badge ${st.cls}`}>{st.t}</span>
                       <span className="mr-auto flex gap-1.5">

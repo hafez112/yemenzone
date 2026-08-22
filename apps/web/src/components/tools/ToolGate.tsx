@@ -2,7 +2,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { toolBySlug } from '@/lib/tools';
-import { buyTool, myAccess, sessionType, toolPrices } from '@/lib/tool-db';
+import { buyTool, myAccess, sessionType, toolPrices, toolPriceCurrencies } from '@/lib/tool-db';
+import { useCurrency } from '@/lib/currency';
 import { toast } from '@/components/Toast';
 
 // 🛡️ حارس الخدمات:
@@ -12,7 +13,10 @@ import { toast } from '@/components/Toast';
 export default function ToolGate({ slug, children }: { slug: string; children: ReactNode }) {
   const [verdict, setVerdict] = useState<'checking' | 'allow' | 'login' | 'seller-only' | 'paywall'>('checking');
   const [price, setPrice] = useState(0);
+  const [priceCur, setPriceCur] = useState('');
   const [busy, setBusy] = useState(false);
+  const { list: currencies } = useCurrency();
+  const priceSym = currencies.find((c) => c.code === String(priceCur || 'YER').toUpperCase())?.symbol || priceCur || 'ر.ي';
 
   useEffect(() => {
     const tool = toolBySlug(slug);
@@ -29,6 +33,8 @@ export default function ToolGate({ slug, children }: { slug: string; children: R
         const prices = await toolPrices();
         const p = prices[slug] || 0;
         if (!p) { setVerdict('allow'); return; }
+        const curs = await toolPriceCurrencies();
+        setPriceCur(curs[slug] || 'YER');
         const access = await myAccess();
         if (access.purchased.includes(slug)) { setVerdict('allow'); return; }
         setPrice(p);
@@ -107,7 +113,7 @@ export default function ToolGate({ slug, children }: { slug: string; children: R
         <p className="text-sm text-white/70 mb-1 leading-relaxed">
           هذه الخدمة احترافية بسعر رمزي حددته إدارة المنصة — شراء مرة واحدة وفتح دائم.
         </p>
-        <p className="text-3xl font-black text-amber-300 my-4">{price.toLocaleString()} <span className="text-sm">ر.ي</span></p>
+        <p className="text-3xl font-black text-amber-300 my-4">{price.toLocaleString()} <span className="text-sm">{priceSym}</span></p>
         <button onClick={buy} disabled={busy}
           className="btn-primary w-full px-6 py-3 rounded-full font-extrabold text-sm disabled:opacity-60">
           {busy ? '⏳ جارٍ الدفع من بطاقتك…' : '💳 ادفع ببطاقة يمن زون وافتحها فوراً'}

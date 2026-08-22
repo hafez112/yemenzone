@@ -17,6 +17,15 @@ export function settlementNet(gross: number, commission: number, refunds: number
   return Math.max(0, Math.round(((Number(gross) || 0) - (Number(commission) || 0) - (Number(refunds) || 0)) * 100) / 100);
 }
 
+/** تحويل مبلغ بين عملتين باستخدام rateToUsd (كم وحدة من العملة = 1 دولار) */
+export function convertMoney(amount: number, fromRateToUsd: number, toRateToUsd: number): number {
+  const a = Number(amount) || 0;
+  const from = Number(fromRateToUsd);
+  const to = Number(toRateToUsd);
+  if (!from || !to || from <= 0 || to <= 0) return Math.round(a * 100) / 100;
+  return Math.round(((a * to) / from) * 100) / 100;
+}
+
 // 🛡️ اسم ملف آمن — يمنع اختراق المسارات والأحرف الخطرة
 export function safeName(name: string): string {
   const base = String(name || '')

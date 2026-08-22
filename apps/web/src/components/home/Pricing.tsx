@@ -1,8 +1,11 @@
 'use client';
 import Link from 'next/link';
+import { useCurrency } from '@/lib/currency';
 
 // الأسعار — من قاعدة البيانات (الخطط المزروعة)
 export default function Pricing({ plans }: { plans: any[] }) {
+  const { list } = useCurrency();
+  const planSym = (code?: string) => list.find((c) => c.code === String(code || 'YER').toUpperCase())?.symbol || code || 'ر.ي';
   return (
     <section id="pricing" className="max-w-5xl mx-auto px-3 py-8">
       <div className="text-center mb-10">
@@ -29,7 +32,7 @@ export default function Pricing({ plans }: { plans: any[] }) {
                 <span className="text-4xl font-black grad-text">
                   {Number(p.priceMonthly) === 0 ? 'مجاناً' : Number(p.priceMonthly).toLocaleString()}
                 </span>
-                {Number(p.priceMonthly) > 0 && <span className="text-sm opacity-70"> ر.ي / شهرياً</span>}
+                {Number(p.priceMonthly) > 0 && <span className="text-sm opacity-70"> {planSym(p.currency)} / شهرياً</span>}
               </div>
               <ul className={`space-y-2 text-sm mb-6 ${popular ? 'text-gray-300' : 'text-gray-500'}`}>
                 <li>📦 {feat.maxProducts === -1 ? 'منتجات غير محدودة' : `حتى ${feat.maxProducts} منتجاً`}</li>

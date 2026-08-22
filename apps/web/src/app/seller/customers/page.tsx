@@ -4,10 +4,13 @@ import { useRouter } from "next/navigation";
 import SellerSidebar from "../../../components/SellerSidebar";
 import { api, getUser } from "../../../lib/api";
 import { toast } from "../../../components/Toast";
+import { useCurrency } from "../../../lib/currency";
 import FeatureLock from "../../../components/FeatureLock";
 
 // عملاء المتجر — تحليل محلي ذكي من بيانات الطلبات (بدون خوادم خارجية)
 export default function SellerCustomersPage() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const router = useRouter();
   const [store, setStore] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
@@ -100,7 +103,7 @@ export default function SellerCustomersPage() {
                     <div className="text-xs text-gray-400" dir="ltr">{c.phone || "—"}</div>
                   </div>
                   <div className="text-left shrink-0">
-                    <div className="font-black text-teal-600 text-sm">{c.spent.toLocaleString()} ر.ي</div>
+                    <div className="font-black text-teal-600 text-sm">{c.spent.toLocaleString()} {dsym()}</div>
                     <div className="text-xs text-gray-400">{c.count} طلب</div>
                   </div>
                   <span className="text-xs font-bold px-2 py-1 rounded-full shrink-0" style={{ color: b.c, background: b.bg }}>{b.t}</span>

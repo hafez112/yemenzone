@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import SellerSidebar from '@/components/SellerSidebar';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -45,6 +46,8 @@ async function copyText(t: string, msg: string) {
 }
 
 export default function SellerOrdersPage() {
+  const { list } = useCurrency();
+  const sym = (code?: string) => list.find((c) => c.code === String(code || 'YER').toUpperCase())?.symbol || code || 'ر.ي';
   const router = useRouter();
   const [store, setStore] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
@@ -164,7 +167,7 @@ export default function SellerOrdersPage() {
                         </div>
                       </div>
                       <div className="text-left">
-                        <div className="font-black text-lg grad-text">{Number(o.total).toLocaleString()} {o.currency === 'YER' ? 'ر.ي' : o.currency}</div>
+                        <div className="font-black text-lg grad-text">{Number(o.total).toLocaleString()} {sym(o.currency)}</div>
                         <div className="text-[10px] text-gray-400">
                           {PAY_AR[o.paymentMethod] || (o.paymentMethod?.startsWith('store:') ? `💳 ${o.paymentMethod.slice(6)}` : o.paymentMethod || '—')}
                           {o.deliveryMethod ? ` • 🚚 ${o.deliveryMethod}` : ''}

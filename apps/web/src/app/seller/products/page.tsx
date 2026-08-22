@@ -7,6 +7,7 @@ import SellerSidebar from '@/components/SellerSidebar';
 import BulkTools from '@/components/seller/BulkTools';
 import RichTextEditor from '@/components/RichTextEditor';
 import { PRODUCT_KINDS, productKindInfo } from '@/lib/activity';
+import { loadCurrencies, type Cur } from '@/lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -20,7 +21,8 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState<any>({ name: '', categoryId: '', productKind: '', specs: {}, price: '', salePrice: '', stock: 10, lowStockAt: 5, description: '', shortDesc: '', keywords: '', metaTitle: '', metaDesc: '', isFeatured: false, sku: '', barcode: '', features: [], variants: [], images: [] });
+  const [form, setForm] = useState<any>({ name: '', categoryId: '', productKind: '', specs: {}, price: '', salePrice: '', currency: '', stock: 10, lowStockAt: 5, description: '', shortDesc: '', keywords: '', metaTitle: '', metaDesc: '', isFeatured: false, sku: '', barcode: '', features: [], variants: [], images: [] });
+  const [currencies, setCurrencies] = useState<Cur[]>([]);
   const [showVariants, setShowVariants] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -42,6 +44,11 @@ export default function ProductsPage() {
     if (!getUser()) { router.push('/auth/login'); return; }
     api('/stores/my').then(setStore).catch(() => router.push('/seller/setup'));
     load().catch(e => toast(e.message, 'error'));
+    loadCurrencies().then((list) => {
+      setCurrencies(list);
+      const def = list.find((c) => c.isDefault) || list[0];
+      if (def) setForm((f: any) => (f.currency ? f : { ...f, currency: def.code }));
+    }).catch(() => {});
   }, []);
 
   // 🤖 توليد وصف بالذكاء المحلي
@@ -165,7 +172,7 @@ export default function ProductsPage() {
         toast(isRestaurant ? '🎉 أُضيف الصنف إلى المنيو' : '🎉 تمت إضافة المنتج');
       }
       setShowForm(false); setEditing(null);
-      setForm({ name: '', categoryId: '', productKind: '', specs: {}, price: '', salePrice: '', stock: 10, lowStockAt: 5, description: '', shortDesc: '', keywords: '', metaTitle: '', metaDesc: '', isFeatured: false, sku: '', barcode: '', features: [], variants: [], images: [] }); setShowVariants(false);
+      setForm({ name: '', categoryId: '', productKind: '', specs: {}, price: '', salePrice: '', currency: (currencies.find((c) => c.isDefault) || currencies[0])?.code || '', stock: 10, lowStockAt: 5, description: '', shortDesc: '', keywords: '', metaTitle: '', metaDesc: '', isFeatured: false, sku: '', barcode: '', features: [], variants: [], images: [] }); setShowVariants(false);
       await load();
     } catch (e: any) { toast(e.message, 'error'); }
     setSaving(false);
@@ -185,7 +192,7 @@ export default function ProductsPage() {
     setForm({
       name: p.name, categoryId: p.categoryId || '', productKind: p.productKind || '',
       specs: p.specs || {},
-      price: p.price, salePrice: p.salePrice || '',
+      price: p.price, salePrice: p.salePrice || '', currency: p.currency || '',
       stock: p.stock, lowStockAt: p.lowStockAt ?? 5, description: p.description || '',
       shortDesc: p.shortDesc || '', keywords: p.keywords || '',
       metaTitle: p.metaTitle || '', metaDesc: p.metaDesc || '', isFeatured: !!p.isFeatured,
@@ -293,7 +300,7 @@ export default function ProductsPage() {
               })()}
               <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 <input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })}
-                  placeholder={showVariants ? 'السعر الأساسي' : 'السعر (ر.ي)'}
+                  placeholder={showVariants ? 'السعر الأساسي' : 'السعر'}
                   className="w-full px-3 py-3 rounded-xl border border-gray-200 outline-none" />
                 <div className="relative min-w-0">
                   <input type="number" value={form.salePrice} onChange={e => setForm({ ...form, salePrice: e.target.value })}
@@ -306,6 +313,26 @@ export default function ProductsPage() {
                   placeholder="الكمية"
                   className="w-full px-3 py-3 rounded-xl border border-gray-200 outline-none" />
               </div>
+              {/* 💱 عملة المنتج — من عملات المنصة النشطة التي تحددها الإدارة */}
+              {currencies.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-extrabold text-gray-500">💱 عملة السعر:</span>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {currencies.map((c) => (
+                      <button key={c.code} type="button"
+                        onClick={() => setForm({ ...form, currency: c.code })}
+                        className={`px-3 py-1.5 rounded-full text-xs font-extrabold transition-all ${
+                          (form.currency || ((currencies.find((x) => x.isDefault) || currencies[0])?.code)) === c.code
+                            ? 'text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                        style={(form.currency || ((currencies.find((x) => x.isDefault) || currencies[0])?.code)) === c.code ? { background: 'var(--primary)' } : {}}>
+                        {c.name} ({c.symbol})
+                      </button>
+                    ))}
+                  </div>
+                  <span className="text-[10px] text-gray-400">تُحوَّل للزبون تلقائياً بسعر الإدارة عند الطلب</span>
+                </div>
+              )}
               {/* 💲 فحص السعر بالذكاء */}
               <div className="flex items-center gap-2">
                 <button onClick={aiPriceCheck} disabled={aiBusy === 'price'}
@@ -600,14 +627,17 @@ export default function ProductsPage() {
                     {p.sku && <span className="font-mono" dir="ltr"> • {p.sku}</span>}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    {p.salePrice ? (
-                      <>
-                        <span className="font-black text-red-500">{Number(p.salePrice).toLocaleString()}</span>
-                        <span className="text-xs text-gray-400 line-through">{Number(p.price).toLocaleString()}</span>
-                      </>
-                    ) : (
-                      <span className="font-black grad-text">{Number(p.price).toLocaleString()} ر.ي</span>
-                    )}
+                    {(() => {
+                      const sym = currencies.find((c) => c.code === p.currency)?.symbol || p.currency || 'ر.ي';
+                      return p.salePrice ? (
+                        <>
+                          <span className="font-black text-red-500">{Number(p.salePrice).toLocaleString()} {sym}</span>
+                          <span className="text-xs text-gray-400 line-through">{Number(p.price).toLocaleString()}</span>
+                        </>
+                      ) : (
+                        <span className="font-black grad-text">{Number(p.price).toLocaleString()} {sym}</span>
+                      );
+                    })()}
                   </div>
                   {/* 🤖 نصيحة المخزون */}
                   <div className="text-[10px] mt-1 font-bold" style={{ color: p.stockAdvice?.color }}>

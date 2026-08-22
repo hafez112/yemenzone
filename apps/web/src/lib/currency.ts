@@ -1,5 +1,5 @@
-// 💱 نظام العملات للعرض — الأسعار الأساسية بالريال اليمني (عملة المنصة الافتراضية)
-// التحويل للعرض فقط — الدفع الفعلي يبقى بالعملة الأساسية
+// 💱 نظام العملات الحقيقي — العملات وأسعار الصرف تحددها إدارة المنصة
+// كل مبلغ له عملة مصدر؛ العرض يحوّلها إلى العملة المختارة بأسعار الإدارة الحالية
 'use client';
 import { useEffect, useState } from 'react';
 
@@ -36,7 +36,15 @@ function smartRound(v: number): string {
   return v >= 100 ? Math.round(v).toLocaleString('en-US') : (Math.round(v * 100) / 100).toLocaleString('en-US');
 }
 
-// 🪙 هوك العملة — يرجع العملة المختارة ودالة تنسيق تحوّل من العملة الافتراضية
+// تحويل رقمي صرف بين عملتين بأسعار الإدارة (rateToUsd)
+export function convertAmount(amount: number, from: Cur | undefined, to: Cur | undefined): number {
+  const a = Number(amount) || 0;
+  if (!from || !to || from.code === to.code) return a;
+  if (!from.rateToUsd || !to.rateToUsd) return a;
+  return Math.round(((a * to.rateToUsd) / from.rateToUsd) * 100) / 100;
+}
+
+// 🪙 هوك العملة — العملة المختارة + تنسيق/تحويل واعيان بعملة المصدر
 export function useCurrency() {
   const [state, setState] = useState<{ list: Cur[]; cur: Cur; def: Cur } | null>(null);
 
@@ -55,14 +63,31 @@ export function useCurrency() {
     return () => { live = false; window.removeEventListener('yz-cur', on); };
   }, []);
 
-  // تنسيق سعر أساسي (بالعملة الافتراضية) → العملة المختارة
-  const fmt = (amount: number): string => {
+  const findCur = (code?: string): Cur | undefined =>
+    code ? state?.list.find((c) => c.code === String(code).toUpperCase()) : undefined;
+
+  // تحويل رقمي: من عملة المصدر (افتراضياً عملة المنصة) إلى عملة معينة أو المختارة
+  const convert = (amount: number, fromCode?: string, toCode?: string): number => {
+    if (!state) return Number(amount) || 0;
+    const from = findCur(fromCode) || state.def;
+    const to = findCur(toCode) || state.cur;
+    return convertAmount(amount, from, to);
+  };
+
+  // تنسيق مبلغ بعملته المصدر (fromCode) محوّلاً للعرض بالعملة المختارة
+  // ملاحظة: استدعاء fmt(amount) بلا fromCode يفترض أن المبلغ بعملة المنصة الافتراضية
+  const fmt = (amount: number, fromCode?: string): string => {
     if (!state) return `${Number(amount).toLocaleString()} ر.ي`;
     const { cur, def } = state;
-    if (cur.code === def.code) return `${Number(amount).toLocaleString()} ${cur.symbol}`;
-    const converted = (Number(amount) * cur.rateToUsd) / def.rateToUsd;
+    // عملة مصدر غير معروفة (تاريخية/معطلة) → اعرض الرقم كما هو مع رمزها
+    if (fromCode && !findCur(fromCode)) {
+      return `${Number(amount).toLocaleString()} ${String(fromCode).toUpperCase()}`;
+    }
+    const from = findCur(fromCode) || def;
+    if (from.code === cur.code) return `${Number(amount).toLocaleString()} ${cur.symbol}`;
+    const converted = convertAmount(amount, from, cur);
     return `${smartRound(converted)} ${cur.symbol}`;
   };
 
-  return { list: state?.list || [], cur: state?.cur || null, fmt, ready: !!state };
+  return { list: state?.list || [], cur: state?.cur || null, def: state?.def || null, fmt, convert, ready: !!state };
 }

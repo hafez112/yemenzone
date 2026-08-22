@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { SERVER_API as API } from '@/lib/server-api';
+import { SERVER_API as API, serverCurSymbols } from '@/lib/server-api';
 
 export const metadata: Metadata = {
   title: 'الباقات والأسعار — يمن زون',
@@ -37,6 +37,8 @@ const NUMERIC_ROWS = [
 // 💎 مقارنة الباقات — كل الأرقام والميزات من قاعدة البيانات مباشرة (يحدّثها المدير)
 export default async function PlansPage() {
   const { plans, labels } = await getPlans();
+  const SYMS = await serverCurSymbols();
+  const dsym = (code?: string) => SYMS[String(code || 'YER').toUpperCase()] || code || 'ر.ي';
   const boolKeys = Object.keys(labels as Record<string, string>);
 
   return (
@@ -68,7 +70,7 @@ export default async function PlansPage() {
                         ) : (
                           <>
                             <span className="text-3xl font-black" style={highlight ? {} : { color: 'var(--primary)' }}>{monthly.toLocaleString('en-US')}</span>
-                            <span className="text-xs font-bold opacity-60"> {p.currency === 'YER' ? 'ر.ي / شهر' : p.currency}</span>
+                            <span className="text-xs font-bold opacity-60"> {dsym(p.currency)} / شهر</span>
                           </>
                         )}
                         {yearly !== null && yearly > 0 && monthly > 0 && (

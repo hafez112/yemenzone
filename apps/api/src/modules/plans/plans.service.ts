@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CardsService } from '../cards/cards.service';
+import { CurrencyService } from '../../prisma/currency.service';
 import { effectiveFeatures, subscriptionActive, FEATURE_AR } from '../../common/features';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class PlansService {
     private messaging: MessagingService,
     private notifications: NotificationsService,
     private cards: CardsService,
+    private fx: CurrencyService,
   ) {}
 
   private async sellerStore(sellerId: string) {
@@ -62,9 +64,9 @@ export class PlansService {
       return { activated: true, message: 'تم التحويل للخطة المجانية' };
     }
 
-    // 💳 الدفع ببطاقة يمن زون — خصم فوري وتفعيل فوري بدون مراجعة
+    // 💳 الدفع ببطاقة يمن زون — خصم فوري وتفعيل فوري بدون مراجعة (يُحوَّل سعر الخطة إلى عملة البطاقة)
     if (body.method === 'yz-card') {
-      const card = await this.cards.chargeYzCard('seller', sellerId, Number(plan.priceMonthly));
+      const card = await this.cards.chargeYzCard('seller', sellerId, Number(plan.priceMonthly), plan.currency);
       const number = 'INV-' + Math.random().toString(36).slice(2, 8).toUpperCase();
       const endsAt = new Date(Date.now() + 30 * 24 * 3600 * 1000);
       await this.prisma.$transaction([
@@ -76,7 +78,7 @@ export class PlansService {
         this.prisma.payment.create({
           data: {
             number, payerType: 'seller', payerId: sellerId, purpose: 'subscription',
-            amount: plan.priceMonthly, method: 'yz-card', status: 'approved',
+            amount: plan.priceMonthly, currency: plan.currency, method: 'yz-card', status: 'approved',
             reviewedAt: new Date(), referenceId: plan.id,
           },
         }),
@@ -84,7 +86,7 @@ export class PlansService {
       this.notifications.push('seller', sellerId, {
         icon: '💳',
         title: `اشتركت في خطة ${plan.name} ✅`,
-        body: `دُفع ${Number(plan.priceMonthly).toLocaleString()} ر.ي من بطاقتك وفُعّلت خطتك فوراً حتى ${endsAt.toLocaleDateString('ar-YE')}`,
+        body: `دُفع ${Number(plan.priceMonthly).toLocaleString()} ${plan.currency} من بطاقتك وفُعّلت خطتك فوراً حتى ${endsAt.toLocaleDateString('ar-YE')}`,
         link: '/seller/subscription',
       }).catch(() => {});
       return { activated: true, paidByCard: true, message: `🎉 دُفع من بطاقتك وفعّلت خطة ${plan.name} فوراً` };
@@ -104,6 +106,7 @@ export class PlansService {
         payerId: sellerId,
         purpose: 'subscription',
         amount: plan.priceMonthly,
+        currency: plan.currency,
         method: body.method || 'transfer',
         proofImage: body.proofImage,
         referenceId: plan.id,
@@ -124,11 +127,14 @@ export class PlansService {
 
   async savePlan(id: string | null, body: any) {
     const KINDS = ['products', 'rentals', 'hotel', 'services', 'restaurants', 'malls'];
+    // 💱 عملة سعر الخطة — من عملات المنصة النشطة
+    const planCurrency = (await this.fx.requireActive(body.currency)).code;
     const data = {
       name: body.name,
       kind: KINDS.includes(body.kind) ? body.kind : null, // 🎯 نوع النشاط المستهدف — فارغ = عامة
       priceMonthly: Number(body.priceMonthly || 0),
       priceYearly: body.priceYearly ? Number(body.priceYearly) : null,
+      currency: planCurrency,
       features: body.features || {},
       isActive: body.isActive ?? true,
       sort: Number(body.sort || 0),

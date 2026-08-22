@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, getUser, imgUrl } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 import {
   InvoiceSheet, InvoiceMasthead, PartyCards,
   PayBanner, InvoiceFooter, PrintToolbar,
@@ -23,6 +24,7 @@ const STATUS_AR: Record<string, { label: string; tone: 'ok' | 'warn' | 'error' }
 
 export default function ReceiptPage() {
   const { number } = useParams<{ number: string }>();
+  const { list } = useCurrency();
   const router = useRouter();
   const [p, setP] = useState<any>(null);
   const [err, setErr] = useState('');
@@ -90,7 +92,7 @@ export default function ReceiptPage() {
             <div className="rounded-2xl bg-white p-5 text-center">
               <div className="text-[11px] font-black" style={{ color: '#8A86A3' }}>{purpose.icon} {purpose.label}</div>
               <div className="font-black mt-1" style={{ fontSize: 'var(--fs-3xl)', background: 'linear-gradient(90deg, #92600A, #6C3DF5)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>
-                {Number(p.amount).toLocaleString()} <span style={{ fontSize: 'var(--fs-base)' }}>ر.ي</span>
+                {Number(p.amount).toLocaleString()} <span style={{ fontSize: 'var(--fs-base)' }}>{list.find((c) => c.code === String(p.currency || 'YER').toUpperCase())?.symbol || p.currency || 'ر.ي'}</span>
               </div>
               <div className="text-xs mt-1" style={{ color: '#6B6685' }}>💳 {methodLabel}</div>
             </div>

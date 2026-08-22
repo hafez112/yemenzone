@@ -8,7 +8,7 @@ export default function RoomsPage() {
       config={{
         title: 'لوحة الغرف الفندقية', icon: '🏨',
         itemName: 'غرفة', itemPlural: 'الغرف', bookingName: 'الحجوزات',
-        priceLabel: 'سعر الليلة (ر.ي)',
+        priceLabel: 'سعر الليلة',
         fields: [
           { key: 'roomType', label: 'نوع الغرفة', type: 'select', options: ['مفردة', 'مزدوجة', 'ثلاثية', 'جناح', 'جناح ملكي', 'عائلية'] },
           { key: 'capacity', label: 'السعة', type: 'number', placeholder: 'عدد الضيوف' },

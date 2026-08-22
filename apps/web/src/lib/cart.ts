@@ -1,6 +1,7 @@
 // سلة المشتريات — محفوظة في الجوال لكل متجر على حدة
 export type CartItem = {
   productId: string; name: string; price: number; qty: number; image?: string;
+  currency?: string;   // 💱 عملة سعر الصنف الأصلية (المنتجات القديمة بلا عملة = افتراضية المنصة)
   variantId?: string;  // 🎨 خيار المنتج المختار (لون/مقاس/وزن)
   variant?: string;    // وصفه المعروض: "أحمر — XL"
 };
@@ -80,6 +81,12 @@ function syncToServer(slug: string, items: CartItem[]) {
 
 export function cartTotal(cart: CartItem[]) {
   return cart.reduce((s, i) => s + i.price * i.qty, 0);
+}
+
+// 💱 إجمالي محوّل: كل سطر يُحوَّل من عملة صنفه إلى العملة المستهدفة قبل الجمع
+// convert(amount, fromCode) ← من useCurrency().convert
+export function cartTotalConv(cart: CartItem[], convert: (amount: number, fromCode?: string) => number) {
+  return Math.round(cart.reduce((s, i) => s + convert(i.price * i.qty, i.currency), 0) * 100) / 100;
 }
 
 export function cartCount(cart: CartItem[]) {

@@ -1,12 +1,16 @@
+
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, getUser, imgUrl } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 import AdminSidebar from '@/components/AdminSidebar';
 
 // 🔗 إدارة «بع برابط واحد» — إشراف على صفحات المنتجات الفورية (إظهار/إخفاء/حذف)
 export default function AdminQuickSellsPage() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const router = useRouter();
   const [data, setData] = useState<{ items: any[]; counts: any }>({ items: [], counts: {} });
   const [status, setStatus] = useState<'active' | 'hidden'>('active');
@@ -44,7 +48,7 @@ export default function AdminQuickSellsPage() {
   };
 
   const c = data.counts || {};
-  const cur = (x: string) => (x === 'SAR' ? 'ر.س' : x === 'USD' ? '$' : 'ر.ي');
+  const cur = (x: string) => dsym(x);
 
   return (
     <div className="page">

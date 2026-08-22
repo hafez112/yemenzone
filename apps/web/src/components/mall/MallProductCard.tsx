@@ -42,11 +42,11 @@ export default function MallProductCard({ p, store, primary }: { p: any; store: 
         <div className="flex items-center gap-1.5 mt-1.5">
           {p.salePrice ? (
             <>
-              <span className="font-black text-red-500 f-sm">{Number(p.salePrice).toLocaleString()}</span>
-              <span className="text-[10px] text-gray-400 line-through">{Number(p.price).toLocaleString()}</span>
+              <span className="font-black text-red-500 f-sm">{fmt(Number(p.salePrice), p.currency)}</span>
+              <span className="text-[10px] text-gray-400 line-through">{fmt(Number(p.price), p.currency)}</span>
             </>
           ) : (
-            <span className="font-black f-sm price-grad">{Number(p.price).toLocaleString()} ر.ي</span>
+            <span className="font-black f-sm price-grad">{fmt(Number(p.price), p.currency)}</span>
           )}
         </div>
         {p.stock > 0 && (
@@ -63,6 +63,7 @@ export default function MallProductCard({ p, store, primary }: { p: any; store: 
                   addToCart(store.slug, {
                     productId: p.id, name: p.name,
                     price: Number(p.salePrice || p.price), image: p.images?.[0],
+                    currency: p.currency,
                   });
                   toast('🛒 أُضيف إلى سلتك');
                 }}

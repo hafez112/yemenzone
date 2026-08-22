@@ -3,11 +3,14 @@ import { useEffect, useState } from "react";
 import AdminSidebar from "../../../components/AdminSidebar";
 import { api } from "../../../lib/api";
 import { toast } from "../../../components/Toast";
+import { useCurrency } from '../../../lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || "";
 
 // 🛒 السلات المهجورة — عملاء ملأوا سلالهم وغادروا دون إتمام الطلب
 export default function AdminCartsPage() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const [data, setData] = useState<any>(null);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>(null);
@@ -47,7 +50,7 @@ export default function AdminCartsPage() {
               </div>
               <div className="card" style={{ textAlign: "center" }}>
                 <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#dc2626" }}>{data.stats.value.toLocaleString()}</div>
-                <div className="muted small">💰 قيمة مهددة بالضياع (ر.ي)</div>
+                <div className="muted small">💰 قيمة مهددة بالضياع ({dsym()})</div>
               </div>
               <div className="card" style={{ textAlign: "center" }}>
                 <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#059669" }}>{data.stats.registered}</div>
@@ -83,7 +86,7 @@ export default function AdminCartsPage() {
                   </div>
                 </div>
                 <div style={{ textAlign: "left", flexShrink: 0 }}>
-                  <b style={{ color: "#dc2626" }}>{g.total.toLocaleString()} ر.ي</b>
+                  <b style={{ color: "#dc2626" }}>{g.total.toLocaleString()} {dsym()}</b>
                   {g.remindedAt && <div className="muted small">🔔 ذُكّر {new Date(g.remindedAt).toLocaleDateString("ar")}</div>}
                 </div>
                 <span className="muted">{open === g.key ? "▲" : "▼"}</span>

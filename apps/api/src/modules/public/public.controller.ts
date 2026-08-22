@@ -508,7 +508,7 @@ export class PublicController {
   @Header('Cache-Control', 'public, max-age=300')
   currencies() {
     return this.cache.wrap('pub:currencies', 300, () =>
-      this.prisma.currency.findMany({ where: { isActive: true } }));
+      this.prisma.currency.findMany({ where: { isActive: true }, orderBy: [{ isDefault: 'desc' }, { code: 'asc' }] }));
   }
 
   @Get('store-types')

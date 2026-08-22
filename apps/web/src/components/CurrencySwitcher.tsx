@@ -37,7 +37,7 @@ export default function CurrencySwitcher() {
             </button>
           ))}
           <p className="text-[9px] font-bold text-gray-400 px-3 py-1.5 border-t border-gray-100 mt-1">
-            للعرض فقط — الدفع بالعملة الأساسية
+            الأسعار تُحوَّل بأسعار الصرف التي تحددها إدارة المنصة
           </p>
         </div>
       )}

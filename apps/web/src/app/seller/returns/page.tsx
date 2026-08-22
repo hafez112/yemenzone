@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import SellerSidebar from '@/components/SellerSidebar';
+import { useCurrency } from '@/lib/currency';
 
 // ↩️ إدارة طلبات الاسترجاع — مراجعة البائع: قبول (يعيد المخزون والمبلغ) أو رفض مسبّب
 const TABS = [
@@ -20,6 +21,8 @@ const STATUS_AR: Record<string, { label: string; cls: string }> = {
 
 export default function SellerReturnsPage() {
   const router = useRouter();
+  const { list } = useCurrency();
+  const sym = (code?: string) => list.find((c) => c.code === String(code || 'YER').toUpperCase())?.symbol || code || 'ر.ي';
   const [store, setStore] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -46,7 +49,7 @@ export default function SellerReturnsPage() {
     const note = (notes[id] || '').trim();
     if (approve) {
       const refundNote = orderInfo.paymentMethod === 'card'
-        ? `\n\n💳 الطلب مدفوع ببطاقة يمن زون — سيُخصم ${Number(orderInfo.total).toLocaleString()} ر.ي من محفظتك ويُعاد لبطاقة العميل تلقائياً.`
+        ? `\n\n💳 الطلب مدفوع ببطاقة يمن زون — سيُخصم ما يعادل ${Number(orderInfo.total).toLocaleString()} ${sym(orderInfo.currency)} من محفظتك ويُعاد لبطاقة العميل تلقائياً.`
         : '';
       if (!confirm(`قبول الاسترجاع؟\n\n📦 ستعود كميات الطلب إلى مخزونك تلقائياً.\n🔔 سيُشعر العميل بقبول الاسترجاع وترتيب إعادة المنتج.${refundNote}`)) return;
     } else if (!note) {
@@ -56,7 +59,7 @@ export default function SellerReturnsPage() {
     try {
       const r = await api(`/seller/returns/${id}/review`, { method: 'POST', body: JSON.stringify({ approve, note }) });
       toast(approve
-        ? (r.refunded ? `✅ قُبل الاسترجاع — عاد المخزون وأُعيد ${r.refunded.toLocaleString()} ر.ي لبطاقة العميل` : '✅ قُبل الاسترجاع — عادت الكميات لمخزونك وأُشعر العميل')
+        ? (r.refunded ? `✅ قُبل الاسترجاع — عاد المخزون وأُعيد ${Number(r.refunded).toLocaleString()} ${sym(r.refundedCurrency)} لبطاقة العميل` : '✅ قُبل الاسترجاع — عادت الكميات لمخزونك وأُشعر العميل')
         : '❌ رُفض الطلب وأُشعر العميل بالسبب');
       load();
     } catch (e: any) { toast(e.message, 'error'); }
@@ -116,7 +119,7 @@ export default function SellerReturnsPage() {
                         </div>
                       </div>
                       <div className="text-left">
-                        <div className="font-black text-lg grad-text">{Number(o.total).toLocaleString()} {o.currency === 'YER' ? 'ر.ي' : o.currency}</div>
+                        <div className="font-black text-lg grad-text">{Number(o.total).toLocaleString()} {sym(o.currency)}</div>
                         <div className="text-[10px] text-gray-400">
                           {o.paymentMethod === 'card' ? '🎫 مدفوع ببطاقة يمن زون — الاسترداد تلقائي' : o.paymentMethod === 'cash' ? '💵 عند الاستلام' : `💳 ${o.paymentMethod}`}
                         </div>
@@ -153,7 +156,7 @@ export default function SellerReturnsPage() {
                       </div>
                     )}
                     {r.status === 'accepted' && r.refundedAmount && (
-                      <p className="text-xs font-bold text-emerald-600 bg-emerald-50 rounded-xl px-3 py-2">💸 أُعيد {Number(r.refundedAmount).toLocaleString()} ر.ي لبطاقة العميل تلقائياً</p>
+                      <p className="text-xs font-bold text-emerald-600 bg-emerald-50 rounded-xl px-3 py-2">💸 أُعيد ما يعادل {Number(r.refundedAmount).toLocaleString()} {sym(r.order?.currency)} لبطاقة العميل تلقائياً</p>
                     )}
 
                     {/* القرار */}

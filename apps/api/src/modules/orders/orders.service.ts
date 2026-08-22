@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CurrencyService } from '../../prisma/currency.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { WebPushService } from '../notifications/push.service';
 import { FinanceService } from '../finance/finance.service';
 import { normalizePhone } from '../../libs/security';
+import { convertMoney } from '../../common/money';
 
 // 📍 المسافة الجوية بين نقطتين (كم) — هافرساين
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -25,6 +27,7 @@ export class OrdersService {
     private notifications: NotificationsService,
     private finance: FinanceService,
     private webPush: WebPushService,
+    private fx: CurrencyService,
   ) {}
 
   // ═══ إنشاء طلب من واجهة المتجر (عام) ═══
@@ -59,6 +62,14 @@ export class OrdersService {
     });
     if (products.length !== ids.length) throw new BadRequestException('بعض المنتجات غير متوفرة');
 
+    // 💱 عملة الطلب = العملة الافتراضية النشطة — أسعار المنتجات تُحوَّل إليها من عملاتها الأصلية بأسعار الإدارة
+    const def = await this.fx.default();
+    const rates = new Map((await this.fx.all()).map((c) => [c.code, c.rateToUsd]));
+    const conv = (amount: number, fromCode?: string) => {
+      const from = rates.get(String(fromCode || def.code).toUpperCase()) ?? def.rateToUsd;
+      return convertMoney(amount, from, def.rateToUsd);
+    };
+
     let subtotal = 0;
     const variantUpdates: { productId: string; variants: any[] }[] = [];
     const items = body.items.map(i => {
@@ -84,7 +95,8 @@ export class OrdersService {
         }
       }
 
-      const price = variant ? Number(variant.salePrice || variant.price) : Number(p.salePrice || p.price);
+      const rawPrice = variant ? Number(variant.salePrice || variant.price) : Number(p.salePrice || p.price);
+      const price = conv(rawPrice, (p as any).currency); // سعر الصنف بعملة الطلب بعد التحويل
       const variantLabel = variant ? [variant.color, variant.size].filter(Boolean).join(' — ') : null;
       subtotal += price * qty;
       return {
@@ -178,10 +190,11 @@ export class OrdersService {
         customerLat: hasLoc ? Math.round(rawLat * 1e6) / 1e6 : null,
         customerLng: hasLoc ? Math.round(rawLng * 1e6) / 1e6 : null,
         notes: body.notes,
-        subtotal,
+        subtotal: Math.round(subtotal * 100) / 100,
         discount,
         deliveryFee: deliveryFee + paymentFee,
-        total: Math.max(0, subtotal - discount + deliveryFee + paymentFee),
+        total: Math.max(0, Math.round((subtotal - discount + deliveryFee + paymentFee) * 100) / 100),
+        currency: def.code,
         couponId,
         paymentMethod,
         deliveryMethod,
@@ -246,7 +259,7 @@ export class OrdersService {
       await this.notifications.push('customer', notifyCustomerId, {
         icon: '🛒',
         title: `استلمنا طلبك ${order.number}`,
-        body: `${store.name} — ${Number(order.total).toLocaleString()} ر.ي · تابع حالته لحظة بلحظة`,
+        body: `${store.name} — ${Number(order.total).toLocaleString()} ${def.symbol} · تابع حالته لحظة بلحظة`,
         link: `/track?number=${order.number}&phone=${encodeURIComponent(order.customerPhone)}`,
       });
     }
@@ -254,19 +267,19 @@ export class OrdersService {
     // 📲 إشعار فوري (Web Push) — يصل للبائع والعميل حتى والتطبيق مغلق
     this.webPush.sendToUser('seller', store.sellerId, {
       title: `📦 طلب جديد ${order.number}`,
-      body: `${order.customerName} — ${Number(order.total).toLocaleString()} ر.ي · افتح لوحتك لمعالجته`,
+      body: `${order.customerName} — ${Number(order.total).toLocaleString()} ${def.symbol} · افتح لوحتك لمعالجته`,
       url: '/seller/orders',
     });
     if (notifyCustomerId) {
       this.webPush.sendToUser('customer', notifyCustomerId, {
         title: `🛒 استلمنا طلبك ${order.number}`,
-        body: `${store.name} — ${Number(order.total).toLocaleString()} ر.ي`,
+        body: `${store.name} — ${Number(order.total).toLocaleString()} ${def.symbol}`,
         url: `/track?number=${order.number}&phone=${encodeURIComponent(order.customerPhone)}`,
       });
     }
 
     // نص واتساب جاهز للتأكيد
-    const waText = this.buildWhatsAppText(order, store.name);
+    const waText = this.buildWhatsAppText(order, store.name, def.symbol);
 
     // 📨 إشعار العميل بطلبه الجديد (إن كان القالب مفعّلاً)
     await this.messaging.send('order_new', order.customerPhone, {
@@ -278,7 +291,7 @@ export class OrdersService {
     await this.notifications.push('seller', store.sellerId, {
       icon: '🛒',
       title: `طلب جديد ${order.number}`,
-      body: `${order.customerName} — ${Number(order.total).toLocaleString()} ر.ي`,
+      body: `${order.customerName} — ${Number(order.total).toLocaleString()} ${def.symbol}`,
       link: '/seller/orders',
     });
 
@@ -286,15 +299,15 @@ export class OrdersService {
   }
 
   // نص رسالة الواتساب المنظمة
-  buildWhatsAppText(order: any, storeName: string) {
+  buildWhatsAppText(order: any, storeName: string, symbol = 'ر.ي') {
     const lines = [
       `🛒 *طلب جديد ${order.number}*`,
       `من متجر: ${storeName}`,
       `━━━━━━━━━━━━━`,
-      ...order.items.map((i: any) => `▪️ ${i.name} × ${i.qty} = ${(Number(i.price) * i.qty).toLocaleString()} ر.ي`),
+      ...order.items.map((i: any) => `▪️ ${i.name} × ${i.qty} = ${(Number(i.price) * i.qty).toLocaleString()} ${symbol}`),
       `━━━━━━━━━━━━━`,
-      Number(order.discount) > 0 ? `🎟️ الخصم: -${Number(order.discount).toLocaleString()} ر.ي` : '',
-      `💰 *الإجمالي: ${Number(order.total).toLocaleString()} ر.ي*`,
+      Number(order.discount) > 0 ? `🎟️ الخصم: -${Number(order.discount).toLocaleString()} ${symbol}` : '',
+      `💰 *الإجمالي: ${Number(order.total).toLocaleString()} ${symbol}*`,
       ``,
       `👤 ${order.customerName}`,
       `📱 ${order.customerPhone}`,
@@ -334,7 +347,7 @@ export class OrdersService {
       },
     });
     if (!order) throw new NotFoundException('الطلب غير موجود');
-    const waText = this.buildWhatsAppText(order, order.store.name);
+    const waText = this.buildWhatsAppText(order, order.store.name, (await this.fx.known(order.currency)).symbol);
     return { ...order, waText };
   }
 
@@ -378,17 +391,24 @@ export class OrdersService {
     if (order.store.status !== 'active') throw new BadRequestException('المتجر غير متاح حالياً');
 
     // الأسعار والتوفر تُعاد قراءتها من قاعدة البيانات الآن (لا نثق بالأرشيف)
+    const def = await this.fx.default();
+    const rates = new Map((await this.fx.all()).map((c) => [c.code, c.rateToUsd]));
+    const conv = (amount: number, fromCode?: string) => {
+      const from = rates.get(String(fromCode || def.code).toUpperCase()) ?? def.rateToUsd;
+      return convertMoney(amount, from, def.rateToUsd);
+    };
     const items: { productId: string; name: string; price: number; qty: number }[] = [];
     const skipped: string[] = [];
     for (const it of order.items) {
       const p = await this.prisma.product.findUnique({ where: { id: it.productId } });
       if (!p || !p.isActive || p.stock <= 0) { skipped.push(it.name); continue; }
-      items.push({ productId: p.id, name: p.name, price: Number(p.salePrice || p.price), qty: Math.min(it.qty, p.stock, 99) });
+      items.push({ productId: p.id, name: p.name, price: conv(Number(p.salePrice || p.price), p.currency), qty: Math.min(it.qty, p.stock, 99) });
     }
     if (!items.length) throw new BadRequestException('كل أصناف الطلب السابق غير متوفرة حالياً');
 
-    const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
-    const deliveryFee = Number(order.deliveryFee || 0);
+    const subtotal = Math.round(items.reduce((s, i) => s + i.price * i.qty, 0) * 100) / 100;
+    // رسوم التوصيل القديمة كانت بعملة الطلب السابق — تُحوَّل إلى عملة الطلب الجديد
+    const deliveryFee = await this.fx.convert(Number(order.deliveryFee || 0), order.currency, def.code);
     const number = 'ORD-' + Math.random().toString(36).slice(2, 8).toUpperCase();
 
     const newOrder = await this.prisma.order.create({
@@ -396,7 +416,8 @@ export class OrdersService {
         number, storeId: order.storeId, customerId,
         customerName: order.customerName, customerPhone: order.customerPhone,
         address: order.address, notes: order.notes,
-        subtotal, deliveryFee, total: subtotal + deliveryFee,
+        subtotal, deliveryFee, total: Math.round((subtotal + deliveryFee) * 100) / 100,
+        currency: def.code,
         paymentMethod: order.paymentMethod, deliveryMethod: order.deliveryMethod,
         items: { create: items },
       },
@@ -412,7 +433,7 @@ export class OrdersService {
     await this.notifications.push('seller', order.store.sellerId, {
       icon: '🔁',
       title: `إعادة طلب ${newOrder.number}`,
-      body: `${order.customerName} أعاد طلبه السابق — ${Number(newOrder.total).toLocaleString()} ر.ي`,
+      body: `${order.customerName} أعاد طلبه السابق — ${Number(newOrder.total).toLocaleString()} ${def.symbol}`,
       link: '/seller/orders',
     });
     await this.notifications.push('customer', customerId, {
@@ -473,7 +494,7 @@ export class OrdersService {
       ...order,
       driver: order.driver ? { name: order.driver.name, vehicle: order.driver.vehicle } : null, // بلا موقع خام في الرد
       driverLive,
-      waText: this.buildWhatsAppText(order, order.store.name),
+      waText: this.buildWhatsAppText(order, order.store.name, (await this.fx.known(order.currency)).symbol),
       review: review || null,
       canReview: ['completed', 'delivered'].includes(order.status) && !review,
     };

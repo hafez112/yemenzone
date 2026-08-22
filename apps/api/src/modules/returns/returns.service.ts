@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CurrencyService } from '../../prisma/currency.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ShieldService } from '../shield/shield.service';
@@ -15,6 +16,7 @@ export class ReturnsService {
     private notifications: NotificationsService,
     private shield: ShieldService,
     private finance: FinanceService,
+    private fx: CurrencyService,
   ) {}
 
   // ═══ العميل: تقديم طلب استرجاع (عام — برقم الطلب والجوال) ═══
@@ -136,14 +138,18 @@ export class ReturnsService {
     // ── القبول ──
     if (order.status === 'refunded') throw new BadRequestException('هذا الطلب مسترجع مسبقاً');
 
-    // 💳 طلب مدفوع بالبطاقة؟ الاسترداد تلقائي: محفظة البائع ← بطاقة العميل
+    // 💳 طلب مدفوع بالبطاقة؟ الاسترداد تلقائي: محفظة البائع ← بطاقة العميل (بتحويل العملات)
     const cardPaid = order.paymentMethod === 'card';
     let wallet: any = null;
     let customerCard: any = null;
+    let walletDebit = 0;
+    let cardCredit = 0;
     if (cardPaid) {
       wallet = await this.prisma.wallet.findUnique({ where: { sellerId } });
-      if (!wallet || Number(wallet.balance) < Number(order.total))
-        throw new BadRequestException(`رصيد محفظتك (${Number(wallet?.balance || 0).toLocaleString()}) لا يكفي لإرجاع ${Number(order.total).toLocaleString()} ر.ي للعميل`);
+      walletDebit = wallet ? await this.fx.convert(Number(order.total), order.currency, wallet.currency) : 0;
+      const walletCur = wallet ? await this.fx.known(wallet.currency) : null;
+      if (!wallet || Number(wallet.balance) < walletDebit)
+        throw new BadRequestException(`رصيد محفظتك (${Number(wallet?.balance || 0).toLocaleString()} ${walletCur?.symbol || ''}) لا يكفي لإرجاع ${walletDebit.toLocaleString()} ${walletCur?.symbol || ''} للعميل`);
       const customer = order.customerId
         ? await this.prisma.customer.findUnique({ where: { id: order.customerId } })
         : await this.prisma.customer.findUnique({ where: { phone: order.customerPhone } });
@@ -151,6 +157,7 @@ export class ReturnsService {
         customerCard = await this.prisma.customerCard.findFirst({ where: { customerId: customer.id } });
       }
       if (!customerCard) throw new BadRequestException('لم يُعثر على بطاقة العميل لإعادة المبلغ — تواصل مع الإدارة');
+      cardCredit = await this.fx.convert(Number(order.total), order.currency, customerCard.currency);
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -173,16 +180,17 @@ export class ReturnsService {
         });
       }
 
-      // 2) الاسترداد المالي لطلبات البطاقة
+      // 2) الاسترداد المالي لطلبات البطاقة — خصم بعملة المحفظة وإيداع بعملة البطاقة
       if (cardPaid) {
-        await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { decrement: order.total } } });
+        await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { decrement: walletDebit } } });
         await tx.walletTransaction.create({
-          data: { walletId: wallet.id, type: 'debit', amount: order.total, note: `استرداد الطلب ${order.number} (استرجاع)`, referenceId: order.number },
+          data: { walletId: wallet.id, type: 'debit', amount: walletDebit, currency: wallet.currency, note: `استرداد الطلب ${order.number} (استرجاع)`, referenceId: order.number },
         });
-        await tx.customerCard.update({ where: { id: customerCard.id }, data: { balance: { increment: order.total } } });
+        await tx.customerCard.update({ where: { id: customerCard.id }, data: { balance: { increment: cardCredit } } });
         await tx.cardTopup.create({
           data: {
-            cardId: customerCard.id, customerId: customerCard.customerId, amount: order.total,
+            cardId: customerCard.id, customerId: customerCard.customerId, amount: order.total, currency: order.currency,
+            creditedAmount: cardCredit,
             method: `refund:${order.number}`, status: 'approved', reviewedAt: new Date(),
           },
         });
@@ -204,14 +212,15 @@ export class ReturnsService {
     await this.finance.reverseCommission(order.id).catch(() => {});
 
     // 4) إشعار العميل بالقبول
+    const cardCur = cardPaid && customerCard ? await this.fx.known(customerCard.currency) : null;
     const statusMsg = cardPaid
-      ? `قُبل طلب استرجاعك ✅ — أُعيد مبلغ ${Number(order.total).toLocaleString()} ر.ي إلى بطاقتك، وسيُرتب البائع معك استلام المنتج`
+      ? `قُبل طلب استرجاعك ✅ — أُعيد مبلغ ${cardCredit.toLocaleString()} ${cardCur?.symbol || ''} إلى بطاقتك، وسيُرتب البائع معك استلام المنتج`
       : 'قُبل طلب استرجاعك ✅ — سيُرتب البائع معك استلام المنتج وإعادة المبلغ';
     this.notifyCustomer(order, 'return_status', {
       name: order.customerName, number: order.number, status: statusMsg,
     }, '✅ قُبل طلب الاسترجاع', `طلبك ${order.number}: ${statusMsg}`, order.customerId);
 
-    return { ok: true, status: 'accepted', refunded: cardPaid ? Number(order.total) : 0 };
+    return { ok: true, status: 'accepted', refunded: cardPaid ? cardCredit : 0, refundedCurrency: cardPaid && customerCard ? customerCard.currency : null };
   }
 
   // إشعار العميل: رسالة خارجية (إن فعّل القالب) + تنبيه داخلي للمسجل

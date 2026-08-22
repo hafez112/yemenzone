@@ -3,11 +3,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 import SellerSidebar from '@/components/SellerSidebar';
 import FeatureLock from '@/components/FeatureLock';
 
 // كوبونات الخصم لمتجري
 export default function CouponsPage() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const router = useRouter();
   const [store, setStore] = useState<any>(null);
   const [coupons, setCoupons] = useState<any[]>([]);
@@ -107,7 +110,7 @@ export default function CouponsPage() {
                   <div>
                     <span className="font-black text-lg" dir="ltr">{c.code}</span>
                     <span className="text-xs font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full mr-2">
-                      {c.type === 'percent' ? `${c.value}%` : `${Number(c.value).toLocaleString()} ر.ي`}
+                      {c.type === 'percent' ? `${c.value}%` : `${Number(c.value).toLocaleString()} ${dsym()}`}
                     </span>
                     {expired && <span className="text-xs text-red-500 font-bold">منتهي ⏰</span>}
                     {exhausted && <span className="text-xs text-red-500 font-bold">مستنفد</span>}

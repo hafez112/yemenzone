@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import AdminSidebar from "../../../components/AdminSidebar";
 import { api } from "../../../lib/api";
 import { toast } from "../../../components/Toast";
+import { useCurrency } from "../../../lib/currency";
 
 const PURPOSE: Record<string, string> = { order: "🛒 طلبات", subscription: "💎 اشتراكات", topup: "💰 شحن", pservice: "🧩 خدمات منصة" };
 const METHOD: Record<string, string> = { card: "💳 بطاقة", gateway: "🏦 بوابات", cash: "💵 كاش", transfer: "📤 تحويل" };
@@ -23,6 +24,8 @@ const EXP_CATS: Record<string, string> = { hosting: "🖥️ استضافة وخ
 const fmt = (n: number) => Number(n || 0).toLocaleString();
 
 export default function AdminFinancePage() {
+  const { def } = useCurrency();
+  const dSym = def?.symbol || "ر.ي";
   const [tab, setTab] = useState<"overview" | "journal" | "income" | "balance" | "settlements" | "expenses" | "tax" | "currencies">("overview");
   const [data, setData] = useState<any>(null);
   const [currencies, setCurrencies] = useState<any[]>([]);
@@ -243,7 +246,7 @@ export default function AdminFinancePage() {
                   ))}
                 </div>
                 {data.analysis.forecast != null && (
-                  <p className="muted small">🤖 التنبؤ للشهر القادم: <strong>{data.analysis.forecast.toLocaleString()} ر.ي</strong>
+                  <p className="muted small">🤖 التنبؤ للشهر القادم: <strong>{data.analysis.forecast.toLocaleString()} {dSym}</strong>
                     {data.analysis.best && ` · أفضل شهر: ${data.analysis.best.label} (${data.analysis.best.total.toLocaleString()})`}</p>
                 )}
               </section>
@@ -402,9 +405,9 @@ export default function AdminFinancePage() {
                   <h2>🤝 أرباح عمولات المنصة</h2>
                   <p className="muted small" style={{ marginTop: 0 }}>تُخصم تلقائياً من محفظة البائع فور تسليم كل طلب ({commReport.globalRate}% عامة أو نسبة المتجر المخصصة) — وتُعكس تلقائياً عند الاسترجاع</p>
                   <div className="row" style={{ gap: ".5rem", flexWrap: "wrap", marginBottom: ".75rem" }}>
-                    <span className="badge" style={{ background: "#ede9fe", color: "#6d28d9" }}>هذا الشهر: {fmt(commReport.thisMonth.total)} ر.ي ({commReport.thisMonth.orders} طلب)</span>
-                    <span className="badge" style={{ background: "#f3f4f6", color: "#374151" }}>الشهر الماضي: {fmt(commReport.lastMonth.total)} ر.ي</span>
-                    <span className="badge" style={{ background: "#d1fae5", color: "#065f46" }}>الإجمالي: {fmt(commReport.allTime.total)} ر.ي ({commReport.allTime.orders} طلب)</span>
+                    <span className="badge" style={{ background: "#ede9fe", color: "#6d28d9" }}>هذا الشهر: {fmt(commReport.thisMonth.total)} {dSym} ({commReport.thisMonth.orders} طلب)</span>
+                    <span className="badge" style={{ background: "#f3f4f6", color: "#374151" }}>الشهر الماضي: {fmt(commReport.lastMonth.total)} {dSym}</span>
+                    <span className="badge" style={{ background: "#d1fae5", color: "#065f46" }}>الإجمالي: {fmt(commReport.allTime.total)} {dSym} ({commReport.allTime.orders} طلب)</span>
                   </div>
                   {commReport.topStores.length > 0 && (
                     <p className="small muted">🏆 الأعلى عمولة: {commReport.topStores.map((t: any) => `${t.name} (${fmt(t.total)})`).join(" · ")}</p>
@@ -533,7 +536,7 @@ export default function AdminFinancePage() {
                     <select value={newExp.category} onChange={(e) => setNewExp({ ...newExp, category: e.target.value })} style={{ maxWidth: 190 }}>
                       {Object.entries(EXP_CATS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                     </select>
-                    <input type="number" placeholder="المبلغ (ر.ي)" value={newExp.amount} onChange={(e) => setNewExp({ ...newExp, amount: e.target.value })} style={{ maxWidth: 150 }} />
+                    <input type="number" placeholder={`المبلغ (${dSym})`} value={newExp.amount} onChange={(e) => setNewExp({ ...newExp, amount: e.target.value })} style={{ maxWidth: 150 }} />
                     <input type="date" value={newExp.spentAt} onChange={(e) => setNewExp({ ...newExp, spentAt: e.target.value })} style={{ maxWidth: 160 }} title="تاريخ الاستحقاق — فارغ = اليوم" />
                   </div>
                   <input placeholder="ملاحظة (اختياري)" value={newExp.note} onChange={(e) => setNewExp({ ...newExp, note: e.target.value })} />

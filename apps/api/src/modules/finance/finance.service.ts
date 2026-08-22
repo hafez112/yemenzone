@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CurrencyService } from '../../prisma/currency.service';
+import { CacheService } from '../../common/cache.service';
 import { FinanceAiService } from './finance-ai.service';
 import { SecurityService } from '../../common/security.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -16,7 +18,15 @@ export class FinanceService {
     private ai: FinanceAiService,
     private security: SecurityService,
     private notifications: NotificationsService,
+    private fx: CurrencyService,
+    private cache: CacheService,
   ) {}
+
+  // ⚡ أي تغيير بالعملات/الأسعار يُبطِل كاش الواجهة العامة فوراً — الزائر يرى السعر الجديد مباشرة
+  private bustCurrencies() {
+    this.fx.invalidate();
+    this.cache.del('pub:currencies').catch(() => {});
+  }
 
   // ── أدوات ──
   private last6Months() {
@@ -47,23 +57,29 @@ export class FinanceService {
   async saveCurrency(body: { code: string; name: string; symbol: string; rateToUsd: number }) {
     const code = body.code?.toUpperCase().trim();
     if (!code || !body.name || !body.symbol || !body.rateToUsd) throw new BadRequestException('كل الحقول مطلوبة');
-    return this.prisma.currency.upsert({
+    const saved = await this.prisma.currency.upsert({
       where: { code },
       update: { name: body.name, symbol: body.symbol, rateToUsd: Number(body.rateToUsd) },
       create: { code, name: body.name, symbol: body.symbol, rateToUsd: Number(body.rateToUsd) },
     });
+    this.bustCurrencies();
+    return saved;
   }
 
   async updateRate(code: string, rate: number) {
     if (!rate || rate <= 0) throw new BadRequestException('سعر غير صحيح');
-    return this.prisma.currency.update({ where: { code: code.toUpperCase() }, data: { rateToUsd: Number(rate) } });
+    const saved = await this.prisma.currency.update({ where: { code: code.toUpperCase() }, data: { rateToUsd: Number(rate) } });
+    this.bustCurrencies();
+    return saved;
   }
 
   async toggleCurrency(code: string) {
     const c = await this.prisma.currency.findUnique({ where: { code: code.toUpperCase() } });
     if (!c) throw new NotFoundException('العملة غير موجودة');
     if (c.isDefault) throw new BadRequestException('لا يمكن تعطيل العملة الافتراضية');
-    return this.prisma.currency.update({ where: { code: c.code }, data: { isActive: !c.isActive } });
+    const saved = await this.prisma.currency.update({ where: { code: c.code }, data: { isActive: !c.isActive } });
+    this.bustCurrencies();
+    return saved;
   }
 
   async setDefault(code: string) {
@@ -73,6 +89,7 @@ export class FinanceService {
       this.prisma.currency.updateMany({ data: { isDefault: false } }),
       this.prisma.currency.update({ where: { code: c.code }, data: { isDefault: true } }),
     ]);
+    this.bustCurrencies();
     return { done: true };
   }
 
@@ -108,49 +125,60 @@ export class FinanceService {
     const store = order.store;
     if (!store) return null;
     const rate = await this.rateForStore(store);
-    const amount = calcCommission(Number(order.total), rate);
+    // العمولة تُحسب بعملة الطلب ثم تُحوَّل إلى عملة محفظة البائع
+    const orderAmount = calcCommission(Number(order.total), rate);
 
-    if (amount <= 0) {
+    if (orderAmount <= 0) {
       await this.prisma.order.update({ where: { id: order.id }, data: { commissionCharged: true, commissionAmount: 0 } });
       return { amount: 0, rate };
     }
 
+    const def = await this.fx.default();
     const wallet = await this.prisma.wallet.upsert({
       where: { sellerId: store.sellerId },
-      create: { sellerId: store.sellerId },
+      create: { sellerId: store.sellerId, currency: def.code },
       update: {},
     });
+    const amount = await this.fx.convert(orderAmount, order.currency, wallet.currency);
     await this.prisma.$transaction([
       // الرصيد قد يصبح سالباً = دين عمولة للمنصة على البائع (طلبات الكاش)
       this.prisma.wallet.update({ where: { id: wallet.id }, data: { balance: { decrement: amount } } }),
       this.prisma.walletTransaction.create({
         data: {
-          walletId: wallet.id, type: 'debit', amount,
+          walletId: wallet.id, type: 'debit', amount, currency: wallet.currency,
           note: `عمولة المنصة (${rate}%) — الطلب ${order.number}`,
           referenceId: order.number,
         },
       }),
-      this.prisma.order.update({ where: { id: order.id }, data: { commissionCharged: true, commissionAmount: amount } }),
+      // commissionAmount يبقى بعملة الطلب (عملة التقارير) — حركة المحفظة تحمل قيمة الخصم الفعلية
+      this.prisma.order.update({ where: { id: order.id }, data: { commissionCharged: true, commissionAmount: orderAmount } }),
     ]);
-    await this.security.log('commission_charged', { userType: 'seller', userId: store.sellerId, details: `${order.number} — ${amount} (${rate}%)` });
+    await this.security.log('commission_charged', { userType: 'seller', userId: store.sellerId, details: `${order.number} — ${amount} ${wallet.currency} (${rate}%)` });
     return { amount, rate };
   }
 
-  // ↩️ عكس العمولة عند قبول استرجاع طلب مخصوم (idempotent)
+  // ↩️ عكس العمولة عند قبول استرجاع طلب مخصوم (idempotent) — يعيد نفس مبلغ الخصم الأصلي بعملة المحفظة
   async reverseCommission(orderId: string) {
     const order = await this.prisma.order.findUnique({ where: { id: orderId }, include: { store: true } });
     if (!order?.commissionCharged || order.commissionReversed) return null;
-    const amount = Number(order.commissionAmount || 0);
-    if (amount <= 0 || !order.store) return null;
+    const orderAmount = Number(order.commissionAmount || 0);
+    if (orderAmount <= 0 || !order.store) return null;
+    const def = await this.fx.default();
     const wallet = await this.prisma.wallet.upsert({
       where: { sellerId: order.store.sellerId },
-      create: { sellerId: order.store.sellerId },
+      create: { sellerId: order.store.sellerId, currency: def.code },
       update: {},
     });
+    // الأدق: عكس حركة الخصم الأصلية نفسها (بقيمتها وعملتها المحفوظتين) — لا إعادة حساب بسعر اليوم
+    const original = await this.prisma.walletTransaction.findFirst({
+      where: { walletId: wallet.id, type: 'debit', referenceId: order.number, note: { contains: 'عمولة المنصة' } },
+      orderBy: { createdAt: 'desc' },
+    });
+    const amount = original ? Number(original.amount) : await this.fx.convert(orderAmount, order.currency, wallet.currency);
     await this.prisma.$transaction([
       this.prisma.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: amount } } }),
       this.prisma.walletTransaction.create({
-        data: { walletId: wallet.id, type: 'credit', amount, note: `عكس عمولة — استرجاع الطلب ${order.number}`, referenceId: order.number },
+        data: { walletId: wallet.id, type: 'credit', amount, currency: wallet.currency, note: `عكس عمولة — استرجاع الطلب ${order.number}`, referenceId: order.number },
       }),
       this.prisma.order.update({ where: { id: order.id }, data: { commissionReversed: true } }),
     ]);

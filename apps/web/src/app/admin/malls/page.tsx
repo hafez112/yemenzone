@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 import AdminSidebar from '@/components/AdminSidebar';
 
 const STATUS_AR: Record<string, { label: string; color: string; bg: string }> = {
@@ -13,6 +14,8 @@ const STATUS_AR: Record<string, { label: string; color: string; bg: string }> = 
 
 // 🏬 إدارة المولات التجارية — إدارة منفصلة: نظرة شاملة + تفعيل/تعليق/توثيق/تمييز
 export default function AdminMalls() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -58,7 +61,7 @@ export default function AdminMalls() {
               { icon: '✅', v: t.active, l: 'نشط', c: '#059669' },
               { icon: '📦', v: t.products, l: 'منتج معروض', c: '#2563EB' },
               { icon: '🛒', v: t.orders, l: 'طلب', c: '#F59E0B' },
-              { icon: '💰', v: `${t.revenue.toLocaleString()}`, l: 'إيرادات محققة (ر.ي)', c: '#0d9488' },
+              { icon: '💰', v: `${t.revenue.toLocaleString()}`, l: `إيرادات محققة (${dsym()})`, c: '#0d9488' },
             ].map((s, i) => (
               <div key={i} className="card !mb-0 !p-3 text-center">
                 <div className="text-lg font-black" style={{ color: s.c }}>{s.icon} {s.v}</div>
@@ -103,14 +106,14 @@ export default function AdminMalls() {
                         </div>
                         <div className="text-[11px] muted">
                           👤 {m.seller?.name} · 📱 <span dir="ltr">{m.seller?.phone}</span>
-                          {m.subscription?.plan && <> · 💎 {m.subscription.plan.name} ({Number(m.subscription.plan.priceMonthly).toLocaleString()} ر.ي/شهر)</>}
+                          {m.subscription?.plan && <> · 💎 {m.subscription.plan.name} ({Number(m.subscription.plan.priceMonthly).toLocaleString()} {dsym(m.subscription.plan.currency)}/شهر)</>}
                         </div>
                       </div>
                       <div className="flex gap-3 text-center shrink-0">
                         <div><div className="font-black text-sm">{m._count.products}</div><div className="text-[9px] muted font-bold">منتج</div></div>
                         <div><div className="font-black text-sm">{m._count.categories}</div><div className="text-[9px] muted font-bold">صنف</div></div>
                         <div><div className="font-black text-sm">{m._count.orders}</div><div className="text-[9px] muted font-bold">طلب</div></div>
-                        <div><div className="font-black text-sm" style={{ color: '#0d9488' }}>{m.revenue.toLocaleString()}</div><div className="text-[9px] muted font-bold">إيراد ر.ي</div></div>
+                        <div><div className="font-black text-sm" style={{ color: '#0d9488' }}>{m.revenue.toLocaleString()}</div><div className="text-[9px] muted font-bold">إيراد {dsym()}</div></div>
                       </div>
                       <span className="text-[10px] font-extrabold px-2 py-1 rounded-full shrink-0"
                         style={{ color: st.color, background: st.bg }}>{st.label}</span>

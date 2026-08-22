@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getCart, updateQty, clearCart, cartTotal, cartCount, rememberStoreId, CartItem } from '@/lib/cart';
+import { getCart, updateQty, clearCart, cartTotalConv, cartCount, rememberStoreId, CartItem } from '@/lib/cart';
 import { toast } from '@/components/Toast';
 import { useCurrency } from '@/lib/currency';
 
@@ -10,7 +10,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || '';
 // 🛒 سلة المول — صفحة منفصلة بثيم فاخر: عناصر + كميات + مشاركة + إتمام
 export default function MallCartClient({ store, primary }: { store: any; primary: string }) {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const { fmt } = useCurrency();
+  const { fmt, convert, def: defCur } = useCurrency();
 
   useEffect(() => {
     rememberStoreId(store.slug, store.id);
@@ -21,7 +21,8 @@ export default function MallCartClient({ store, primary }: { store: any; primary
   }, [store.slug, store.id]);
 
   const count = cartCount(cart);
-  const total = cartTotal(cart);
+  // 💱 كل سطر يُحوَّل من عملة صنفه إلى عملة المنصة الافتراضية ثم يُعرض بالمختارة
+  const total = cartTotalConv(cart, (a, from) => convert(a, from, defCur?.code));
 
   return (
     <main className="min-h-screen pb-24 pt-20" style={{ background: `linear-gradient(180deg, ${primary}08, transparent 40%), #faf9ff` }}>
@@ -63,7 +64,7 @@ export default function MallCartClient({ store, primary }: { store: any; primary
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-sm truncate">{i.name}</div>
                     {i.variant && <div className="text-[11px] font-bold" style={{ color: primary }}>🎨 {i.variant}</div>}
-                    <div className="text-sm font-black price-grad mt-0.5">{fmt(i.price * i.qty)}</div>
+                    <div className="text-sm font-black price-grad mt-0.5">{fmt(i.price * i.qty, i.currency)}</div>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <button onClick={() => setCart(updateQty(store.slug, i.productId, i.qty - 1, i.variantId))}

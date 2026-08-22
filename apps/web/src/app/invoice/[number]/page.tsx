@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, getUser, imgUrl } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 import {
   InvoiceSheet, InvoiceMasthead, PartyCards, ItemsTable,
   TotalsPanel, PayBanner, InvoiceFooter, PrintToolbar,
@@ -23,6 +24,7 @@ const PAY_AR: Record<string, string> = { cash: 'الدفع عند الاستلا
 
 export default function InvoicePage() {
   const { number } = useParams<{ number: string }>();
+  const { list } = useCurrency();
   const router = useRouter();
   const [o, setO] = useState<any>(null);
   const [err, setErr] = useState('');
@@ -41,7 +43,7 @@ export default function InvoicePage() {
   );
   if (!o) return <main className="min-h-screen bg-gray-100 flex items-center justify-center"><div className="skeleton w-full max-w-2xl h-96 rounded-3xl mx-4" /></main>;
 
-  const sym = 'ر.ي';
+  const sym = list.find((c) => c.code === String(o.currency || 'YER').toUpperCase())?.symbol || o.currency || 'ر.ي';
   const st = STATUS_AR[o.status] || { label: o.status, tone: 'neutral' as const };
   const stamp = o.status === 'cancelled' ? { text: 'ملغاة', color: '#B42323' }
     : o.status === 'refunded' ? { text: 'مسترجعة', color: '#B42323' }

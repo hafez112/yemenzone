@@ -4,11 +4,14 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from '@/components/Toast';
 import { imgUrl } from '@/lib/api';
+import { useCurrency } from '@/lib/currency';
 
 // 🔎 البحث الموحد — متاجر + منتجات من كل المنصة
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
 export default function SearchClient() {
+  const { list } = useCurrency();
+  const psym = (code?: string) => list.find((c) => c.code === String(code || 'YER').toUpperCase())?.symbol || code || 'ر.ي';
   const router = useRouter();
   const params = useSearchParams();
   const initial = params.get('q') || '';
@@ -111,7 +114,7 @@ export default function SearchClient() {
                     <b className="text-xs block truncate">{p.name}</b>
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-xs font-black" style={{ color: 'var(--primary)' }}>
-                        {Number(p.salePrice ?? p.price).toLocaleString('en')} {p.currency === 'YER' ? 'ر.ي' : p.currency}
+                        {Number(p.salePrice ?? p.price).toLocaleString('en')} {psym(p.currency)}
                       </span>
                       {p.salePrice && (
                         <span className="text-[10px] text-gray-400 line-through">{Number(p.price).toLocaleString('en')}</span>

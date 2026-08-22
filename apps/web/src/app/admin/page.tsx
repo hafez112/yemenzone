@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api, getUser } from '@/lib/api';
+import { useCurrency } from '@/lib/currency';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminPwaPush from '@/components/admin/AdminPwaPush';
 import { DashStat, DashPanel } from '@/components/dash/DashKit';
@@ -37,6 +38,8 @@ const greeting = () => {
 
 // الرئيسية — غرفة قيادة المنصة الحية
 export default function AdminHome() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const router = useRouter();
   const [stats, setStats] = useState<any>(null);
   const [alerts, setAlerts] = useState<any>(null);
@@ -60,7 +63,7 @@ export default function AdminHome() {
     { icon: '🛒', n: stats.counts.orders,        l: 'طلب',         c: '#F59E0B', href: '/admin/stores' },
     { icon: '⏳', n: stats.counts.pendingOrders, l: 'طلب معلق',    c: '#DC2626', href: '/admin/stores' },
     { icon: '⭐', n: stats.counts.reviews,       l: 'تقييم',       c: '#FBBF24', href: '/admin/reviews' },
-    { icon: '💳', n: stats.revenue,              l: 'إيرادات (ر.ي)', c: '#00E5C7', href: '/admin/finance' },
+    { icon: '💳', n: stats.revenue,              l: `إيرادات (${dsym()})`, c: '#00E5C7', href: '/admin/finance' },
   ] : [];
 
   const QUICK = [

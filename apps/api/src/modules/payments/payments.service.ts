@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CurrencyService } from '../../prisma/currency.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentAiService } from './payment-ai.service';
@@ -12,6 +13,7 @@ export class PaymentsService {
     private messaging: MessagingService,
     private notifications: NotificationsService,
     private ai: PaymentAiService,
+    private fx: CurrencyService,
   ) {}
 
   private inv() { return 'INV-' + Math.random().toString(36).slice(2, 8).toUpperCase(); }
@@ -71,10 +73,11 @@ export class PaymentsService {
     await this.prisma.order.update({ where: { id: orderId }, data: { paymentMethod: method.startsWith('store:') ? method : 'gateway' } });
 
     // 🔔 تنبيه البائع: إثبات دفع جديد بانتظار مراجعته
+    const orderCur = await this.fx.known(order.currency);
     await this.notifications.push('seller', order.store.sellerId, {
       icon: '💳',
       title: `إثبات دفع للطلب ${order.number}`,
-      body: `${order.customerName} حوّل ${Number(order.total).toLocaleString()} ر.ي عبر ${method.replace(/^(gateway|store):/, '')} — راجع الطلب وأكّده`,
+      body: `${order.customerName} حوّل ${Number(order.total).toLocaleString()} ${orderCur.symbol} عبر ${method.replace(/^(gateway|store):/, '')} — راجع الطلب وأكّده`,
       link: '/seller/orders',
     });
     return { payment, message: 'تم استلام إثبات الدفع — سنراجعه ونؤكد طلبك قريباً' };
@@ -154,12 +157,15 @@ export class PaymentsService {
             await this.prisma.order.update({ where: { id: order.id }, data: { status: 'confirmed' } });
           }
           if (order.store.sellerId) {
+            const def = await this.fx.default();
             const wallet = await this.prisma.wallet.upsert({
-              where: { sellerId: order.store.sellerId }, update: {}, create: { sellerId: order.store.sellerId },
+              where: { sellerId: order.store.sellerId }, update: {}, create: { sellerId: order.store.sellerId, currency: def.code },
             });
-            await this.prisma.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: payment.amount } } });
+            // 💱 الإيداع بعملة المحفظة بعد التحويل من عملة الدفعة
+            const credit = await this.fx.convert(Number(payment.amount), payment.currency, wallet.currency);
+            await this.prisma.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: credit } } });
             await this.prisma.walletTransaction.create({
-              data: { walletId: wallet.id, type: 'credit', amount: payment.amount, note: `دفع طلب ${order.number} (${payment.number})`, referenceId: order.number },
+              data: { walletId: wallet.id, type: 'credit', amount: credit, currency: wallet.currency, note: `دفع طلب ${order.number} (${payment.number})`, referenceId: order.number },
             });
           }
           await this.messaging.send('order_status', order.customerPhone, {

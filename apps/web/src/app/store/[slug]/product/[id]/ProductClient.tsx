@@ -165,11 +165,11 @@ export default function ProductClient({ store, product, similar }: any) {
               )}
               {product.salePrice || selectedVariant?.salePrice ? (
                 <>
-                  <span className="text-3xl font-black text-red-500">{fmt(price)}</span>
-                  <span className="text-lg text-gray-400 line-through">{fmt(Number(selectedVariant ? selectedVariant.price : product.price))}</span>
+                  <span className="text-3xl font-black text-red-500">{fmt(price, product.currency)}</span>
+                  <span className="text-lg text-gray-400 line-through">{fmt(Number(selectedVariant ? selectedVariant.price : product.price), product.currency)}</span>
                 </>
               ) : (
-                <span className="text-3xl font-black price-grad">{fmt(price)}</span>
+                <span className="text-3xl font-black price-grad">{fmt(price, product.currency)}</span>
               )}
             </div>
 
@@ -209,7 +209,7 @@ export default function ProductClient({ store, product, similar }: any) {
                             onClick={() => { setSelSize(active ? null : s); setQty(1); }}
                             className={`px-3 py-2 rounded-xl text-xs font-extrabold transition-all ${active ? 'text-white theme-glow scale-105' : isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-600'} ${out ? 'opacity-40 line-through' : ''}`}
                             style={active ? { background: `linear-gradient(135deg, ${primary}, ${primary}CC)` } : {}}>
-                            {s} <span className="opacity-75">· {fmt(Number(v?.salePrice || v?.price || 0))}</span>
+                            {s} <span className="opacity-75">· {fmt(Number(v?.salePrice || v?.price || 0), product.currency)}</span>
                           </button>
                         );
                       })}
@@ -292,6 +292,7 @@ export default function ProductClient({ store, product, similar }: any) {
                     }
                     addToCart(store.slug, {
                       productId: product.id, name: product.name, price, image: product.images?.[0],
+                      currency: product.currency,
                       variantId: selectedVariant?.id,
                       variant: selectedVariant ? [selectedVariant.color, selectedVariant.size].filter(Boolean).join(' — ') : undefined,
                     }, qty);
@@ -300,7 +301,7 @@ export default function ProductClient({ store, product, similar }: any) {
                   }}
                   className="theme-glow flex-1 py-3.5 rounded-2xl text-white font-extrabold text-lg transition-all hover:scale-[1.02] disabled:opacity-50"
                   style={{ background: `linear-gradient(135deg, ${primary}, color-mix(in srgb, ${primary} 55%, ${secondary}))` }}>
-                  🛒 أضف للسلة{selectedVariant ? ` — ${fmt(price)}` : ''}
+                  🛒 أضف للسلة{selectedVariant ? ` — ${fmt(price, product.currency)}` : ''}
                 </button>
               </div>
             )}

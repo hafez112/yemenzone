@@ -1,13 +1,14 @@
 'use client';
 import { useRef, useState } from 'react';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 import { elementToPdf, fmtN } from './pdfHelper';
 import { useToolDB } from './shared/db';
 import { btnD, btnP, btnS, card, Empty, Field, fmtDate, inp, Stat, todayISO, uid, waLink } from './shared/ui';
 
 // 📝 عروض الأسعار الاحترافية — عرض سعر PDF بترويسة متجرك لزبائن الجملة والمؤسسات
 interface QItem { name: string; qty: number; price: number }
-interface Quote { id: number; no: number; client: string; phone: string; items: QItem[]; discount: number; tax: number; validDays: number; note: string; date: string }
+interface Quote { id: number; no: number; client: string; phone: string; items: QItem[]; discount: number; tax: number; validDays: number; note: string; date: string; currency?: string }
 interface Store { quotes: Quote[]; seq: number; biz: string }
 
 export default function QuotesTool() {
@@ -21,6 +22,10 @@ export default function QuotesTool() {
   const [note, setNote] = useState('');
   const [current, setCurrent] = useState<Quote | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
+  const { list: CURS, def: defCur } = useCurrency();
+  const [currency, setCurrency] = useState('');
+  const qsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
+  const effCur = currency || defCur?.code || 'YER';
 
   const sub = items.reduce((s, it) => s + (it.qty || 0) * (it.price || 0), 0);
   const disc = Math.min(Number(discount) || 0, sub);
@@ -32,7 +37,7 @@ export default function QuotesTool() {
   const build = (): Quote | null => {
     const clean = items.filter((it) => it.name.trim() && it.qty > 0);
     if (!client.trim() || !clean.length) { toast('✍️ أدخل اسم العميل وبنداً واحداً على الأقل', 'error'); return null; }
-    return { id: uid(), no: store.seq, client: client.trim(), phone: phone.trim(), items: clean, discount: disc, tax: Number(tax) || 0, validDays: Number(validDays) || 7, note: note.trim(), date: new Date().toISOString() };
+    return { id: uid(), no: store.seq, client: client.trim(), phone: phone.trim(), items: clean, discount: disc, tax: Number(tax) || 0, validDays: Number(validDays) || 7, note: note.trim(), date: new Date().toISOString(), currency: effCur };
   };
 
   const preview = () => {
@@ -56,7 +61,7 @@ export default function QuotesTool() {
   };
 
   const waText = current
-    ? `السلام عليكم ${current.client} 🌹\nعرض سعر رقم ${current.no} من ${store.biz || 'متجرنا'}\n${current.items.map((it) => `• ${it.name} ×${it.qty} = ${fmtN(it.qty * it.price)}`).join('\n')}\n💰 الإجمالي: ${fmtN(total)} ر.ي\nالعرض ساري ${current.validDays} أيام`
+    ? `السلام عليكم ${current.client} 🌹\nعرض سعر رقم ${current.no} من ${store.biz || 'متجرنا'}\n${current.items.map((it) => `• ${it.name} ×${it.qty} = ${fmtN(it.qty * it.price)}`).join('\n')}\n💰 الإجمالي: ${fmtN(total)} ${qsym(current.currency)}\nالعرض ساري ${current.validDays} أيام`
     : '';
 
   return (
@@ -90,6 +95,11 @@ export default function QuotesTool() {
         </div>
 
         <div className="grid grid-cols-3 gap-3">
+          <Field label="💱 العملة">
+            <select value={effCur} onChange={(e) => setCurrency(e.target.value)} className={inp}>
+              {CURS.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.symbol}</option>)}
+            </select>
+          </Field>
           <Field label="🏷️ خصم"><input inputMode="decimal" value={discount} onChange={(e) => setDiscount(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0" className={inp} /></Field>
           <Field label="🧾 ضريبة ٪"><input inputMode="decimal" value={tax} onChange={(e) => setTax(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0" className={inp} /></Field>
           <Field label="📅 ساري (أيام)"><input inputMode="numeric" value={validDays} onChange={(e) => setValidDays(e.target.value.replace(/[^0-9]/g, ''))} className={inp} /></Field>
@@ -141,7 +151,7 @@ export default function QuotesTool() {
               <div className="flex justify-between"><span>المجموع الفرعي</span><span>{fmtN(sub)}</span></div>
               {current.discount > 0 && <div className="flex justify-between text-red-600"><span>الخصم</span><span>−{fmtN(current.discount)}</span></div>}
               {taxVal > 0 && <div className="flex justify-between"><span>الضريبة ({current.tax}٪)</span><span>+{fmtN(taxVal)}</span></div>}
-              <div className="flex justify-between font-black text-lg text-emerald-700 border-t-2 border-emerald-600 pt-2"><span>الإجمالي</span><span>{fmtN(total)} ر.ي</span></div>
+              <div className="flex justify-between font-black text-lg text-emerald-700 border-t-2 border-emerald-600 pt-2"><span>الإجمالي</span><span>{fmtN(total)} {qsym(current.currency)}</span></div>
             </div>
             {current.note && <p className="text-xs text-gray-500 border-t border-gray-200 pt-2">📌 {current.note}</p>}
             <p className="text-[10px] text-gray-400">هذا العرض ساري لمدة {current.validDays} أيام من تاريخه — عبر منصة يمن زون ⚡</p>

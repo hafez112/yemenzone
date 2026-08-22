@@ -35,6 +35,7 @@ export default function WishlistPage() {
     addToCart(p.store.slug, {
       productId: p.id, name: p.name,
       price: Number(p.salePrice || p.price), image: p.images?.[0],
+      currency: p.currency,
     });
     toast(`🛒 أُضيف ${p.name} لسلة ${p.store.name}`);
   };
@@ -78,10 +79,10 @@ export default function WishlistPage() {
                   <Link href={`/store/${p.store.slug}/product/${p.id}`} className="font-extrabold text-sm block truncate hover:underline">{p.name}</Link>
                   <p className="text-[11px] font-bold text-gray-400 truncate">🏪 {p.store.name}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <b className="text-base" style={{ color: 'var(--primary)' }}>{fmt(price)}</b>
-                    {p.salePrice && <s className="text-[11px] text-gray-400">{fmt(Number(p.price))}</s>}
+                    <b className="text-base" style={{ color: 'var(--primary)' }}>{fmt(price, p.currency)}</b>
+                    {p.salePrice && <s className="text-[11px] text-gray-400">{fmt(Number(p.price), p.currency)}</s>}
                     {i.dropped && i.priceAtAdd && (
-                      <span className="text-[10px] font-extrabold text-red-500">كان {fmt(Number(i.priceAtAdd))}</span>
+                      <span className="text-[10px] font-extrabold text-red-500">كان {fmt(Number(i.priceAtAdd), p.currency)}</span>
                     )}
                   </div>
                   {!p.isActive && <p className="text-[10px] font-bold text-red-400 mt-0.5">⚠️ لم يعد متاحاً</p>}

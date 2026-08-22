@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { imgUrl } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import { getRecent, getCompare } from '@/lib/recent';
+import { useCurrency } from '@/lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -18,6 +19,7 @@ const SORTS = [
 ];
 
 function ExploreInner() {
+  const { fmt } = useCurrency();
   const router = useRouter();
   const params = useSearchParams();
   const [data, setData] = useState<any>(null);
@@ -209,7 +211,7 @@ function ExploreInner() {
                     <div className="p-3">
                       <div className="font-extrabold text-[13px] truncate">{p.name}</div>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <span className="font-black text-sm grad-text">{price.toLocaleString()} ر.ي</span>
+                        <span className="font-black text-sm grad-text">{fmt(price, p.currency)}</span>
                         {discount > 0 && <span className="text-[10px] text-gray-400 line-through">{Number(p.price).toLocaleString()}</span>}
                       </div>
                       <div className="text-[10px] text-gray-400 mt-1 truncate">

@@ -5,6 +5,7 @@ import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import SellerSidebar from '@/components/SellerSidebar';
 import { BOOKING_SPEC_FIELDS } from '@/lib/activity';
+import { useCurrency } from '@/lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -34,7 +35,9 @@ export default function BookingDashboard({ kind, config }: {
   const [tab, setTab] = useState<'items' | 'bookings'>('items');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState<any>({ title: '', price: '', description: '', images: [] });
+  const [form, setForm] = useState<any>({ title: '', price: '', description: '', images: [], currency: '' });
+  const { list: currencies, def: defCur } = useCurrency();
+  const isym = (code?: string) => currencies.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const [saving, setSaving] = useState(false);
   const [wrongKind, setWrongKind] = useState<string>('');
 
@@ -54,7 +57,7 @@ export default function BookingDashboard({ kind, config }: {
 
   function startNew() {
     setEditing(null);
-    setForm({ title: '', price: '', description: '', images: [] });
+    setForm({ title: '', price: '', description: '', images: [], currency: defCur?.code || '' });
     setShowForm(true);
   }
 
@@ -63,6 +66,7 @@ export default function BookingDashboard({ kind, config }: {
     setForm({
       title: it.title,
       price: it.pricePerDay || it.pricePerNight || it.price,
+      currency: it.currency || defCur?.code || '',
       description: it.description || '',
       images: it.images || [],
       type: it.type, roomType: it.roomType, capacity: it.capacity,
@@ -190,9 +194,17 @@ export default function BookingDashboard({ kind, config }: {
                 <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
                   placeholder={`اسم ${config.itemName} *`}
                   className="px-4 py-3 rounded-xl border border-gray-200 outline-none" />
-                <input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })}
-                  placeholder={`${config.priceLabel} *`}
-                  className="px-4 py-3 rounded-xl border border-gray-200 outline-none" />
+                <div className="flex gap-2">
+                  <input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })}
+                    placeholder={`${config.priceLabel} *`}
+                    className="flex-1 px-4 py-3 rounded-xl border border-gray-200 outline-none" />
+                  <select value={form.currency || ''} onChange={e => setForm({ ...form, currency: e.target.value })}
+                    title="عملة التسعير — من عملات المنصة المعتمدة"
+                    className="w-28 px-2 py-3 rounded-xl border border-gray-200 outline-none bg-white font-bold text-sm">
+                    {!form.currency && <option value="">العملة</option>}
+                    {currencies.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.symbol}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="grid md:grid-cols-2 gap-3">
                 {config.fields.map(f => f.type === 'checkbox' ? (
@@ -277,7 +289,7 @@ export default function BookingDashboard({ kind, config }: {
                       </div>
                     </div>
                     <span className="font-black grad-text">
-                      {Number(it.pricePerDay || it.pricePerNight || it.price).toLocaleString()} ر.ي
+                      {Number(it.pricePerDay || it.pricePerNight || it.price).toLocaleString()} {isym(it.currency)}
                     </span>
                   </div>
                   {(it.features || []).length > 0 && (
@@ -327,7 +339,7 @@ export default function BookingDashboard({ kind, config }: {
                       {b.guests && <div>👥 {b.guests} ضيوف</div>}
                       {b.details && <div>📝 {b.details}</div>}
                       <div className="font-black text-sm" style={{ color: 'var(--primary)' }}>
-                        💰 {Number(b.total).toLocaleString()} ر.ي
+                        💰 {Number(b.total).toLocaleString()} {isym(b.currency)}
                       </div>
                     </div>
                     {/* تغيير الحالة */}

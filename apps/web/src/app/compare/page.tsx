@@ -5,11 +5,13 @@ import { useSearchParams } from 'next/navigation';
 import { imgUrl } from '@/lib/api';
 import { clearCompare } from '@/lib/recent';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
 // ⚖️ مقارنة المنتجات جنباً إلى جنب — حتى 4
 function CompareInner() {
+  const { fmt } = useCurrency();
   const params = useSearchParams();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,7 +88,7 @@ function CompareInner() {
                   return (
                     <div>
                       <div className={`font-black text-sm ${isBest ? 'text-emerald-600' : ''}`} style={!isBest ? { color: 'var(--primary)' } : {}}>
-                        {price.toLocaleString()} ر.ي
+                        {fmt(price, p.currency)}
                         {isBest && <span className="block text-[9px]">🏆 الأرخص</span>}
                       </div>
                       {p.salePrice && <div className="text-[9px] text-gray-400 line-through">{Number(p.price).toLocaleString()}</div>}

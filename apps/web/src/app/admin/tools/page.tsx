@@ -3,15 +3,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, getUser, imgUrl } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 import AdminSidebar from '@/components/AdminSidebar';
 import ImageUpload from '@/components/ImageUpload';
 import { TOOLS } from '@/lib/tools';
 
-interface ToolRow { key: string; isVisible: boolean; order: number; uses: number; views: number; seoTitle?: string; seoDesc?: string; seoKeys?: string; price?: number | null }
+interface ToolRow { key: string; isVisible: boolean; order: number; uses: number; views: number; seoTitle?: string; seoDesc?: string; seoKeys?: string; price?: number | null; currency?: string }
 interface AdRow { id: string; title: string; image: string; link?: string; position: string; size: string; isActive: boolean; views: number; clicks: number; positionLabel?: string; sizeLabel?: string }
 
 // 👑 إدارة تكنولوجيا المنصة — خدمات + زيارات + SEO + إعلانات مستهدفة + أسعار صرف
 export default function AdminToolsPage() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const router = useRouter();
   const [rows, setRows] = useState<ToolRow[]>([]);
   const [fx, setFx] = useState<Record<string, number>>({});
@@ -24,6 +27,7 @@ export default function AdminToolsPage() {
   // 💰 تسعير الخدمة — فارغ/صفر = مجانية
   const [priceEdit, setPriceEdit] = useState<string | null>(null);
   const [priceVal, setPriceVal] = useState('');
+  const [priceCur, setPriceCur] = useState('');
   const [aiImages, setAiImages] = useState(false);
   // 📢 الإعلانات
   const [ads, setAds] = useState<AdRow[]>([]);
@@ -83,15 +87,16 @@ export default function AdminToolsPage() {
   const openPrice = (r: ToolRow) => {
     setPriceEdit(priceEdit === r.key ? null : r.key);
     setPriceVal(r.price ? String(r.price) : '');
+    setPriceCur(r.currency || defCur?.code || '');
   };
   const savePrice = async (key: string, free = false) => {
     const p = free ? null : Number(priceVal);
-    if (!free && (!p || p <= 0)) { toast('⚠️ أدخل سعراً صحيحاً بالريال أو اختر «مجانية»', 'error'); return; }
+    if (!free && (!p || p <= 0)) { toast('⚠️ أدخل سعراً صحيحاً أو اختر «مجانية»', 'error'); return; }
     try {
-      await api(`/admin/tools/${key}`, { method: 'PATCH', body: JSON.stringify({ price: p }) });
-      setRows(rows.map((x) => x.key === key ? { ...x, price: p } : x));
+      await api(`/admin/tools/${key}`, { method: 'PATCH', body: JSON.stringify({ price: p, ...(p ? { currency: priceCur || undefined } : {}) }) });
+      setRows(rows.map((x) => x.key === key ? { ...x, price: p, currency: p ? (priceCur || x.currency) : x.currency } : x));
       setPriceEdit(null);
-      toast(p ? `💰 أصبحت مدفوعة بـ ${p.toLocaleString()} ر.ي — تُفتح تلقائياً بعد الدفع بالبطاقة` : '🎁 أصبحت مجانية للجميع');
+      toast(p ? `💰 أصبحت مدفوعة بـ ${p.toLocaleString()} ${dsym(priceCur)} — تُفتح تلقائياً بعد الدفع بالبطاقة` : '🎁 أصبحت مجانية للجميع');
     } catch (e: any) { toast(e.message || 'تعذّر الحفظ', 'error'); }
   };
 
@@ -230,7 +235,10 @@ export default function AdminToolsPage() {
                         <p className="text-[11px] text-gray-500">مجانية = متاحة لكل مسجل · مدفوعة = تُشترى ببطاقة يمن زون فقط وتفتح تلقائياً فور الدفع (شراء مرة واحدة = فتح دائم)</p>
                         <div className="flex gap-2 items-center flex-wrap">
                           <input type="number" min="0" value={priceVal} onChange={(e) => setPriceVal(e.target.value)}
-                            placeholder="السعر بالريال اليمني (مثال: 5000)" className={inp} style={{ maxWidth: 240 }} />
+                            placeholder="السعر (مثال: 5000)" className={inp} style={{ maxWidth: 200 }} />
+                          <select value={priceCur} onChange={(e) => setPriceCur(e.target.value)} className={inp} style={{ maxWidth: 150 }} title="عملة السعر — من عملات المنصة المعتمدة">
+                            {CURS.map((c) => <option key={c.code} value={c.code}>{c.code} — {c.symbol}</option>)}
+                          </select>
                           <button onClick={() => savePrice(r.key)} className="px-5 py-2 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-400">💾 حفظ السعر</button>
                           <button onClick={() => savePrice(r.key, true)} className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-500">🎁 اجعلها مجانية</button>
                           <button onClick={() => setPriceEdit(null)} className="px-4 py-2 rounded-xl bg-gray-200 text-sm font-bold">إلغاء</button>

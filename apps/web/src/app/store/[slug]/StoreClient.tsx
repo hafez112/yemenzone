@@ -6,6 +6,7 @@ import MallClient from './MallClient';
 import BookingSection from '@/components/BookingSection';
 import ReviewsSection from '@/components/ReviewsSection';
 import { addToCart, saveCart } from '@/lib/cart';
+import { useCurrency } from '@/lib/currency';
 import { toast } from '@/components/Toast';
 import { KIND_INFO, type StoreKind } from '@/lib/activity';
 
@@ -501,6 +502,7 @@ export default function StoreClient({ store }: { store: any }) {
 
 // بطاقة المنتج — تتكيف مع القالب (زووم ناعم + إطار متوهج + شارات متدرجة)
 function ProductCard({ p, st, primary, isDark, store }: any) {
+  const { fmt } = useCurrency();
   return (
     <div className={`${st.card} overflow-hidden card-hover card-glow`}>
       <div className="h-32 md:h-40 relative overflow-hidden">
@@ -528,11 +530,11 @@ function ProductCard({ p, st, primary, isDark, store }: any) {
         <div className="flex items-center gap-1.5 mt-1.5">
           {p.salePrice ? (
             <>
-              <span className="font-black text-red-500 f-sm">{Number(p.salePrice).toLocaleString()}</span>
-              <span className="text-[10px] text-gray-400 line-through">{Number(p.price).toLocaleString()}</span>
+              <span className="font-black text-red-500 f-sm">{fmt(Number(p.salePrice), p.currency)}</span>
+              <span className="text-[10px] text-gray-400 line-through">{fmt(Number(p.price), p.currency)}</span>
             </>
           ) : (
-            <span className="font-black f-sm price-grad">{Number(p.price).toLocaleString()} ر.ي</span>
+            <span className="font-black f-sm price-grad">{fmt(Number(p.price), p.currency)}</span>
           )}
         </div>
         {p.stock > 0 && (
@@ -550,6 +552,7 @@ function ProductCard({ p, st, primary, isDark, store }: any) {
                 addToCart(store.slug, {
                   productId: p.id, name: p.name,
                   price: Number(p.salePrice || p.price), image: p.images?.[0],
+                  currency: p.currency,
                 });
                 toast('🛒 أُضيف إلى السلة');
               }}
@@ -572,6 +575,7 @@ function ProductCard({ p, st, primary, isDark, store }: any) {
 
 // 🍽️ بطاقة صنف المنيو — صف أفقي بأسلوب قوائم المطاعم: صورة شهية + تفاصيل + سعر وإضافة
 function MenuCard({ p, st, primary, isDark, store }: any) {
+  const { fmt } = useCurrency();
   const out = p.stock <= 0;
   const specs = (p.specs && typeof p.specs === 'object') ? p.specs : {};
   return (
@@ -618,12 +622,11 @@ function MenuCard({ p, st, primary, isDark, store }: any) {
           <div className="flex items-center gap-1.5 min-w-0">
             {p.salePrice ? (
               <>
-                <span className="font-black text-red-500 f-sm">{Number(p.salePrice).toLocaleString()}</span>
-                <span className="text-[10px] text-gray-400 line-through">{Number(p.price).toLocaleString()}</span>
-                <span className="text-[10px] text-gray-400">ر.ي</span>
+                <span className="font-black text-red-500 f-sm">{fmt(Number(p.salePrice), p.currency)}</span>
+                <span className="text-[10px] text-gray-400 line-through">{fmt(Number(p.price), p.currency)}</span>
               </>
             ) : (
-              <span className="font-black f-sm price-grad">{Number(p.price).toLocaleString()} ر.ي</span>
+              <span className="font-black f-sm price-grad">{fmt(Number(p.price), p.currency)}</span>
             )}
           </div>
           {out ? (
@@ -640,6 +643,7 @@ function MenuCard({ p, st, primary, isDark, store }: any) {
                 addToCart(store.slug, {
                   productId: p.id, name: p.name,
                   price: Number(p.salePrice || p.price), image: p.images?.[0],
+                  currency: p.currency,
                 });
                 toast('🍽️ أُضيف إلى طلبك');
               }}

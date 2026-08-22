@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { SERVER_API as API } from '@/lib/server-api';
+import { SERVER_API as API, serverCurSymbol } from '@/lib/server-api';
 import RequestReplyForm from '@/components/tools/RequestReplyForm';
 import ReqActions from '@/components/tools/ReqActions';
 
@@ -21,7 +21,6 @@ async function getReq(slug: string): Promise<Req | null> {
   } catch { return null; }
 }
 
-const cur = (c: string) => (c === 'SAR' ? 'ر.س' : c === 'USD' ? '$' : 'ر.ي');
 const ago = (d: string) => {
   const m = Math.floor((Date.now() - +new Date(d)) / 60000);
   if (m < 60) return m <= 1 ? 'الآن' : `قبل ${m} دقيقة`;
@@ -48,6 +47,7 @@ export default async function RequestPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const req = await getReq(slug);
   if (!req) notFound();
+  const curSym = await serverCurSymbol(req.currency);
 
   return (
     <div className="page">
@@ -64,7 +64,7 @@ export default async function RequestPage({ params }: { params: Promise<{ slug: 
           <div className="flex flex-wrap gap-2 text-xs font-bold">
             {req.budget && (
               <span className="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-                💰 الميزانية: {Number(req.budget).toLocaleString()} {cur(req.currency)}
+                💰 الميزانية: {Number(req.budget).toLocaleString()} {curSym}
               </span>
             )}
             {req.governorate && <span className="px-3 py-1.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100">📍 {req.governorate}</span>}
@@ -97,7 +97,7 @@ export default async function RequestPage({ params }: { params: Promise<{ slug: 
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-extrabold text-sm text-gray-900">{rep.sellerName}</p>
                           <span className="text-[10px] text-gray-400 font-bold">🕘 {ago(rep.createdAt)}</span>
-                          {rep.price && <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{Number(rep.price).toLocaleString()} {cur(req.currency)}</span>}
+                          {rep.price && <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{Number(rep.price).toLocaleString()} {curSym}</span>}
                         </div>
                         <p className="text-sm text-gray-600 leading-relaxed mt-1 whitespace-pre-line">{rep.message}</p>
                         <a href={`https://wa.me/${waIntl}?text=${encodeURIComponent(`السلام عليكم 🌹 بخصوص طلبي: ${req.title.slice(0, 50)}\n${SITE}/r/${req.slug}`)}`}

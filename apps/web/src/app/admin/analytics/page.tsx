@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 import AdminSidebar from '@/components/AdminSidebar';
 import WeeklyReportsPanel from '@/components/admin/WeeklyReportsPanel';
 
@@ -19,6 +20,8 @@ function Bar({ value, max, color, label, hint }: { value: number; max: number; c
 }
 
 export default function AdminAnalyticsPage() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const router = useRouter();
   const [d, setD] = useState<any>(null);
   const [chart, setChart] = useState<'stores' | 'orders' | 'revenue'>('stores');
@@ -37,7 +40,7 @@ export default function AdminAnalyticsPage() {
   const chartConf = {
     stores:  { key: 'newStores',   color: 'linear-gradient(180deg,#6C3DF5,#9D6BFF)', title: '🏪 المتاجر الجديدة' },
     orders:  { key: 'orders',      color: 'linear-gradient(180deg,#00E5C7,#0ea5e9)', title: '🛒 الطلبات' },
-    revenue: { key: 'subsRevenue', color: 'linear-gradient(180deg,#FFB800,#f97316)', title: '💰 إيراد الاشتراكات (ر.ي)' },
+    revenue: { key: 'subsRevenue', color: 'linear-gradient(180deg,#FFB800,#f97316)', title: `💰 إيراد الاشتراكات (${dsym()})` },
   }[chart];
   const maxChart = Math.max(...months.map((m: any) => m[chartConf.key]), 1);
 

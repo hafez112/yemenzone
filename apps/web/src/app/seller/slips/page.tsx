@@ -3,6 +3,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 
 // 🖨️ بوالص الشحن — فردية أو جماعية، كل بوليصة في صفحة مستقلة عند الطباعة
 const STATUS_AR: Record<string, string> = {
@@ -11,6 +12,8 @@ const STATUS_AR: Record<string, string> = {
 };
 
 function SlipsInner() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const router = useRouter();
   const params = useSearchParams();
   const [data, setData] = useState<any>(null);
@@ -97,7 +100,7 @@ function SlipsInner() {
                   {o.deliveryMethod ? ` · 🚚 ${o.deliveryMethod}` : ''}
                 </span>
                 <span className="font-black text-lg" style={{ color: '#6C3DF5' }}>
-                  {Number(o.total).toLocaleString()} ر.ي
+                  {Number(o.total).toLocaleString()} {dsym(o.currency)}
                 </span>
               </div>
               {o.notes && <p className="mt-2 text-xs text-gray-500">📝 ملاحظات العميل: {o.notes}</p>}

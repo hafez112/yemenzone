@@ -3,13 +3,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { WebPushService } from '../notifications/push.service';
 import { CacheService } from '../../common/cache.service';
+import { CurrencyService } from '../../prisma/currency.service';
 import { effectiveFeatures } from '../../common/features';
 import { sanitizePhone, sanitizeText, normalizePhone } from '../../libs/security';
 
 // نظام الحجوزات الموحد: وحدات إيجار + غرف فندقية + خدمات
 @Injectable()
 export class BookingsService {
-  constructor(private prisma: PrismaService, private messaging: MessagingService, private webPush: WebPushService, private cache: CacheService) {}
+  constructor(private prisma: PrismaService, private messaging: MessagingService, private webPush: WebPushService, private cache: CacheService, private fx: CurrencyService) {}
 
   // ⚡ إبطال كاش الواجهة العامة بعد تعديل الوحدات/الغرف/الخدمات
   private bust(store: { slug: string }) {
@@ -71,12 +72,15 @@ export class BookingsService {
     const priceField = kind === 'rentals' ? 'pricePerDay' : kind === 'hotel' ? 'pricePerNight' : 'price';
     if (!body.price || Number(body.price) <= 0) throw new BadRequestException('السعر مطلوب');
 
+    // 💱 عملة التسعير — نشطة ومعتمدة من الإدارة (افتراضي = عملة المنصة)
+    const itemCur = body.currency ? await this.fx.requireActive(body.currency) : await this.fx.default();
     const data: any = {
       storeId: store.id,
       title: body.title.trim(),
       description: body.description,
       images: body.images || [],
       [priceField]: Number(body.price),
+      currency: itemCur.code,
     };
     if (kind === 'rentals') {
       data.type = body.type; data.address = body.address;
@@ -124,6 +128,7 @@ export class BookingsService {
       isActive: body.isActive,
       ...(body.price ? { [priceField]: Number(body.price) } : {}),
     };
+    if (body.currency) data.currency = (await this.fx.requireActive(body.currency)).code;
     if (kind === 'rentals') {
       data.type = body.type; data.address = body.address; data.features = body.features;
       data.pricePerMonth = body.pricePerMonth ? Number(body.pricePerMonth) : null;
@@ -219,6 +224,7 @@ export class BookingsService {
     let total = 0;
     let booking: any;
     let itemTitle = '';
+    let itemCurrency = 'YER';
 
     if (body.itemType === 'rental') {
       const unit = await this.prisma.rentalUnit.findFirst({ where: { id: body.itemId, storeId: store.id, isActive: true } });
@@ -227,12 +233,13 @@ export class BookingsService {
       const days = Math.max(1, Math.ceil((new Date(body.toDate).getTime() - new Date(body.fromDate).getTime()) / 86400000));
       total = days * Number(unit.pricePerDay);
       itemTitle = unit.title;
+      itemCurrency = (unit as any).currency || 'YER';
       booking = await this.prisma.rentalBooking.create({
         data: {
           unitId: unit.id,
           customerName, customerPhone,
           fromDate: new Date(body.fromDate), toDate: new Date(body.toDate),
-          total, notes: details || null,
+          total, currency: itemCurrency, notes: details || null,
         },
       });
     } else if (body.itemType === 'room') {
@@ -242,12 +249,13 @@ export class BookingsService {
       const nights = Math.max(1, Math.ceil((new Date(body.toDate).getTime() - new Date(body.fromDate).getTime()) / 86400000));
       total = nights * Number(room.pricePerNight);
       itemTitle = room.title;
+      itemCurrency = (room as any).currency || 'YER';
       booking = await this.prisma.roomBooking.create({
         data: {
           roomId: room.id,
           customerName, customerPhone,
           checkIn: new Date(body.fromDate), checkOut: new Date(body.toDate),
-          guests: Number(body.guests || 1), total, notes: details || null,
+          guests: Number(body.guests || 1), total, currency: itemCurrency, notes: details || null,
         },
       });
     } else {
@@ -255,19 +263,22 @@ export class BookingsService {
       if (!service) throw new NotFoundException('الخدمة غير متوفرة');
       total = Number(service.price);
       itemTitle = service.title;
+      itemCurrency = (service as any).currency || 'YER';
       booking = await this.prisma.serviceRequest.create({
         data: {
           serviceId: service.id,
           customerName, customerPhone,
-          details: details || null, total,
+          details: details || null, total, currency: itemCurrency,
         },
       });
     }
 
+    // 💱 رمز عملة الحجز من قائمة عملات الإدارة
+    const itemSym = (await this.fx.known(itemCurrency)).symbol;
     // 📲 إشعار فوري للبائع بالحجز الجديد — يصله حتى وتطبيق لوحته مغلق
     this.webPush.sendToUser('seller', store.sellerId, {
       title: `📅 حجز جديد — ${itemTitle}`,
-      body: `${customerName} — ${total.toLocaleString()} ر.ي · افتح لوحتك لتأكيده`,
+      body: `${customerName} — ${total.toLocaleString()} ${itemSym} · افتح لوحتك لتأكيده`,
       url: '/seller',
     });
 
@@ -279,7 +290,7 @@ export class BookingsService {
       `▪️ ${itemTitle}`,
       body.fromDate ? `📆 من ${body.fromDate}${body.toDate ? ` إلى ${body.toDate}` : ''}` : '',
       body.guests ? `👥 عدد الضيوف: ${body.guests}` : '',
-      `💰 *الإجمالي: ${total.toLocaleString()} ر.ي*`,
+      `💰 *الإجمالي: ${total.toLocaleString()} ${itemSym}*`,
       ``,
       `👤 ${customerName}`,
       `📱 ${customerPhone}`,

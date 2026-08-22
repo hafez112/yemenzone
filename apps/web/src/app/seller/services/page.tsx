@@ -8,7 +8,7 @@ export default function ServicesPage() {
       config={{
         title: 'لوحة الخدمات', icon: '🛠️',
         itemName: 'خدمة', itemPlural: 'الخدمات', bookingName: 'الطلبات الواردة',
-        priceLabel: 'سعر الخدمة (ر.ي)',
+        priceLabel: 'سعر الخدمة',
         fields: [
           { key: 'category', label: 'تصنيف الخدمة', placeholder: 'مثال: صيانة / تصميم / نقل' },
           { key: 'duration', label: 'مدة التنفيذ', placeholder: 'مثال: 3 أيام / أسبوع' },

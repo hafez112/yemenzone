@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import SellerSidebar from '@/components/SellerSidebar';
+import { useCurrency } from '@/lib/currency';
 import { KIND_INFO, type StoreKind } from '@/lib/activity';
 
 // 💎 اشتراكي — الخطة الحالية + الميزات + الترقية بموافقة الإدارة + طلب التمييز
@@ -40,6 +41,8 @@ function FeatureRow({ icon, label, on, granted }: { icon: string; label: string;
 }
 
 export default function SubscriptionPage() {
+  const { list } = useCurrency();
+  const planSym = (code?: string) => list.find((c) => c.code === String(code || 'YER').toUpperCase())?.symbol || code || 'ر.ي';
   const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [sending, setSending] = useState(false);
@@ -197,7 +200,7 @@ export default function SubscriptionPage() {
                     <span className="text-3xl font-black grad-text">
                       {Number(p.priceMonthly) === 0 ? 'مجاناً' : Number(p.priceMonthly).toLocaleString()}
                     </span>
-                    {Number(p.priceMonthly) > 0 && <span className="text-xs opacity-70"> ر.ي/شهر</span>}
+                    {Number(p.priceMonthly) > 0 && <span className="text-xs opacity-70"> {planSym(p.currency)}/شهر</span>}
                   </div>
                   <ul className={`space-y-1.5 text-xs mb-4 ${isCurrent ? 'text-gray-300' : 'text-gray-500'}`}>
                     <li>{limitText(f, storeKind)}</li>

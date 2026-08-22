@@ -2,26 +2,24 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 import { apiUpload } from '@/lib/api';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
 // 🔗 بع برابط واحد — صفحة بيع فورية بلا متجر: صور + سعر + واتساب = رابط يبيع عنك
 const GOVS = ['أمانة العاصمة', 'صنعاء', 'عدن', 'تعز', 'الحديدة', 'إب', 'ذمار', 'حضرموت', 'مأرب', 'عمران', 'حجة', 'صعدة', 'المحويت', 'البيضاء', 'الضالع', 'لحج', 'أبين', 'شبوة', 'المهرة', 'الجوف', 'ريمة', 'سقطرى'];
-const CURS = [
-  { id: 'YER', label: 'ريال يمني 🇾🇪' },
-  { id: 'SAR', label: 'ريال سعودي 🇸🇦' },
-  { id: 'USD', label: 'دولار أمريكي 💵' },
-];
 const LS_KEY = 'yz-my-qs-v1';
 
 interface MyLink { slug: string; name: string; price: number; currency: string; at: number }
 
 export default function QuickSellTool() {
+  const { list: CURS, def: defCur } = useCurrency();
+  useEffect(() => { if (!currency && defCur) setCurrency(defCur.code); }, [defCur]);
   const [images, setImages] = useState<string[]>([]);
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
-  const [currency, setCurrency] = useState('YER');
+  const [currency, setCurrency] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [phone, setPhone] = useState('');
   const [gov, setGov] = useState('');
@@ -159,7 +157,7 @@ export default function QuickSellTool() {
         <div className="flex gap-2">
           <input value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ''))} inputMode="decimal" placeholder="السعر" className={inp + ' flex-1'} />
           <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inp + ' !w-auto shrink-0 bg-night'}>
-            {CURS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+            {CURS.map((c) => <option key={c.code} value={c.code}>{c.name} — {c.symbol}</option>)}
           </select>
         </div>
         <select value={gov} onChange={(e) => setGov(e.target.value)} className={inp + ' bg-night'}>
@@ -191,7 +189,7 @@ export default function QuickSellTool() {
               <div key={l.slug} className="flex items-center gap-2 bg-black/20 rounded-xl px-3 py-2.5">
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold truncate">{l.name}</p>
-                  <p className="text-[10px] text-white/40">{l.price.toLocaleString()} {l.currency === 'YER' ? 'ر.ي' : l.currency === 'SAR' ? 'ر.س' : '$'} · {new Date(l.at).toLocaleDateString('ar-YE')}</p>
+                  <p className="text-[10px] text-white/40">{l.price.toLocaleString()} {CURS.find((c) => c.code === l.currency)?.symbol || l.currency} · {new Date(l.at).toLocaleDateString('ar-YE')}</p>
                 </div>
                 <a href={pageUrl(l.slug)} target="_blank" className="w-8 h-8 grid place-items-center rounded-lg bg-white/10 hover:bg-white/20 text-sm transition-colors">👁️</a>
                 <button onClick={() => copy(l.slug)} className="w-8 h-8 grid place-items-center rounded-lg bg-white/10 hover:bg-white/20 text-sm transition-colors">📋</button>

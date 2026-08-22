@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { imgUrl } from '@/lib/api';
+import { useCurrency } from '@/lib/currency';
 
 // 🎬 قسم البطل السينمائي — بحث حي باقتراحات فورية + إحصاءات حقيقية من قاعدة البيانات
 function CountUp({ to, suffix = '' }: { to: number; suffix?: string }) {
@@ -28,6 +29,8 @@ const KINDS = [
 ];
 
 export default function Hero({ platform, stats }: { platform: any; stats: any }) {
+  const { list } = useCurrency();
+  const hsym = (code?: string) => list.find((c) => c.code === String(code || 'YER').toUpperCase())?.symbol || code || 'ر.ي';
   const router = useRouter();
   const [q, setQ] = useState('');
   const [sugg, setSugg] = useState<any>(null);
@@ -146,7 +149,7 @@ export default function Hero({ platform, stats }: { platform: any; stats: any })
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold text-white truncate">{p.name}</div>
                     <div className="text-[10px] text-teal-300 font-bold">
-                      {Number(p.salePrice || p.price).toLocaleString()} ر.ي
+                      {Number(p.salePrice || p.price).toLocaleString()} {hsym(p.currency)}
                       {p.salePrice && <span className="text-gray-500 line-through font-normal mr-1.5">{Number(p.price).toLocaleString()}</span>}
                     </div>
                   </div>

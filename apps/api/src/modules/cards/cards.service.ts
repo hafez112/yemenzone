@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CurrencyService } from '../../prisma/currency.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CardAiService } from './card-ai.service';
@@ -15,6 +16,7 @@ export class CardsService {
     private messaging: MessagingService,
     private notifications: NotificationsService,
     private ai: CardAiService,
+    private fx: CurrencyService,
   ) {}
 
   private cardNumber() {
@@ -24,14 +26,15 @@ export class CardsService {
   private pin() { return crypto.randomInt(100000, 999999).toString(); }
 
   // ═══ الإدارة: دفعات البطاقات ═══
-  async createBatch(body: { name: string; count: number; value: number }) {
+  async createBatch(body: { name: string; count: number; value: number; currency?: string }) {
     const count = Math.min(Math.max(body.count || 1, 1), 500);
     const value = Number(body.value);
     if (!body.name || !value || value <= 0) throw new BadRequestException('اسم الدفعة والقيمة مطلوبان');
+    const cur = await this.fx.requireActive(body.currency);
 
-    const batch = await this.prisma.cardBatch.create({ data: { name: body.name, count, value } });
+    const batch = await this.prisma.cardBatch.create({ data: { name: body.name, count, value, currency: cur.code } });
     const cards = Array.from({ length: count }, () => ({
-      batchId: batch.id, cardNumber: this.cardNumber(), pin: this.pin(), value,
+      batchId: batch.id, cardNumber: this.cardNumber(), pin: this.pin(), value, currency: cur.code,
     }));
     await this.prisma.paymentCard.createMany({ data: cards });
     return { batch, generated: count };
@@ -82,11 +85,13 @@ export class CardsService {
     let card = await this.prisma.customerCard.findFirst({ where: this.ownerWhere(ownerType, ownerId) as any });
     if (!card) {
       const info = await this.ownerInfo(ownerType, ownerId);
+      const def = await this.fx.default();
       card = await this.prisma.customerCard.create({
         data: {
           ...this.ownerWhere(ownerType, ownerId),
           holderName: info.name, phone: info.phone,
           cardNumber: this.cardNumber(),
+          currency: def.code,
         } as any,
       });
     }
@@ -127,6 +132,10 @@ export class CardsService {
     const myCard = await this.prisma.customerCard.findFirst({ where: this.ownerWhere(ownerType, ownerId) as any });
     if (!myCard) throw new NotFoundException('بطاقتك غير موجودة');
 
+    // 💱 تحويل قيمة بطاقة الشحن من عملتها إلى عملة بطاقة المستخدم بسعر الإدارة
+    const credited = await this.fx.convert(Number(card.value), card.currency, myCard.currency);
+    const myCur = await this.fx.known(myCard.currency);
+
     await this.prisma.$transaction([
       this.prisma.paymentCard.update({
         where: { id: card.id },
@@ -134,24 +143,28 @@ export class CardsService {
       }),
       this.prisma.customerCard.update({
         where: { id: myCard.id },
-        data: { balance: { increment: card.value } },
+        data: { balance: { increment: credited } },
       }),
       this.prisma.cardTopup.create({
-        data: { cardId: myCard.id, ...(ownerType === 'seller' ? { sellerId: ownerId } : { customerId: ownerId }), amount: card.value, method: 'payment-card', status: 'approved', reviewedAt: new Date() },
+        data: { cardId: myCard.id, ...(ownerType === 'seller' ? { sellerId: ownerId } : { customerId: ownerId }), amount: card.value, currency: card.currency, creditedAmount: credited, method: 'payment-card', status: 'approved', reviewedAt: new Date() },
       }),
     ]);
     this.redeemAttempts.delete(key);
-    return { success: true, added: Number(card.value), message: `🎉 شُحنت بطاقتك بـ ${Number(card.value).toLocaleString()} ر.ي` };
+    return { success: true, added: credited, currency: myCard.currency, message: `🎉 شُحنت بطاقتك بـ ${credited.toLocaleString()} ${myCur.symbol}` };
   }
 
   // شحن عبر بوابة (إثبات → مراجعة) — للعميل والبائع
-  async topupProof(ownerType: string, ownerId: string, body: { amount: number; gatewayName: string; proofImage: string }) {
+  async topupProof(ownerType: string, ownerId: string, body: { amount: number; gatewayName: string; proofImage: string; currency?: string }) {
     const myCard = await this.prisma.customerCard.findFirst({ where: this.ownerWhere(ownerType, ownerId) as any });
     if (!myCard) throw new NotFoundException('بطاقتك غير موجودة');
     const pending = await this.prisma.cardTopup.findFirst({ where: { cardId: myCard.id, status: 'pending' } });
     if (pending) throw new BadRequestException('لديك طلب شحن قيد المراجعة');
+    const cur = await this.fx.requireActive(body.currency);
+    const amount = Number(body.amount);
+    if (!amount || amount <= 0) throw new BadRequestException('أدخل مبلغاً صحيحاً');
+    const credited = await this.fx.convert(amount, cur.code, myCard.currency);
     return this.prisma.cardTopup.create({
-      data: { cardId: myCard.id, ...(ownerType === 'seller' ? { sellerId: ownerId } : { customerId: ownerId }), amount: Number(body.amount), method: `gateway:${body.gatewayName}`, proofImage: body.proofImage },
+      data: { cardId: myCard.id, ...(ownerType === 'seller' ? { sellerId: ownerId } : { customerId: ownerId }), amount, currency: cur.code, creditedAmount: credited, method: `gateway:${body.gatewayName}`, proofImage: body.proofImage },
     });
   }
 
@@ -174,16 +187,19 @@ export class CardsService {
   }
 
   // 💳 خصم من بطاقة يمن زون — أساس الدفع للخدمات المدفوعة والاشتراكات (عميل أو بائع)
-  async chargeYzCard(ownerType: string, ownerId: string, amount: number) {
+  // المبلغ بعملة المصدر (currency) — يُحوَّل إلى عملة البطاقة بسعر الإدارة قبل الخصم
+  async chargeYzCard(ownerType: string, ownerId: string, amount: number, currency?: string) {
     const card = await this.prisma.customerCard.findFirst({ where: this.ownerWhere(ownerType, ownerId) as any });
     if (!card) throw new NotFoundException('لا تملك بطاقة يمن زون بعد — افتح صفحة «بطاقتي» لإصدارها');
     if (!card.isActive) throw new BadRequestException('بطاقتك موقوفة — تواصل مع إدارة المنصة');
-    if (Number(card.balance) < amount) {
-      throw new BadRequestException(`رصيد بطاقتك ${Number(card.balance).toLocaleString()} ر.ي لا يكفي — المطلوب ${amount.toLocaleString()} ر.ي`);
+    const required = await this.fx.convert(amount, currency, card.currency);
+    const cur = await this.fx.known(card.currency);
+    if (Number(card.balance) < required) {
+      throw new BadRequestException(`رصيد بطاقتك ${Number(card.balance).toLocaleString()} ${cur.symbol} لا يكفي — المطلوب ${required.toLocaleString()} ${cur.symbol}`);
     }
     return this.prisma.customerCard.update({
       where: { id: card.id },
-      data: { balance: { decrement: amount } },
+      data: { balance: { decrement: required } },
     });
   }
 
@@ -204,8 +220,12 @@ export class CardsService {
     });
     if (paid) throw new BadRequestException('هذا الطلب مدفوع أو قيد المراجعة');
 
-    if (Number(myCard.balance) < Number(order.total))
-      throw new BadRequestException(`رصيدك ${Number(myCard.balance).toLocaleString()} لا يكفي — المطلوب ${Number(order.total).toLocaleString()}`);
+    // 💱 المطلوب من بطاقة العميل = إجمالي الطلب محوّلاً من عملة الطلب إلى عملة البطاقة
+    const cardNeed = await this.fx.convert(Number(order.total), order.currency, myCard.currency);
+    const cardCur = await this.fx.known(myCard.currency);
+    const orderCur = await this.fx.known(order.currency);
+    if (Number(myCard.balance) < cardNeed)
+      throw new BadRequestException(`رصيدك ${Number(myCard.balance).toLocaleString()} ${cardCur.symbol} لا يكفي — المطلوب ${cardNeed.toLocaleString()} ${cardCur.symbol}`);
 
     // 🔐 OTP إن كان قالب card_verify مفعّلاً
     const otpTpl = await this.prisma.messageTemplate.findUnique({ where: { event: 'card_verify' } });
@@ -229,19 +249,22 @@ export class CardsService {
       await this.prisma.otpCode.update({ where: { id: otp.id }, data: { usedAt: new Date() } });
     }
 
-    // تنفيذ الدفع: خصم العميل + إيداع التاجر + سجل دفعة معتمدة
+    // تنفيذ الدفع: خصم العميل بعملة بطاقته + إيداع التاجر بعملة محفظته + سجل دفعة بعملة الطلب
+    const def = await this.fx.default();
     const wallet = await this.prisma.wallet.upsert({
       where: { sellerId: order.store.sellerId! },
       update: {},
-      create: { sellerId: order.store.sellerId! },
+      create: { sellerId: order.store.sellerId!, currency: def.code },
     });
+    const walletCredit = await this.fx.convert(Number(order.total), order.currency, wallet.currency);
+    const walletCur = await this.fx.known(wallet.currency);
     const inv = 'INV-' + Math.random().toString(36).slice(2, 8).toUpperCase();
 
     await this.prisma.$transaction([
-      this.prisma.customerCard.update({ where: { id: myCard.id }, data: { balance: { decrement: order.total } } }),
-      this.prisma.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: order.total } } }),
+      this.prisma.customerCard.update({ where: { id: myCard.id }, data: { balance: { decrement: cardNeed } } }),
+      this.prisma.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: walletCredit } } }),
       this.prisma.walletTransaction.create({
-        data: { walletId: wallet.id, type: 'credit', amount: order.total, note: `دفع طلب ${order.number} بالبطاقة`, referenceId: order.number },
+        data: { walletId: wallet.id, type: 'credit', amount: walletCredit, currency: wallet.currency, note: `دفع طلب ${order.number} بالبطاقة (${Number(order.total).toLocaleString()} ${orderCur.symbol})`, referenceId: order.number },
       }),
       this.prisma.payment.create({
         data: {
@@ -263,16 +286,17 @@ export class CardsService {
     // 🔔 إشعار البائع بوصول المبلغ لمحفظته — إطلاق ونسيان
     this.notifications.push('seller', order.store.sellerId!, {
       icon: '💰',
-      title: `استلمت ${Number(order.total).toLocaleString()} ر.ي في محفظتك`,
+      title: `استلمت ${walletCredit.toLocaleString()} ${walletCur.symbol} في محفظتك`,
       body: `دفع العميل ${order.customerName} طلبه ${order.number} ببطاقة يمن زون — المبلغ في محفظتك الآن`,
       link: '/seller/wallet',
     }).catch(() => {});
-    return { paid: true, message: `✅ تم الدفع ${Number(order.total).toLocaleString()} ر.ي من بطاقتك` };
+    return { paid: true, message: `✅ تم الدفع ${cardNeed.toLocaleString()} ${cardCur.symbol} من بطاقتك` };
   }
 
   // ═══ محفظة التاجر ═══
   async myWallet(sellerId: string) {
-    const wallet = await this.prisma.wallet.upsert({ where: { sellerId }, update: {}, create: { sellerId } });
+    const def = await this.fx.default();
+    const wallet = await this.prisma.wallet.upsert({ where: { sellerId }, update: {}, create: { sellerId, currency: def.code } });
     const [transactions, withdrawals, monthSales] = await Promise.all([
       this.prisma.walletTransaction.findMany({ where: { walletId: wallet.id }, orderBy: { createdAt: 'desc' }, take: 30 }),
       this.prisma.withdrawalRequest.findMany({ where: { walletId: wallet.id }, orderBy: { createdAt: 'desc' }, take: 10 }),
@@ -289,7 +313,11 @@ export class CardsService {
     const wallet = await this.prisma.wallet.findUnique({ where: { sellerId } });
     if (!wallet) throw new NotFoundException('محفظتك غير موجودة');
     const amount = Number(body.amount);
-    if (!amount || amount < 1000) throw new BadRequestException('أقل مبلغ للسحب 1,000 ر.ي');
+    // الحد الأدنى 1,000 بالعملة الافتراضية — يُحوَّل إلى عملة المحفظة
+    const def = await this.fx.default();
+    const min = Math.max(1, await this.fx.convert(1000, def.code, wallet.currency));
+    const cur = await this.fx.known(wallet.currency);
+    if (!amount || amount < min) throw new BadRequestException(`أقل مبلغ للسحب ${min.toLocaleString()} ${cur.symbol}`);
     if (amount > Number(wallet.balance)) throw new BadRequestException('المبلغ أكبر من رصيدك');
     const pending = await this.prisma.withdrawalRequest.findFirst({ where: { walletId: wallet.id, status: 'pending' } });
     if (pending) throw new BadRequestException('لديك طلب سحب قيد المعالجة');
@@ -299,10 +327,10 @@ export class CardsService {
     const [, request] = await this.prisma.$transaction([
       this.prisma.wallet.update({ where: { id: wallet.id }, data: { balance: { decrement: amount } } }),
       this.prisma.withdrawalRequest.create({
-        data: { walletId: wallet.id, amount, method: body.method || 'حوالة', accountInfo: body.accountInfo },
+        data: { walletId: wallet.id, amount, currency: wallet.currency, method: body.method || 'حوالة', accountInfo: body.accountInfo },
       }),
       this.prisma.walletTransaction.create({
-        data: { walletId: wallet.id, type: 'debit', amount, note: 'حجز طلب سحب', },
+        data: { walletId: wallet.id, type: 'debit', amount, currency: wallet.currency, note: 'حجز طلب سحب', },
       }),
     ]);
     return { request, message: '✅ استلمنا طلب السحب — سنحوّل خلال 24-48 ساعة' };
@@ -313,19 +341,21 @@ export class CardsService {
     return this.prisma.cardTopup.findMany({
       where: status ? { status: status as any } : {},
       orderBy: { createdAt: 'desc' }, take: 100,
-      include: { customer: { select: { name: true, phone: true } }, seller: { select: { name: true, phone: true } }, card: { select: { cardNumber: true } } },
+      include: { customer: { select: { name: true, phone: true } }, seller: { select: { name: true, phone: true } }, card: { select: { cardNumber: true, currency: true } } },
     });
   }
 
   async reviewTopup(id: string, approve: boolean) {
-    const topup = await this.prisma.cardTopup.findUnique({ where: { id }, include: { customer: true } });
+    const topup = await this.prisma.cardTopup.findUnique({ where: { id }, include: { customer: true, card: true } });
     if (!topup) throw new NotFoundException('الطلب غير موجود');
     if (topup.status !== 'pending') throw new BadRequestException('تمت مراجعته مسبقاً');
+    // 💱 تحويل مبلغ التحويل من عملته المصدر إلى عملة البطاقة بسعر الإدارة الحالي
+    const credited = approve ? await this.fx.convert(Number(topup.amount), topup.currency, topup.card.currency) : null;
     await this.prisma.$transaction([
-      this.prisma.cardTopup.update({ where: { id }, data: { status: approve ? 'approved' : 'rejected', reviewedAt: new Date() } }),
-      ...(approve ? [this.prisma.customerCard.update({ where: { id: topup.cardId }, data: { balance: { increment: topup.amount } } })] : []),
+      this.prisma.cardTopup.update({ where: { id }, data: { status: approve ? 'approved' : 'rejected', reviewedAt: new Date(), ...(credited != null ? { creditedAmount: credited } : {}) } }),
+      ...(approve && credited != null ? [this.prisma.customerCard.update({ where: { id: topup.cardId }, data: { balance: { increment: credited } } })] : []),
     ]);
-    return { done: true };
+    return { done: true, credited };
   }
 
   adminWithdrawals(status?: string) {
@@ -351,7 +381,7 @@ export class CardsService {
       // إعادة المبلغ المحجوز عند الرفض
       ops.push(this.prisma.wallet.update({ where: { id: wd.walletId }, data: { balance: { increment: wd.amount } } }));
       ops.push(this.prisma.walletTransaction.create({
-        data: { walletId: wd.walletId, type: 'credit', amount: wd.amount, note: 'إعادة مبلغ سحب مرفوض' },
+        data: { walletId: wd.walletId, type: 'credit', amount: wd.amount, currency: wd.wallet.currency, note: 'إعادة مبلغ سحب مرفوض' },
       }));
     }
     await this.prisma.$transaction(ops);

@@ -41,8 +41,8 @@ export default function CrossStoreReco({ productId, isDark }: { productId: strin
               <p className="font-bold text-xs truncate">{p.name}</p>
               <p className="text-[10px] font-bold text-gray-400 truncate">{p.store.name}</p>
               <div className="flex items-center gap-1.5 mt-1">
-                <b className="text-sm" style={{ color: '#6C3DF5' }}>{fmt(Number(p.salePrice || p.price))}</b>
-                {p.salePrice && <s className="text-[10px] text-gray-400">{fmt(Number(p.price))}</s>}
+                <b className="text-sm" style={{ color: '#6C3DF5' }}>{fmt(Number(p.salePrice || p.price), p.currency)}</b>
+                {p.salePrice && <s className="text-[10px] text-gray-400">{fmt(Number(p.price), p.currency)}</s>}
               </div>
             </div>
           </Link>

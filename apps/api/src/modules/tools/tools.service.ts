@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CurrencyService } from '../../prisma/currency.service';
 import { CardsService } from '../cards/cards.service';
 import { saveImage } from '../../common/upload';
 import { randomBytes } from 'crypto';
@@ -52,7 +53,7 @@ const CONFIG_KEY = 'tools.config';
 
 @Injectable()
 export class ToolsService {
-  constructor(private prisma: PrismaService, private cards: CardsService) {}
+  constructor(private prisma: PrismaService, private cards: CardsService, private fx: CurrencyService) {}
 
   // يضمن وجود صف لكل أداة معروفة (يُنشئ الناقص بالترتيب الافتراضي)
   private async ensureRows() {
@@ -127,11 +128,12 @@ export class ToolsService {
       select: { key: true },
     });
     const { fx, aiImages } = await this.getConfig();
-    // 💰 أسعار الخدمات — تُرسل للواجهة لتعرف المجانية من المدفوعة
-    const all = await this.prisma.platformTool.findMany({ select: { key: true, price: true } });
+    // 💰 أسعار الخدمات — تُرسل للواجهة لتعرف المجانية من المدفوعة (مع عملة كل خدمة)
+    const all = await this.prisma.platformTool.findMany({ select: { key: true, price: true, currency: true } });
     const prices: Record<string, number> = {};
-    for (const t of all) if (Number(t.price || 0) > 0) prices[t.key] = Number(t.price);
-    return { tools: rows.map((r) => r.key), fx, aiImages, prices };
+    const priceCurrencies: Record<string, string> = {};
+    for (const t of all) if (Number(t.price || 0) > 0) { prices[t.key] = Number(t.price); priceCurrencies[t.key] = t.currency; }
+    return { tools: rows.map((r) => r.key), fx, aiImages, prices, priceCurrencies };
   }
 
   // 🔓 وصولي للخدمات المدفوعة — ما اشتريته يعمل فوراً ودائماً
@@ -158,18 +160,19 @@ export class ToolsService {
     });
     if (existing) return { unlocked: true, already: true, message: 'الخدمة مشتراة مسبقاً — هي لك دائماً' };
 
-    // 💳 الدفع من بطاقة يمن زون حصراً — يرمي خطأ واضحاً عند نقص الرصيد أو إيقاف البطاقة
-    const card = await this.cards.chargeYzCard(ownerType, ownerId, price);
+    // 💳 الدفع من بطاقة يمن زون حصراً — يُحوَّل سعر الخدمة من عملتها إلى عملة البطاقة
+    const toolCurrency = tool.currency || 'YER';
+    const card = await this.cards.chargeYzCard(ownerType, ownerId, price, toolCurrency);
 
     await this.prisma.$transaction([
       this.prisma.toolPurchase.create({
-        data: { ownerType, ownerId, slug: key, amount: price, cardId: card.id },
+        data: { ownerType, ownerId, slug: key, amount: price, currency: toolCurrency, cardId: card.id },
       }),
       this.prisma.payment.create({
         data: {
           number: 'SRV-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
           payerType: ownerType, payerId: ownerId, purpose: 'tool',
-          amount: price, method: 'yz-card', status: 'approved',
+          amount: price, currency: toolCurrency, method: 'yz-card', status: 'approved',
           reviewedAt: new Date(), referenceId: key,
         },
       }),
@@ -252,7 +255,7 @@ export class ToolsService {
     };
   }
 
-  async updateTool(key: string, patch: { isVisible?: boolean; order?: number; seoTitle?: string; seoDesc?: string; seoKeys?: string; price?: number | null }) {
+  async updateTool(key: string, patch: { isVisible?: boolean; order?: number; seoTitle?: string; seoDesc?: string; seoKeys?: string; price?: number | null; currency?: string }) {
     if (!TOOL_KEYS.includes(key as any)) throw new NotFoundException('الأداة غير معروفة');
     await this.ensureRows();
     const data: any = {};
@@ -262,6 +265,11 @@ export class ToolsService {
     if (patch.price !== undefined) {
       const p = Number(patch.price);
       data.price = p > 0 && isFinite(p) && p < 1e9 ? p : null;
+    }
+    // 💱 عملة سعر الخدمة — من العملات النشطة التي تحددها الإدارة
+    if (patch.currency !== undefined) {
+      const cur = await this.fx.requireActive(patch.currency);
+      data.currency = cur.code;
     }
     if (patch.seoTitle !== undefined) data.seoTitle = String(patch.seoTitle).trim().slice(0, 120) || null;
     if (patch.seoDesc !== undefined) data.seoDesc = String(patch.seoDesc).trim().slice(0, 300) || null;
@@ -450,8 +458,10 @@ export class ToolsService {
     const name = String(body.name || '').trim().slice(0, 80);
     const desc = String(body.desc || '').trim().slice(0, 600) || null;
     const price = Number(body.price);
-    const currency = ['YER', 'SAR', 'USD'].includes(String(body.currency || '').toUpperCase())
-      ? String(body.currency).toUpperCase() : 'YER';
+    // 💱 العملة من قائمة عملات المنصة النشطة (لا قائمة ثابتة)
+    const activeCodes = (await this.fx.active()).map((c) => c.code);
+    const currency = activeCodes.includes(String(body.currency || '').toUpperCase())
+      ? String(body.currency).toUpperCase() : (await this.fx.default()).code;
     const whatsapp = String(body.whatsapp || '').replace(/[^0-9+]/g, '');
     const phone = String(body.phone || '').replace(/[^0-9+]/g, '') || null;
     const governorate = String(body.governorate || '').trim().slice(0, 40) || null;
@@ -523,8 +533,9 @@ export class ToolsService {
     const title = String(body.title || '').trim().slice(0, 80);
     const desc = String(body.desc || '').trim().slice(0, 800) || null;
     const price = Number(body.price);
-    const currency = ['YER', 'SAR', 'USD'].includes(String(body.currency || '').toUpperCase())
-      ? String(body.currency).toUpperCase() : 'YER';
+    const activeCodes = (await this.fx.active()).map((c) => c.code);
+    const currency = activeCodes.includes(String(body.currency || '').toUpperCase())
+      ? String(body.currency).toUpperCase() : (await this.fx.default()).code;
     const category = ToolsService.USED_CATS.includes(body.category) ? body.category : 'other';
     const condition = ToolsService.USED_CONDS.includes(body.condition) ? body.condition : 'used-good';
     const whatsapp = String(body.whatsapp || '').replace(/[^0-9+]/g, '');
@@ -716,8 +727,9 @@ export class ToolsService {
     const title = String(body.title || '').trim().slice(0, 120);
     const details = String(body.details || '').trim().slice(0, 600) || null;
     const budget = body.budget ? Number(body.budget) : null;
-    const currency = ['YER', 'SAR', 'USD'].includes(String(body.currency || '').toUpperCase())
-      ? String(body.currency).toUpperCase() : 'YER';
+    const activeCodes = (await this.fx.active()).map((c) => c.code);
+    const currency = activeCodes.includes(String(body.currency || '').toUpperCase())
+      ? String(body.currency).toUpperCase() : (await this.fx.default()).code;
     const governorate = String(body.governorate || '').trim().slice(0, 40) || null;
     const whatsapp = String(body.whatsapp || '').replace(/[^0-9+]/g, '');
 

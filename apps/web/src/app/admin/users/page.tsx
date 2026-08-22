@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import AdminSidebar from "../../../components/AdminSidebar";
 import { api, getUser } from "../../../lib/api";
 import { toast } from "../../../components/Toast";
+import { useCurrency } from '../../../lib/currency';
 import { useRouter } from "next/navigation";
 
 const ROLES = [
@@ -14,6 +15,8 @@ const STATUS_AR: Record<string, string> = { active: "نشط", suspended: "موق
 
 // 🧑‍🤝‍🧑 إدارة المستخدمين الموحدة — بائعون/عملاء/سائقون
 export default function AdminUsersPage() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const router = useRouter();
   const [role, setRole] = useState("seller");
   const [q, setQ] = useState("");
@@ -78,7 +81,7 @@ export default function AdminUsersPage() {
                     {role === "seller" && (
                       <p className="muted small">
                         🏪 {u.stores?.length || 0} متجر{u.stores?.[0] ? ` (${u.stores[0].name})` : ""}
-                        {u.wallet ? ` · 💰 ${Number(u.wallet.balance).toLocaleString()} ر.ي` : ""}
+                        {u.wallet ? ` · 💰 ${Number(u.wallet.balance).toLocaleString()} ${dsym(u.wallet.currency)}` : ""}
                       </p>
                     )}
                     {role === "customer" && <p className="muted small">🛒 {u._count?.orders || 0} طلب</p>}

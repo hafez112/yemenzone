@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CurrencyService } from '../../prisma/currency.service';
 import { ProductAiService } from './product-ai.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { MessagingService } from '../messaging/messaging.service';
@@ -17,6 +18,7 @@ export class ProductsService {
     private messaging: MessagingService,
     private wishlist: WishlistService,
     private cache: CacheService,
+    private fx: CurrencyService,
   ) {}
 
   // ⚡ إبطال كاش الواجهة العامة بعد أي تعديل — يرى الزوار التغيير فوراً بدل انتظار انتهاء المدة
@@ -164,6 +166,8 @@ export class ProductsService {
     }
     if (!body.name?.trim()) throw new BadRequestException('اسم المنتج مطلوب');
     if (!body.price || Number(body.price) <= 0) throw new BadRequestException('السعر مطلوب');
+    // 💱 عملة المنتج — من العملات النشطة التي تحددها إدارة المنصة (الافتراضية إن لم تُختر)
+    const currency = (await this.fx.requireActive(body.currency)).code;
 
     // 🎨 المتغيرات — عند وجودها يُحسب المخزون الكلي من مجموع مخزونها
     const variants = this.sanitizeVariants(body.variants);
@@ -192,6 +196,7 @@ export class ProductsService {
         isFeatured: !!body.isFeatured,
         price: Number(body.price),
         salePrice: body.salePrice ? Number(body.salePrice) : null,
+        currency,
         stock: variantStock ?? Number(body.stock ?? 0),
         lowStockAt: body.lowStockAt !== undefined ? Math.max(0, Number(body.lowStockAt)) : 5,
         sku: String(body.sku || '').trim().slice(0, 60) || null,
@@ -238,11 +243,15 @@ export class ProductsService {
     const newEffective = nextSale ?? nextPrice;
     const priceDropped = newEffective < oldEffective;
 
+    // 💱 تغيير عملة المنتج (اختياري) — عملة نشطة فقط؛ السعر المدخل يُفسَّر بها
+    const nextCurrency = body.currency !== undefined ? (await this.fx.requireActive(body.currency)).code : undefined;
+
     const updated = await this.prisma.product.update({
       where: { id },
       data: {
         name: body.name ? this.ai.enhanceName(body.name) : undefined,
         description: body.description,
+        currency: nextCurrency,
         // 🏬 حقول المول
         shortDesc: body.shortDesc !== undefined ? String(body.shortDesc || '').trim().slice(0, 200) || null : undefined,
         keywords: body.keywords !== undefined ? String(body.keywords || '').trim().slice(0, 300) || null : undefined,

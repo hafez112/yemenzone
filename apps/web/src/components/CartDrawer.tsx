@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getCart, saveCart, updateQty, clearCart, cartTotal, cartCount, rememberStoreId, CartItem } from '@/lib/cart';
+import { getCart, saveCart, updateQty, clearCart, cartTotal, cartTotalConv, cartCount, rememberStoreId, CartItem } from '@/lib/cart';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import PhoneInput from '@/components/PhoneInput';
@@ -37,7 +37,7 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
   const [cardError, setCardError] = useState('');
   const [otpRequired, setOtpRequired] = useState(false);
   const [otp, setOtp] = useState('');
-  const { fmt } = useCurrency(); // 💱 عرض الأسعار بالعملة المختارة
+  const { fmt, convert, def: defCur } = useCurrency(); // 💱 عرض الأسعار بالعملة المختارة + تحويل حقيقي
 
   function requestLocation() {
     if (!('geolocation' in navigator)) {
@@ -98,8 +98,8 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
       } else {
         setCardPaid(true);
         setOtpRequired(false);
-        // تحديث الرصيد المعروض محلياً بعد الخصم
-        setMyCard((c: any) => (c ? { ...c, balance: Number(c.balance) - orderTotal } : c));
+        // تحديث الرصيد المعروض من الخادم (الخصم تم بعملة البطاقة بعد التحويل)
+        api('/customer/card').then(d => setMyCard(d.card)).catch(() => {});
         toast(r.message || '✅ تم الدفع من بطاقتك');
       }
     } catch (e: any) {
@@ -127,8 +127,10 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
       };
       if (!samePhone(form.customerPhone, user.phone || ''))
         return toast('⚠️ الدفع بالبطاقة يتطلب أن يكون جوال الطلب هو جوال حسابك المسجل', 'error');
-      if (Number(myCard.balance) < finalTotal)
-        return toast(`⚠️ رصيد بطاقتك (${Number(myCard.balance).toLocaleString()}) لا يكفي — اشحنها من صفحة بطاقتك`, 'error');
+      // 💱 رصيد البطاقة بعملتها — يُحوَّل إلى عملة الطلب (الافتراضية) قبل المقارنة
+      const balanceInOrderCur = convert(Number(myCard.balance), myCard.currency, defCur?.code);
+      if (balanceInOrderCur < finalTotal)
+        return toast(`⚠️ رصيد بطاقتك (${Number(myCard.balance).toLocaleString()} ${myCard.currency || ''}) لا يكفي — اشحنها من صفحة بطاقتك`, 'error');
     }
     setSending(true);
     setDoneCard(false); setCardPaid(false); setCardError(''); setOtpRequired(false); setOtp('');
@@ -166,7 +168,8 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
   }
 
   const count = cartCount(cart);
-  const total = cartTotal(cart);
+  // 💱 الإجمالي بعملة المنصة الافتراضية — كل سطر يُحوَّل من عملة صنفه (الخادم يعيد الحساب نفسه عند إنشاء الطلب)
+  const total = cartTotalConv(cart, (a, from) => convert(a, from, defCur?.code));
   // 💳 طرق المتجر الخاصة (إن ضبطها البائع) لها الأولوية على بوابات المنصة
   const storeMethods: any[] = store.paymentMethods || [];
   const hasStorePay = storeMethods.length > 0;
@@ -178,13 +181,18 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
   const selectedDelivery = deliveryMethods.find(d => d.id === deliveryId);
   const deliveryFee = selectedDelivery?.fee || 0;
   const finalTotal = (coupon ? Math.max(0, total - coupon.discount) : total) + gatewayFee + deliveryFee;
+  // رمز العملة الافتراضية للرسائل الثابتة (الطلب يُنشأ بها)
+  const defSym = defCur?.symbol || 'ر.ي';
   // طريقة تتطلب إثبات تحويل: كل ما عدا النقدي وبطاقة يمن زون (خصم فوري بلا إثبات)
   const needsProof = payMethod !== 'cash' && payMethod !== 'yzcard' && payMethod !== '' && (!selectedStoreMethod || selectedStoreMethod.type !== 'cash');
 
   // 🎫 خيار بطاقة يمن زون — وسيلة دفع عامة تظهر مع كل الطرق
   const cardBalance = myCard ? Number(myCard.balance) : null;
-  const cardEnough = cardBalance !== null && cardBalance >= finalTotal;
+  // 💱 كفاية الرصيد تُقاس بعد تحويله إلى عملة الطلب
+  const cardBalanceInOrderCur = myCard ? convert(Number(myCard.balance), myCard.currency, defCur?.code) : null;
+  const cardEnough = cardBalanceInOrderCur !== null && cardBalanceInOrderCur >= finalTotal;
   const cardUnavailable = user && myCard === null; // حساب غير عميل أو تعذر الجلب
+  const cardSym = myCard?.currency || defSym;
   const cardOption = (
     <label className={`block p-3 rounded-xl border cursor-pointer ${payMethod === 'yzcard' ? 'border-teal-500 bg-teal-50' : 'border-gray-200'}`}>
       <div className="flex items-center gap-2">
@@ -192,7 +200,7 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
         <span className="font-bold text-sm flex-1">🎫 بطاقة يمن زون <span className="text-[10px] text-teal-600 font-extrabold">— دفع فوري من رصيدك</span></span>
         {user && cardBalance !== null && (
           <span className={`text-[11px] font-extrabold ${cardEnough ? 'text-teal-600' : 'text-red-500'}`}>
-            {cardBalance.toLocaleString()} ر.ي
+            {cardBalance.toLocaleString()} {cardSym}
           </span>
         )}
       </div>
@@ -207,7 +215,7 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
             <p className="text-red-500 font-bold">رصيدك لا يكفي لهذا الطلب — اشحن بطاقتك من <a href="/customer/card" className="underline">صفحة البطاقة</a> ثم عُد هنا</p>
           )}
           {user && cardEnough && (
-            <p className="text-teal-700 font-bold">✅ سيُخصم {finalTotal.toLocaleString()} ر.ي من رصيدك فور تأكيد الطلب ويُضاف لمحفظة البائع مباشرة — بلا إثبات تحويل</p>
+            <p className="text-teal-700 font-bold">✅ سيُخصم ما يعادل {finalTotal.toLocaleString()} {defSym} من رصيد بطاقتك ({cardSym}) فور تأكيد الطلب ويُضاف لمحفظة البائع مباشرة — بلا إثبات تحويل</p>
           )}
         </div>
       )}
@@ -247,7 +255,7 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
         body: JSON.stringify({ code: couponCode.trim(), storeSlug: store.slug, total }),
       });
       setCoupon(r);
-      toast(`🎟️ ${r.label} — وفّرت ${r.discount.toLocaleString()} ر.ي`);
+      toast(`🎟️ ${r.label} — وفّرت ${fmt(r.discount)}`);
     } catch (e: any) {
       setCoupon(null);
       toast(e.message, 'error');
@@ -288,7 +296,7 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
                   <div className="w-full bg-teal-50 border border-teal-200 rounded-2xl p-4 mb-3 text-right">
                     {cardPaying && <p className="font-extrabold text-sm text-teal-700">⏳ جاري الخصم من بطاقتك وإيداع المبلغ في محفظة البائع...</p>}
                     {cardPaid && (
-                      <p className="font-extrabold text-sm text-emerald-600">✅ تم الدفع من بطاقتك — أُضيف {Number(done.order.total).toLocaleString()} ر.ي لمحفظة البائع وطلبك قيد التجهيز</p>
+                      <p className="font-extrabold text-sm text-emerald-600">✅ تم الدفع من بطاقتك — أُضيف {Number(done.order.total).toLocaleString()} {done.order.currency || defSym} لمحفظة البائع وطلبك قيد التجهيز</p>
                     )}
                     {otpRequired && !cardPaid && !cardPaying && (
                       <>
@@ -357,7 +365,7 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
                         <div className="font-bold text-sm truncate">{i.name}</div>
                         {i.variant && <div className="text-[11px] font-bold" style={{ color: primary }}>🎨 {i.variant}</div>}
                         <div className="text-sm font-black" style={{ color: primary }}>
-                          {fmt(i.price * i.qty)}
+                          {fmt(i.price * i.qty, i.currency)}
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
@@ -516,7 +524,7 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
                           <div className="flex items-center gap-2">
                             <input type="radio" name="delivery" checked={deliveryId === d.id} onChange={() => setDeliveryId(d.id)} />
                             <span className="font-bold text-sm flex-1">{d.label}</span>
-                            <span className="text-xs font-extrabold" style={{ color: primary }}>{d.fee > 0 ? `+${d.fee.toLocaleString()} ر.ي` : 'مجاني'}</span>
+                            <span className="text-xs font-extrabold" style={{ color: primary }}>{d.fee > 0 ? `+${fmt(d.fee)}` : 'مجاني'}</span>
                           </div>
                           {deliveryId === d.id && (d.eta || d.areas || d.note) && (
                             <div className="mt-1.5 text-[11px] text-gray-500 pr-6">
@@ -551,7 +559,7 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
                               {m.account && <p className="font-bold" dir="ltr">📌 {m.account}</p>}
                               {m.accountName && <p className="text-gray-500">👤 {m.accountName}</p>}
                               {m.instructions && <p className="text-gray-500 mt-1">{m.instructions}</p>}
-                              <p className="text-amber-600 mt-1">⚠️ حوّل {finalTotal.toLocaleString()} ر.ي ثم ارفع الإثبات بعد تأكيد الطلب</p>
+                              <p className="text-amber-600 mt-1">⚠️ حوّل {finalTotal.toLocaleString()} {defSym} ثم ارفع الإثبات بعد تأكيد الطلب</p>
                             </div>
                           )}
                         </label>
@@ -576,7 +584,7 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
                             <div className="mt-2 text-xs bg-white rounded-lg p-2 border border-gray-100">
                               {g.accountInfo && <p className="font-bold">📌 {g.accountInfo}</p>}
                               {g.instructions && <p className="text-gray-500 mt-1">{g.instructions}</p>}
-                              <p className="text-amber-600 mt-1">⚠️ حوّل {finalTotal.toLocaleString()} ر.ي ثم ارفع الإثبات بعد تأكيد الطلب</p>
+                              <p className="text-amber-600 mt-1">⚠️ حوّل {finalTotal.toLocaleString()} {defSym} ثم ارفع الإثبات بعد تأكيد الطلب</p>
                             </div>
                           )}
                         </label>

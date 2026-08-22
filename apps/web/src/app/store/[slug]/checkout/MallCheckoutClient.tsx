@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getCart, clearCart, cartTotal, cartCount, CartItem } from '@/lib/cart';
+import { getCart, clearCart, cartTotalConv, cartCount, CartItem } from '@/lib/cart';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import { useCurrency } from '@/lib/currency';
@@ -34,7 +34,7 @@ export default function MallCheckoutClient({ store, primary }: { store: any; pri
   const [cardError, setCardError] = useState('');
   const [otpRequired, setOtpRequired] = useState(false);
   const [otp, setOtp] = useState('');
-  const { fmt } = useCurrency();
+  const { fmt, convert, def: defCur } = useCurrency();
 
   function requestLocation() {
     if (!('geolocation' in navigator)) {
@@ -79,7 +79,9 @@ export default function MallCheckoutClient({ store, primary }: { store: any; pri
   }, [store.slug]);
 
   const count = cartCount(cart);
-  const total = cartTotal(cart);
+  // 💱 كل سطر يُحوَّل من عملة صنفه إلى عملة المنصة الافتراضية — الخادم يعيد الحساب نفسه عند الطلب
+  const total = cartTotalConv(cart, (a, from) => convert(a, from, defCur?.code));
+  const defSym = defCur?.symbol || 'ر.ي';
   const storeMethods: any[] = store.paymentMethods || [];
   const hasStorePay = storeMethods.length > 0;
   const selectedStoreMethod = payMethod.startsWith('sm:') ? storeMethods.find(m => `sm:${m.id}` === payMethod) : null;
@@ -92,8 +94,11 @@ export default function MallCheckoutClient({ store, primary }: { store: any; pri
   const needsProof = payMethod !== 'cash' && payMethod !== 'yzcard' && payMethod !== '' && (!selectedStoreMethod || selectedStoreMethod.type !== 'cash');
 
   const cardBalance = myCard ? Number(myCard.balance) : null;
-  const cardEnough = cardBalance !== null && cardBalance >= finalTotal;
+  // 💱 كفاية الرصيد تُقاس بعد تحويله من عملة البطاقة إلى عملة الطلب
+  const cardBalanceInOrderCur = myCard ? convert(Number(myCard.balance), myCard.currency, defCur?.code) : null;
+  const cardEnough = cardBalanceInOrderCur !== null && cardBalanceInOrderCur >= finalTotal;
   const cardUnavailable = user && myCard === null;
+  const cardSym = myCard?.currency || defSym;
 
   async function payOrderWithCard(orderId: string, orderTotal: number, otpCode?: string) {
     setCardPaying(true);
@@ -109,7 +114,7 @@ export default function MallCheckoutClient({ store, primary }: { store: any; pri
       } else {
         setCardPaid(true);
         setOtpRequired(false);
-        setMyCard((c: any) => (c ? { ...c, balance: Number(c.balance) - orderTotal } : c));
+        api('/customer/card').then(d => setMyCard(d.card)).catch(() => {});
         toast(r.message || '✅ تم الدفع من بطاقتك');
       }
     } catch (e: any) {
@@ -130,8 +135,8 @@ export default function MallCheckoutClient({ store, primary }: { store: any; pri
       const digits = (s: string) => (s || '').replace(/\D/g, '');
       if (digits(form.customerPhone) !== digits(user.phone || ''))
         return toast('⚠️ الدفع بالبطاقة يتطلب أن يكون جوال الطلب هو جوال حسابك المسجل', 'error');
-      if (Number(myCard.balance) < finalTotal)
-        return toast(`⚠️ رصيد بطاقتك (${Number(myCard.balance).toLocaleString()}) لا يكفي — اشحنها من صفحة بطاقتك`, 'error');
+      if ((cardBalanceInOrderCur ?? 0) < finalTotal)
+        return toast(`⚠️ رصيد بطاقتك (${Number(myCard.balance).toLocaleString()} ${myCard.currency || ''}) لا يكفي — اشحنها من صفحة بطاقتك`, 'error');
     }
     setSending(true);
     setDoneCard(false); setCardPaid(false); setCardError(''); setOtpRequired(false); setOtp('');
@@ -195,7 +200,7 @@ export default function MallCheckoutClient({ store, primary }: { store: any; pri
         body: JSON.stringify({ code: couponCode.trim(), storeSlug: store.slug, total }),
       });
       setCoupon(r);
-      toast(`🎟️ ${r.label} — وفّرت ${r.discount.toLocaleString()} ر.ي`);
+      toast(`🎟️ ${r.label} — وفّرت ${fmt(r.discount)}`);
     } catch (e: any) {
       setCoupon(null);
       toast(e.message, 'error');
@@ -209,7 +214,7 @@ export default function MallCheckoutClient({ store, primary }: { store: any; pri
         <span className="font-bold text-sm flex-1">🎫 بطاقة يمن زون <span className="text-[10px] text-teal-600 font-extrabold">— دفع فوري من رصيدك</span></span>
         {user && cardBalance !== null && (
           <span className={`text-[11px] font-extrabold ${cardEnough ? 'text-teal-600' : 'text-red-500'}`}>
-            {cardBalance.toLocaleString()} ر.ي
+            {cardBalance.toLocaleString()} {cardSym}
           </span>
         )}
       </div>
@@ -224,7 +229,7 @@ export default function MallCheckoutClient({ store, primary }: { store: any; pri
             <p className="text-red-500 font-bold">رصيدك لا يكفي لهذا الطلب — اشحن بطاقتك من <a href="/customer/card" className="underline">صفحة البطاقة</a> ثم عُد هنا</p>
           )}
           {user && cardEnough && (
-            <p className="text-teal-700 font-bold">✅ سيُخصم {finalTotal.toLocaleString()} ر.ي من رصيدك فور تأكيد الطلب ويُضاف لمحفظة المول مباشرة — بلا إثبات تحويل</p>
+            <p className="text-teal-700 font-bold">✅ سيُخصم ما يعادل {finalTotal.toLocaleString()} {defSym} من رصيد بطاقتك ({cardSym}) فور تأكيد الطلب ويُضاف لمحفظة المول مباشرة — بلا إثبات تحويل</p>
           )}
         </div>
       )}
@@ -246,7 +251,7 @@ export default function MallCheckoutClient({ store, primary }: { store: any; pri
               <div className="w-full bg-teal-50 border border-teal-200 rounded-2xl p-4 mb-3 text-right">
                 {cardPaying && <p className="font-extrabold text-sm text-teal-700">⏳ جاري الخصم من بطاقتك وإيداع المبلغ في محفظة المول...</p>}
                 {cardPaid && (
-                  <p className="font-extrabold text-sm text-emerald-600">✅ تم الدفع من بطاقتك — أُضيف {Number(done.order.total).toLocaleString()} ر.ي لمحفظة المول وطلبك قيد التجهيز</p>
+                  <p className="font-extrabold text-sm text-emerald-600">✅ تم الدفع من بطاقتك — أُضيف {Number(done.order.total).toLocaleString()} {done.order.currency || defSym} لمحفظة المول وطلبك قيد التجهيز</p>
                 )}
                 {otpRequired && !cardPaid && !cardPaying && (
                   <>
@@ -333,7 +338,7 @@ export default function MallCheckoutClient({ store, primary }: { store: any; pri
                 {cart.map(i => (
                   <div key={i.productId + (i.variantId || '')} className="flex justify-between text-xs font-bold text-gray-500">
                     <span className="truncate">{i.name}{i.variant ? ` — ${i.variant}` : ''} × {i.qty}</span>
-                    <span className="shrink-0">{fmt(i.price * i.qty)}</span>
+                    <span className="shrink-0">{fmt(i.price * i.qty, i.currency)}</span>
                   </div>
                 ))}
               </div>
@@ -420,7 +425,7 @@ export default function MallCheckoutClient({ store, primary }: { store: any; pri
                     <div className="flex items-center gap-2">
                       <input type="radio" name="delivery" checked={deliveryId === d.id} onChange={() => setDeliveryId(d.id)} />
                       <span className="font-bold text-sm flex-1">{d.label}</span>
-                      <span className="text-xs font-extrabold" style={{ color: primary }}>{d.fee > 0 ? `+${d.fee.toLocaleString()} ر.ي` : 'مجاني'}</span>
+                      <span className="text-xs font-extrabold" style={{ color: primary }}>{d.fee > 0 ? `+${fmt(d.fee)}` : 'مجاني'}</span>
                     </div>
                     {deliveryId === d.id && (d.eta || d.areas || d.note) && (
                       <div className="mt-1.5 text-[11px] text-gray-500 pr-6">
@@ -454,7 +459,7 @@ export default function MallCheckoutClient({ store, primary }: { store: any; pri
                             {m.account && <p className="font-bold" dir="ltr">📌 {m.account}</p>}
                             {m.accountName && <p className="text-gray-500">👤 {m.accountName}</p>}
                             {m.instructions && <p className="text-gray-500 mt-1">{m.instructions}</p>}
-                            <p className="text-amber-600 mt-1">⚠️ حوّل {finalTotal.toLocaleString()} ر.ي ثم ارفع الإثبات بعد تأكيد الطلب</p>
+                            <p className="text-amber-600 mt-1">⚠️ حوّل {finalTotal.toLocaleString()} {defSym} ثم ارفع الإثبات بعد تأكيد الطلب</p>
                           </div>
                         )}
                       </label>
@@ -479,7 +484,7 @@ export default function MallCheckoutClient({ store, primary }: { store: any; pri
                         <div className="mt-2 text-xs bg-white rounded-lg p-2 border border-gray-100">
                           {g.accountInfo && <p className="font-bold">📌 {g.accountInfo}</p>}
                           {g.instructions && <p className="text-gray-500 mt-1">{g.instructions}</p>}
-                          <p className="text-amber-600 mt-1">⚠️ حوّل {finalTotal.toLocaleString()} ر.ي ثم ارفع الإثبات بعد تأكيد الطلب</p>
+                          <p className="text-amber-600 mt-1">⚠️ حوّل {finalTotal.toLocaleString()} {defSym} ثم ارفع الإثبات بعد تأكيد الطلب</p>
                         </div>
                       )}
                     </label>

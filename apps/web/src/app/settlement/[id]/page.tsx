@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api, getUser } from "../../../lib/api";
+import { useCurrency } from "../../../lib/currency";
 import {
   InvoiceSheet, InvoiceMasthead, PartyCards, ItemsTable,
   InvoiceFooter, PrintToolbar, INK,
@@ -11,6 +12,8 @@ import {
 const fmt = (n: any) => Number(n || 0).toLocaleString();
 
 export default function SettlementPrintPage() {
+  const { def } = useCurrency();
+  const curSym = def?.symbol || "ر.ي";
   const { id } = useParams() as { id: string };
   const [st, setSt] = useState<any>(null);
   const [err, setErr] = useState("");
@@ -72,7 +75,7 @@ export default function SettlementPrintPage() {
               style={{ background: "#F6F4FF", border: `1px solid ${INK.line}` }}>
               <p className="text-[10px] font-black" style={{ color: "#8A86A3" }}>{l}</p>
               <p className="font-black text-lg" style={{ color: c as string }}>{fmt(v)}</p>
-              <p className="text-[9px]" style={{ color: "#8A86A3" }}>ر.ي</p>
+              <p className="text-[9px]" style={{ color: "#8A86A3" }}>{curSym}</p>
             </div>
           ))}
         </div>

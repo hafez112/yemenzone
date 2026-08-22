@@ -3,11 +3,14 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import { specChips } from '@/lib/activity';
+import { useCurrency } from '@/lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
 // قسم الحجوزات في واجهة المتجر — للإيجارات والفنادق والخدمات
 export default function BookingSection({ store, kind }: { store: any; kind: 'rentals' | 'hotel' | 'services' }) {
+  const { list: currencies } = useCurrency();
+  const bsym = (code?: string) => currencies.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || 'ر.ي';
   const theme = (store.themeJson as any) || {};
   const primary = theme.primary || '#6C3DF5';
   const secondary = theme.secondary || '#00E5C7';
@@ -94,7 +97,7 @@ export default function BookingSection({ store, kind }: { store: any; kind: 'ren
               </div>}
               {/* 💊 حبة السعر الزجاجية */}
               <span className="price-chip absolute bottom-2.5 right-2.5">
-                <b className="price-grad text-sm">{Number(it.pricePerDay || it.pricePerNight || it.price).toLocaleString()} ر.ي</b>
+                <b className="price-grad text-sm">{Number(it.pricePerDay || it.pricePerNight || it.price).toLocaleString()} {bsym(it.currency)}</b>
                 {CFG.priceLabel && <small className="text-[9px] font-bold text-gray-500">{CFG.priceLabel}</small>}
               </span>
             </div>
@@ -116,7 +119,7 @@ export default function BookingSection({ store, kind }: { store: any; kind: 'ren
               {/* 💰 التأمين للإيجارات */}
               {kind === 'rentals' && it.deposit && (
                 <div className={`text-[11px] mt-1.5 font-bold ${isDark ? 'text-amber-300' : 'text-amber-600'}`}>
-                  💰 تأمين مسترد: {Number(it.deposit).toLocaleString()} ر.ي
+                  💰 تأمين مسترد: {Number(it.deposit).toLocaleString()} {bsym(it.currency)}
                 </div>
               )}
               {/* 🧬 مواصفات منظمة حسب النشاط */}
@@ -164,7 +167,7 @@ export default function BookingSection({ store, kind }: { store: any; kind: 'ren
                 <h3 className="font-black text-xl mb-1">تم إرسال طلب حجزك!</h3>
                 <p className="text-gray-500 text-sm mb-1">{booking.title}</p>
                 <p className="font-black f-xl mb-5 price-grad">
-                  الإجمالي: {done.total.toLocaleString()} ر.ي
+                  الإجمالي: {done.total.toLocaleString()} {bsym(done.booking?.currency || done.currency || booking?.currency)}
                 </p>
                 {done.storeWhatsapp && (
                   <a href={`https://wa.me/${done.storeWhatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(done.waText)}`}
@@ -182,7 +185,7 @@ export default function BookingSection({ store, kind }: { store: any; kind: 'ren
                   <button onClick={() => setBooking(null)} className="w-9 h-9 rounded-full bg-gray-100">✕</button>
                 </div>
                 <p className="text-sm text-gray-500 mb-3">{booking.title} — <span className="font-black" style={{ color: primary }}>
-                  {Number(booking.pricePerDay || booking.pricePerNight || booking.price).toLocaleString()} ر.ي {CFG.priceLabel}
+                  {Number(booking.pricePerDay || booking.pricePerNight || booking.price).toLocaleString()} {bsym(booking.currency)} {CFG.priceLabel}
                 </span></p>
                 <div className="space-y-3">
                   <input value={form.customerName} onChange={e => setForm({ ...form, customerName: e.target.value })}

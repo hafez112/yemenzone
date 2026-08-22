@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { SERVER_API as API, pubImg } from '@/lib/server-api';
+import { SERVER_API as API, pubImg, serverCurSymbol } from '@/lib/server-api';
 import UActions from '@/components/tools/UActions';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://yemenzone1.com';
@@ -21,7 +21,6 @@ async function getItem(slug: string): Promise<UsedItem | null> {
   } catch { return null; }
 }
 
-const curLabel = (c: string) => (c === 'SAR' ? 'ر.س' : c === 'USD' ? '$' : 'ر.ي');
 const CATS: Record<string, string> = { cars: '🚗 سيارات ومركبات', phones: '📱 جوالات وأجهزة', electronics: '💻 إلكترونيات', realestate: '🏠 عقارات', furniture: '🛋️ أثاث ومنزل', clothes: '👕 ملابس وأزياء', other: '📦 أخرى' };
 const CONDS: Record<string, string> = { 'like-new': '✨ كالجديد', 'used-good': '👍 مستعمل جيد', 'used-fair': '🔧 مستعمل مقبول' };
 
@@ -29,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const item = await getItem(slug);
   if (!item) return {};
-  const price = `${Number(item.price).toLocaleString()} ${curLabel(item.currency)}`;
+  const price = `${Number(item.price).toLocaleString()} ${await serverCurSymbol(item.currency)}`;
   const desc = (item.desc || `${item.title} — ${CONDS[item.condition] || ''} بسعر ${price}${item.governorate ? ` في ${item.governorate}` : ''} — تواصل مباشرة مع البائع`).slice(0, 160);
   const img = item.images?.[0] ? `${SITE}${item.images[0]}` : undefined;
   return {
@@ -50,12 +49,14 @@ export default async function UsedPage({ params }: { params: Promise<{ slug: str
   const item = await getItem(slug);
   if (!item) notFound();
 
-  const price = `${Number(item.price).toLocaleString()} ${curLabel(item.currency)}`;
+  const price = `${Number(item.price).toLocaleString()} ${await serverCurSymbol(item.currency)}`;
   const waNum = item.whatsapp.replace(/[^0-9]/g, '');
   const waIntl = waNum.startsWith('967') ? waNum : '967' + waNum.replace(/^0/, '');
   const waMsg = encodeURIComponent(`السلام عليكم 🌹\nشاهدت إعلانك في سوق المستعمل: ${item.title}\nالسعر المعلن: ${price}\n${SITE}/u/${item.slug}`);
   const images = Array.isArray(item.images) ? item.images : [];
   const similar = Array.isArray(item.similar) ? item.similar : [];
+  const simSyms = new Map<string, string>();
+  for (const it of similar) simSyms.set(it.slug, await serverCurSymbol(it.currency));
 
   // 📊 بيانات منظمة Product — تظهر في جوجل بالسعر والحالة
   const jsonLd = {
@@ -162,7 +163,7 @@ export default async function UsedPage({ params }: { params: Promise<{ slug: str
                   </div>
                   <div className="p-2.5">
                     <p className="text-xs font-bold truncate mb-1">{s.title}</p>
-                    <p className="text-xs font-black text-lime-300">{Number(s.price).toLocaleString()} {curLabel(s.currency)}</p>
+                    <p className="text-xs font-black text-lime-300">{Number(s.price).toLocaleString()} {simSyms.get(s.slug) || s.currency}</p>
                   </div>
                 </Link>
               ))}

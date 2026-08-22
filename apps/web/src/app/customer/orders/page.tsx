@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import CaptchaBox from '@/components/CaptchaBox';
+import { useCurrency } from '@/lib/currency';
 
 const STATUS: Record<string, { label: string; color: string; icon: string }> = {
   pending:   { label: 'بانتظار البائع', color: '#F59E0B', icon: '⏳' },
@@ -16,7 +17,7 @@ const STATUS: Record<string, { label: string; color: string; icon: string }> = {
 };
 
 // ↩️ قسم الاسترجاع داخل تفاصيل الطلب — يعرض الحالة أو نموذج الطلب
-function ReturnSection({ order, onDone }: any) {
+function ReturnSection({ order, onDone, sym }: any) {
   const [openForm, setOpenForm] = useState(false);
   const [reason, setReason] = useState('');
   const [sending, setSending] = useState(false);
@@ -50,7 +51,7 @@ function ReturnSection({ order, onDone }: any) {
         {latest.status === 'accepted' && (
           <p className="text-[11px] font-bold text-emerald-600 mt-2">
             {latest.refundedAmount
-              ? `💸 أُعيد ${Number(latest.refundedAmount).toLocaleString()} ر.ي إلى بطاقتك — رتّب مع البائع تسليم المنتج`
+              ? `💸 أُعيد ${Number(latest.refundedAmount).toLocaleString()} ${sym(order.currency)} إلى بطاقتك — رتّب مع البائع تسليم المنتج`
               : '📦 رتّب مع البائع تسليم المنتج ليُعاد مبلغك'}
           </p>
         )}
@@ -87,6 +88,8 @@ function ReturnSection({ order, onDone }: any) {
 // طلباتي — لوحة العميل (تصلها الطلبات من المتاجر)
 export default function MyOrders() {
   const router = useRouter();
+  const { list, convert } = useCurrency();
+  const sym = (code?: string) => list.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || 'ر.ي';
   const [orders, setOrders] = useState<any[]>([]);
   const [open, setOpen] = useState<any>(null);
   const [payStatus, setPayStatus] = useState<any>(null);
@@ -94,7 +97,7 @@ export default function MyOrders() {
   const [payGateway, setPayGateway] = useState('');
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [cardBalance, setCardBalance] = useState<number | null>(null);
+  const [card, setCard] = useState<any>(null);
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [paying, setPaying] = useState(false);
@@ -115,7 +118,7 @@ export default function MyOrders() {
       setProofFile(null);
       api(`/v1/payments/order/${id}/status?phone=${u?.phone}`).then(setPayStatus).catch(() => {});
       api('/v1/payments/gateways?scope=orders').then(g => { setGateways(g); if (g[0]) setPayGateway(g[0].id); }).catch(() => {});
-      api('/customer/card').then(d => setCardBalance(Number(d.card.balance))).catch(() => setCardBalance(null));
+      api('/customer/card').then(d => setCard(d.card)).catch(() => setCard(null));
       setOtpSent(false); setOtp('');
     } catch (e: any) { toast(e.message, 'error'); }
   }
@@ -186,7 +189,7 @@ export default function MyOrders() {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500">🏪 {o.store.name}</span>
-                  <span className="font-black grad-text">{Number(o.total).toLocaleString()} ر.ي</span>
+                  <span className="font-black grad-text">{Number(o.total).toLocaleString()} {sym(o.currency)}</span>
                 </div>
                 <div className="text-xs text-gray-400 mt-1">
                   {o.items.length} منتج • {new Date(o.createdAt).toLocaleDateString('ar-YE')}
@@ -220,7 +223,7 @@ export default function MyOrders() {
               </div>
               <div className="flex justify-between font-black text-lg border-t pt-3 mb-4">
                 <span>الإجمالي</span>
-                <span className="grad-text">{Number(open.total).toLocaleString()} ر.ي</span>
+                <span className="grad-text">{Number(open.total).toLocaleString()} {sym(open.currency)}</span>
               </div>
               <div className="text-xs text-gray-400 mb-4">🏪 {open.store.name} • الحالة: {(STATUS[open.status] || STATUS.pending).label}</div>
 
@@ -230,20 +233,24 @@ export default function MyOrders() {
                   {payStatus.status === 'approved' && <p className="text-emerald-600 font-bold text-sm bg-emerald-50 rounded-xl p-3">✅ تم تأكيد دفعتك {payStatus.number}</p>}
                   {payStatus.status === 'pending' && <p className="text-amber-600 font-bold text-sm bg-amber-50 rounded-xl p-3">⏳ إثبات الدفع {payStatus.number} قيد المراجعة</p>}
                   {payStatus.status === 'rejected' && <p className="text-red-600 font-bold text-sm bg-red-50 rounded-xl p-3">❌ رُفض إثبات الدفع — أرسل إثباتاً صحيحاً</p>}
-                  {['unpaid', 'rejected'].includes(payStatus.status) && open.status !== 'cancelled' && cardBalance !== null && (
+                  {['unpaid', 'rejected'].includes(payStatus.status) && open.status !== 'cancelled' && card && (() => {
+                    const balInOrder = convert(Number(card.balance), card.currency, open.currency);
+                    const enough = balInOrder >= Number(open.total);
+                    return (
                     <div className="mb-3 bg-purple-50 border border-purple-200 rounded-2xl p-3">
                       <p className="font-extrabold text-sm mb-1">💳 ادفع ببطاقة يمن زون</p>
-                      <p className="text-xs text-gray-500 mb-2">رصيدك: {cardBalance.toLocaleString()} ر.ي {cardBalance < Number(open.total) && <span className="text-red-500 font-bold">— لا يكفي، اشحن بطاقتك من <a href="/customer/card" className="underline">هنا</a></span>}</p>
+                      <p className="text-xs text-gray-500 mb-2">رصيدك: {Number(card.balance).toLocaleString()} {sym(card.currency)}{card.currency !== open.currency && ` ≈ ${balInOrder.toLocaleString()} ${sym(open.currency)}`} {!enough && <span className="text-red-500 font-bold">— لا يكفي، اشحن بطاقتك من <a href="/customer/card" className="underline">هنا</a></span>}</p>
                       {otpSent && (
                         <input value={otp} onChange={e => setOtp(e.target.value)} placeholder="رمز التأكيد OTP" dir="ltr" inputMode="numeric"
                           className="w-full px-3 py-2 rounded-xl border border-purple-200 mb-2 text-sm" />
                       )}
-                      <button onClick={payWithCard} disabled={paying || cardBalance < Number(open.total)}
+                      <button onClick={payWithCard} disabled={paying || !enough}
                         className="w-full py-3 rounded-xl bg-purple-600 text-white font-extrabold text-sm disabled:opacity-40">
-                        {paying ? '⏳...' : otpSent ? '✅ تأكيد الدفع' : `💳 دفع ${Number(open.total).toLocaleString()} ر.ي بالبطاقة`}
+                        {paying ? '⏳...' : otpSent ? '✅ تأكيد الدفع' : `💳 دفع ${Number(open.total).toLocaleString()} ${sym(open.currency)} بالبطاقة`}
                       </button>
                     </div>
-                  )}
+                    );
+                  })()}
                   {['unpaid', 'rejected'].includes(payStatus.status) && open.status !== 'cancelled' && gateways.length > 0 && (
                     <div className="bg-gray-50 rounded-2xl p-3 space-y-2">
                       <p className="font-extrabold text-sm">💳 ادفع إلكترونياً الآن</p>

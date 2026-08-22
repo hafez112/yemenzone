@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import SellerSidebar from "../../../components/SellerSidebar";
 import { api, getUser } from "../../../lib/api";
 import { toast } from "../../../components/Toast";
+import { loadCurrencies, type Cur } from "../../../lib/currency";
 
 const WD_STATUS: Record<string, { label: string; cls: string }> = {
   pending: { label: "⏳ قيد المعالجة", cls: "pending" },
@@ -17,6 +18,7 @@ export default function SellerWalletPage() {
   const [data, setData] = useState<any>(null);
   const [settlements, setSettlements] = useState<any[]>([]);
   const [form, setForm] = useState({ amount: "", method: "الكريمي", accountInfo: "" });
+  const [currencies, setCurrencies] = useState<Cur[]>([]);
   const [busy, setBusy] = useState(false);
 
   const load = () => api("/seller/wallet").then(setData).catch((e) => toast(e.message, "error"));
@@ -25,6 +27,7 @@ export default function SellerWalletPage() {
     api("/stores/my").then(setStore).catch(() => router.push("/seller/setup"));
     load();
     api("/seller/finance/settlements").then(setSettlements).catch(() => {});
+    loadCurrencies().then(setCurrencies).catch(() => {});
   }, []);
 
   const withdraw = async () => {
@@ -41,6 +44,9 @@ export default function SellerWalletPage() {
 
   if (!store || !data) return null;
   const { wallet, transactions, withdrawals, tips } = data;
+  // 💱 رموز العملات — المحفظة وحركاتها بعملاتها الأصلية المحفوظة
+  const sym = (code?: string) => currencies.find((c) => c.code === code)?.symbol || code || "ر.ي";
+  const walletSym = sym(wallet.currency);
 
   return (
     <div className="page">
@@ -52,7 +58,7 @@ export default function SellerWalletPage() {
           {/* الرصيد */}
           <div className="card" style={{ background: "linear-gradient(135deg, #059669, #14b8a6)", color: "#fff", textAlign: "center", padding: "1.75rem" }}>
             <p style={{ opacity: .85, fontSize: ".85rem" }}>الرصيد المتاح للسحب</p>
-            <p style={{ fontSize: "2.2rem", fontWeight: 900 }}>{Number(wallet.balance).toLocaleString()} <span style={{ fontSize: "1rem" }}>ر.ي</span></p>
+            <p style={{ fontSize: "2.2rem", fontWeight: 900 }}>{Number(wallet.balance).toLocaleString()} <span style={{ fontSize: "1rem" }}>{walletSym}</span></p>
             <p style={{ opacity: .85, fontSize: ".78rem" }}>تُضاف أرباح الطلبات المدفوعة إلكترونياً تلقائياً 💳</p>
           </div>
 
@@ -67,7 +73,7 @@ export default function SellerWalletPage() {
           {/* طلب سحب */}
           <section className="card">
             <h2>💸 طلب سحب</h2>
-            <input type="number" placeholder="المبلغ (أقل حد 1,000 ر.ي)" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+            <input type="number" placeholder={`المبلغ بعملة محفظتك (${walletSym})`} value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
             <select value={form.method} onChange={(e) => setForm({ ...form, method: e.target.value })}>
               <option>الكريمي</option>
               <option>جيب</option>
@@ -88,7 +94,7 @@ export default function SellerWalletPage() {
               {withdrawals.map((wd: any) => (
                 <div key={wd.id} className="assign-row">
                   <div>
-                    <strong>{Number(wd.amount).toLocaleString()} ر.ي</strong>
+                    <strong>{Number(wd.amount).toLocaleString()} {sym(wd.currency || wallet.currency)}</strong>
                     <span className={`badge ${WD_STATUS[wd.status]?.cls}`}>{WD_STATUS[wd.status]?.label}</span>
                     <p className="muted small">{wd.method} · {new Date(wd.createdAt).toLocaleDateString("ar-YE")}{wd.note ? ` · ${wd.note}` : ""}</p>
                   </div>
@@ -127,7 +133,7 @@ export default function SellerWalletPage() {
             {transactions.length === 0 ? <p className="muted">لا حركات بعد — ستظهر أرباح الطلبات المدفوعة هنا</p> : transactions.map((t: any) => (
               <div key={t.id} className="assign-row">
                 <div>
-                  <strong className={t.type === "credit" ? "ok" : "bad"}>{t.type === "credit" ? "+" : "−"}{Number(t.amount).toLocaleString()} ر.ي</strong>
+                  <strong className={t.type === "credit" ? "ok" : "bad"}>{t.type === "credit" ? "+" : "−"}{Number(t.amount).toLocaleString()} {sym(t.currency || wallet.currency)}</strong>
                   <p className="muted small">{t.note || "—"} · {new Date(t.createdAt).toLocaleDateString("ar-YE")}</p>
                 </div>
                 <span className="badge">{t.type === "credit" ? "💰 إيداع" : "💸 خصم"}</span>

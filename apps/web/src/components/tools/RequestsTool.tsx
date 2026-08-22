@@ -2,17 +2,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 const GOVS = ['أمانة العاصمة', 'صنعاء', 'عدن', 'تعز', 'الحديدة', 'إب', 'ذمار', 'حضرموت', 'مأرب', 'عمران', 'حجة', 'صعدة', 'المحويت', 'البيضاء', 'الضالع', 'لحج', 'أبين', 'شبوة', 'المهرة', 'الجوف', 'ريمة', 'سقطرى'];
 
 // 📢 اطلبها ونوفرها — سوق الطلبات العكسي: العميل ينشر والتجار يردون بعروضهم
 export default function RequestsTool() {
+  const { list: CURS, def: defCur } = useCurrency();
   const [tab, setTab] = useState<'browse' | 'post'>('browse');
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
   const [budget, setBudget] = useState('');
-  const [currency, setCurrency] = useState('YER');
+  const [currency, setCurrency] = useState('');
   const [gov, setGov] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [busy, setBusy] = useState(false);
@@ -20,7 +22,8 @@ export default function RequestsTool() {
   const [fGov, setFGov] = useState('');
   const [fQ, setFQ] = useState('');
 
-  const cur = (c: string) => (c === 'SAR' ? 'ر.س' : c === 'USD' ? '$' : 'ر.ي');
+  const cur = (c: string) => CURS.find((x) => x.code === String(c || '').toUpperCase())?.symbol || c || 'ر.ي';
+  useEffect(() => { if (!currency && defCur) setCurrency(defCur.code); }, [defCur]);
   const ago = (d: string) => {
     const m = Math.floor((Date.now() - +new Date(d)) / 60000);
     if (m < 60) return m <= 1 ? 'الآن' : `قبل ${m} دقيقة`;
@@ -85,7 +88,7 @@ export default function RequestsTool() {
             <div className="flex gap-2">
               <input value={budget} onChange={(e) => setBudget(e.target.value.replace(/[^0-9.]/g, ''))} inputMode="decimal" placeholder="ميزانيتك (اختياري)" className={inp + ' flex-1'} />
               <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inp + ' !w-auto shrink-0 bg-night'}>
-                <option value="YER">ر.ي 🇾🇪</option><option value="SAR">ر.س 🇸🇦</option><option value="USD">$ 💵</option>
+                {CURS.map((c) => <option key={c.code} value={c.code}>{c.name} — {c.symbol}</option>)}
               </select>
             </div>
             <select value={gov} onChange={(e) => setGov(e.target.value)} className={inp + ' bg-night'}>

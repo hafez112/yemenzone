@@ -268,6 +268,7 @@ export class CustomerDashboardController {
           id: completedOrders[0].id,
           number: completedOrders[0].number,
           total: Number(completedOrders[0].total),
+          currency: completedOrders[0].currency,
           store: completedOrders[0].store,
           itemsCount: completedOrders[0].items.reduce((s, i) => s + i.qty, 0),
           at: completedOrders[0].createdAt,
@@ -278,7 +279,7 @@ export class CustomerDashboardController {
       points: customer?.points || 0,
       governorate: customer?.governorate, address: customer?.address,
       activeOrders: activeOrders.map((o) => ({
-        id: o.id, number: o.number, status: o.status, total: Number(o.total),
+        id: o.id, number: o.number, status: o.status, total: Number(o.total), currency: o.currency,
         store: o.store, createdAt: o.createdAt,
         itemsSummary: o.items.map((i) => `${i.name} ×${i.qty}`).join('، ').slice(0, 80),
       })),

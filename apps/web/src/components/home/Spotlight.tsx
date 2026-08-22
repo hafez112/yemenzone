@@ -1,11 +1,14 @@
 'use client';
 import Link from 'next/link';
 import { imgUrl } from '@/lib/api';
+import { useCurrency } from '@/lib/currency';
 
 // ✨ أقسام الرئيسية الديناميكية — كلها من بيانات البيع الفعلية (آخر 14 يوماً)
 
 // بطاقة منتج موحدة — زووم ناعم للصورة + شارات حديثة
 function ProductCard({ p, badge }: { p: any; badge?: string }) {
+  const { list } = useCurrency();
+  const psym = list.find((c) => c.code === String(p.currency || 'YER').toUpperCase())?.symbol || p.currency || 'ر.ي';
   const price = Number(p.salePrice || p.price);
   return (
     <Link href={`/store/${p.store.slug}/product/${p.id}`}
@@ -26,7 +29,7 @@ function ProductCard({ p, badge }: { p: any; badge?: string }) {
       </div>
       <div className="font-extrabold f-sm truncate">{p.name}</div>
       <div className="flex items-center justify-between mt-1">
-        <span className="font-black text-sm grad-text">{price.toLocaleString()} <span className="text-[9px]">ر.ي</span></span>
+        <span className="font-black text-sm grad-text">{price.toLocaleString()} <span className="text-[9px]">{psym}</span></span>
         {p.salePrice && <span className="text-[10px] text-gray-400 line-through">{Number(p.price).toLocaleString()}</span>}
       </div>
       <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-0.5 truncate">

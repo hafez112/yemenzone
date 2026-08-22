@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from '@/components/Toast';
 import { imgUrl } from '@/lib/api';
+import { useCurrency } from '@/lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 const LS_KEY = 'yz-price-hunt-v1';
 
 // ⚖️ مقارن الأسعار الذكي — ابحث عن منتج وشاهد أسعاره في كل متاجر المنصة
 export default function PriceHuntTool() {
+  const { list: CURS } = useCurrency();
   const [q, setQ] = useState('');
   const [busy, setBusy] = useState(false);
   const [data, setData] = useState<any>(null);
@@ -18,7 +20,7 @@ export default function PriceHuntTool() {
     try { setHistory(JSON.parse(localStorage.getItem(LS_KEY) || '[]')); } catch {}
   }, []);
 
-  const cur = (c: string) => (c === 'SAR' ? 'ر.س' : c === 'USD' ? '$' : 'ر.ي');
+  const cur = (c: string) => CURS.find((x) => x.code === String(c || '').toUpperCase())?.symbol || c || 'ر.ي';
 
   const hunt = async (query = q) => {
     const queryClean = query.trim();

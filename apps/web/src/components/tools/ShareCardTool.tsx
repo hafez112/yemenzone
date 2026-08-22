@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from '@/components/Toast';
+import { loadCurrencies } from '@/lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -26,7 +27,12 @@ const CARD_SIZES = [
   { id: 'st', label: '📱 ستوري', w: 1080, h: 1920, tag: 'ستوري · ريلز' },
 ];
 
-const curLabel = (c: string) => (c === 'SAR' ? 'ر.س' : c === 'USD' ? '$' : 'ر.ي');
+// 💱 رموز العملات من عملات الإدارة — تُحمّل مرة وتُحدَّث دورياً
+let CUR_SYMS: Record<string, string> = { YER: 'ر.ي' };
+loadCurrencies().then((list) => {
+  CUR_SYMS = Object.fromEntries(list.map((c) => [c.code, c.symbol]));
+}).catch(() => {});
+const curLabel = (c: string) => CUR_SYMS[String(c || 'YER').toUpperCase()] || c || 'ر.ي';
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number, maxLines = 2): string[] {
   const words = text.split(/\s+/).filter(Boolean);
@@ -200,6 +206,7 @@ async function drawCard(cv: HTMLCanvasElement, d: CardData, tpl: (typeof TEMPLAT
 }
 
 export default function ShareCardTool() {
+  const [curs, setCurs] = useState<{ code: string; name: string; symbol: string }[]>([]);
   const [data, setData] = useState<CardData>({ img: null, name: '', price: '', salePrice: '', currency: 'YER', store: '', link: '' });
   const [urlInput, setUrlInput] = useState('');
   const [tpl, setTpl] = useState(TEMPLATES[0]);
@@ -207,6 +214,14 @@ export default function ShareCardTool() {
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const cvRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    loadCurrencies().then((list) => {
+      setCurs(list);
+      const def = list.find((c) => c.isDefault);
+      if (def) setData((d) => (d.currency === 'YER' ? { ...d, currency: def.code } : d));
+    }).catch(() => {});
+  }, []);
 
   const redraw = useCallback(() => {
     const cv = cvRef.current;
@@ -365,7 +380,7 @@ export default function ShareCardTool() {
           <input value={data.price} onChange={(e) => upd({ price: e.target.value.replace(/[^0-9.]/g, '') })} inputMode="decimal" placeholder="السعر" className={inp + ' flex-1'} />
           <input value={data.salePrice} onChange={(e) => upd({ salePrice: e.target.value.replace(/[^0-9.]/g, '') })} inputMode="decimal" placeholder="سعر الخصم (اختياري)" className={inp + ' flex-1'} />
           <select value={data.currency} onChange={(e) => upd({ currency: e.target.value })} className={inp + ' !w-auto shrink-0 bg-night'}>
-            <option value="YER">ر.ي 🇾🇪</option><option value="SAR">ر.س 🇸🇦</option><option value="USD">$ 💵</option>
+            {curs.map((c) => <option key={c.code} value={c.code}>{c.name} — {c.symbol}</option>)}
           </select>
         </div>
         <input value={data.store} onChange={(e) => upd({ store: e.target.value })} placeholder="اسم المتجر أو البائع (اختياري)" className={inp} maxLength={40} />

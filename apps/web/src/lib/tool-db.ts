@@ -47,8 +47,16 @@ export async function toolPrices(): Promise<Record<string, number>> {
     const API = process.env.NEXT_PUBLIC_API_URL || '';
     const r = await fetch(`${API}/api/v1/tools`).then((x) => x.json());
     pricesCache = r?.prices || {};
-  } catch { pricesCache = {}; }
+    priceCursCache = r?.priceCurrencies || {};
+  } catch { pricesCache = {}; priceCursCache = {}; }
   return pricesCache!;
+}
+
+// 💱 عملة سعر كل خدمة مدفوعة — تحددها الإدارة مع السعر
+let priceCursCache: Record<string, string> | null = null;
+export async function toolPriceCurrencies(): Promise<Record<string, string>> {
+  if (!pricesCache) await toolPrices();
+  return priceCursCache || {};
 }
 
 // 🔓 الخدمات المدفوعة التي اشتريتها

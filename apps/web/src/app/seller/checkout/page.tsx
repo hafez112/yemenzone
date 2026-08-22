@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import SellerSidebar from '@/components/SellerSidebar';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 
 const PAY_TYPES: Record<string, { icon: string; label: string; hint: string }> = {
   cash:     { icon: '💵', label: 'الدفع عند الاستلام', hint: 'العميل يدفع نقداً عند استلام طلبه' },
@@ -14,6 +15,8 @@ const PAY_TYPES: Record<string, { icon: string; label: string; hint: string }> =
 
 // 💳🚚 طرق الدفع والتوصيل الخاصة بمتجري — تظهر لعملائي عند إتمام الطلب
 export default function SellerCheckoutPage() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const router = useRouter();
   const [store, setStore] = useState<any>(null);
   const [data, setData] = useState<any>(null);
@@ -142,7 +145,7 @@ export default function SellerCheckoutPage() {
                     </>
                   )}
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-gray-500">رسوم إضافية (ر.ي):</span>
+                    <span className="text-xs font-bold text-gray-500">رسوم إضافية ({dsym()}):</span>
                     <input type="number" min="0" value={payForm.fee} onChange={e => setPayForm({ ...payForm, fee: e.target.value })}
                       className="w-28 px-3 py-2 rounded-xl border border-gray-200 outline-none" dir="ltr" />
                   </div>
@@ -198,7 +201,7 @@ export default function SellerCheckoutPage() {
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none" />
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[11px] font-bold text-gray-500 block mb-1">رسوم التوصيل (ر.ي)</label>
+                      <label className="text-[11px] font-bold text-gray-500 block mb-1">رسوم التوصيل ({dsym()})</label>
                       <input type="number" min="0" value={delForm.fee} onChange={e => setDelForm({ ...delForm, fee: e.target.value })}
                         className="w-full px-3 py-2.5 rounded-xl border border-gray-200 outline-none" dir="ltr" />
                     </div>
@@ -229,7 +232,7 @@ export default function SellerCheckoutPage() {
                     <div className="flex-1 min-w-[160px]">
                       <div className="font-extrabold text-sm">{m.label}</div>
                       <div className="text-[11px] text-gray-400">
-                        {m.fee > 0 ? `${m.fee.toLocaleString()} ر.ي` : 'مجاني'}{m.eta ? ` • ${m.eta}` : ''}{m.areas ? ` • ${m.areas}` : ''}
+                        {m.fee > 0 ? `${m.fee.toLocaleString()} ${dsym()}` : 'مجاني'}{m.eta ? ` • ${m.eta}` : ''}{m.areas ? ` • ${m.areas}` : ''}
                       </div>
                     </div>
                     <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full ${m.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>

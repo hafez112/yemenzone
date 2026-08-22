@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api, getUser, logout } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 import { TOOLS } from '@/lib/tools';
 import { myTools, addMyTool, removeMyTool } from '@/lib/tool-db';
 import DashboardPwa from '@/components/DashboardPwa';
@@ -17,6 +18,8 @@ const STATUS: Record<string, string> = {
 
 // لوحة العميل الشاملة: طلباتي / حجوزاتي / تقييماتي / مفضلتي / إعداداتي
 export default function CustomerDashboard() {
+  const { list } = useCurrency();
+  const osym = (code?: string) => list.find((c) => c.code === String(code || 'YER').toUpperCase())?.symbol || code || 'ر.ي';
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [data, setData] = useState<any>(null);
@@ -222,7 +225,7 @@ export default function CustomerDashboard() {
                         <MiniPipeline status={o.status} />
                         <div className="flex justify-between items-center mt-1.5">
                           <span className="text-[10px] text-gray-400 truncate flex-1">{o.itemsSummary}</span>
-                          <span className="font-black text-xs grad-text shrink-0">{o.total.toLocaleString()} ر.ي</span>
+                          <span className="font-black text-xs grad-text shrink-0">{o.total.toLocaleString()} {osym(o.currency)}</span>
                         </div>
                       </Link>
                     ))}
@@ -239,7 +242,7 @@ export default function CustomerDashboard() {
                       <div className="flex-1 min-w-0 text-white">
                         <div className="text-[10px] opacity-80 font-bold">آخر طلب ناجح — {hub.lastCompleted.store.name}</div>
                         <div className="text-sm font-black truncate">
-                          {hub.lastCompleted.number} · {hub.lastCompleted.itemsCount} صنف · {hub.lastCompleted.total.toLocaleString()} ر.ي
+                          {hub.lastCompleted.number} · {hub.lastCompleted.itemsCount} صنف · {hub.lastCompleted.total.toLocaleString()} {osym(hub.lastCompleted.currency)}
                         </div>
                       </div>
                       <button onClick={() => reorder(hub.lastCompleted.id)} disabled={reorderBusy}
@@ -285,7 +288,7 @@ export default function CustomerDashboard() {
                     </div>
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>🏪 {o.store.name}</span>
-                      <span className="font-black grad-text">{Number(o.total).toLocaleString()} ر.ي</span>
+                      <span className="font-black grad-text">{Number(o.total).toLocaleString()} {osym(o.currency)}</span>
                     </div>
                   </Link>
                 ))}
@@ -344,7 +347,7 @@ export default function CustomerDashboard() {
                     </div>
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>🏪 {b.store?.name}</span>
-                      <span className="font-black grad-text">{Number(b.total).toLocaleString()} ر.ي</span>
+                      <span className="font-black grad-text">{Number(b.total).toLocaleString()} {osym(b.currency)}</span>
                     </div>
                     {(b.fromDate || b.checkIn) && (
                       <div className="text-xs text-gray-400 mt-1">

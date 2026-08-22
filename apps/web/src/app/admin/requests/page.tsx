@@ -3,10 +3,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { useCurrency } from '@/lib/currency';
 import AdminSidebar from '@/components/AdminSidebar';
 
 // 📢 إدارة «اطلبها ونوفرها» — اعتماد الطلبات ومراجعة ردود التجار
 export default function AdminRequestsPage() {
+  const { list: CURS, def: defCur } = useCurrency();
+  const dsym = (code?: string) => CURS.find((c) => c.code === String(code || '').toUpperCase())?.symbol || code || defCur?.symbol || 'ر.ي';
   const router = useRouter();
   const [section, setSection] = useState<'requests' | 'replies'>('requests');
   const [reqs, setReqs] = useState<{ items: any[]; counts: any }>({ items: [], counts: {} });
@@ -65,7 +68,7 @@ export default function AdminRequestsPage() {
     catch (e: any) { toast(e.message || 'تعذّر', 'error'); }
   };
 
-  const cur = (x: string) => (x === 'SAR' ? 'ر.س' : x === 'USD' ? '$' : 'ر.ي');
+  const cur = (x: string) => dsym(x);
   const rc = reqs.counts || {}, pc = reps.counts || {};
   const tabBtn = (on: boolean) => `px-4 py-2.5 rounded-xl text-sm font-extrabold transition-all ${on ? 'bg-gray-900 text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'}`;
 

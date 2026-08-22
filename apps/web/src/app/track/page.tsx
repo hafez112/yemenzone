@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "../../components/Toast";
 import CaptchaBox from "../../components/CaptchaBox";
 import PhoneInput from "../../components/PhoneInput";
+import { useCurrency } from "../../lib/currency";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -24,6 +25,7 @@ const payAr = (m?: string) =>
 
 function TrackPage() {
   const params = useSearchParams();
+  const { list } = useCurrency();
   const [number, setNumber] = useState("");
   const [phone, setPhone] = useState("");
   const [order, setOrder] = useState<any>(null);
@@ -59,7 +61,7 @@ function TrackPage() {
 
   const idx = order ? Math.max(0, FLOW.findIndex((f) => f.key === order.status)) : 0;
   const money = (v: any) => Number(v).toLocaleString("en");
-  const currency = order?.currency === "YER" ? "ر.ي" : order?.currency || "ر.ي";
+  const currency = list.find((c) => c.code === String(order?.currency || "YER").toUpperCase())?.symbol || order?.currency || "ر.ي";
 
   return (
     <div className="page">
@@ -233,7 +235,7 @@ function TrackPage() {
 
             {/* ↩️ الاسترجاع — متاح بعد الاستلام وفق سياسة المنصة */}
             {(order.returns?.length > 0 || ["delivered", "completed"].includes(order.status)) && (
-              <ReturnCard order={order} phone={phone}
+              <ReturnCard order={order} phone={phone} sym={currency}
                 onDone={(r: any) => setOrder({ ...order, returns: [r, ...(order.returns || [])] })} />
             )}
 
@@ -271,7 +273,7 @@ export default function TrackPageWrapper() {
 }
 
 // ↩️ بطاقة طلب الاسترجاع — بعد الاستلام، بوصف السبب، وتصل حالتها هنا فور مراجعة البائع
-function ReturnCard({ order, phone, onDone }: any) {
+function ReturnCard({ order, phone, onDone, sym }: any) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [sending, setSending] = useState(false);
@@ -312,7 +314,7 @@ function ReturnCard({ order, phone, onDone }: any) {
         {latest.status === "accepted" && (
           <p className="text-[11px] font-bold text-emerald-600 mt-2">
             {latest.refundedAmount
-              ? `💸 أُعيد ${Number(latest.refundedAmount).toLocaleString()} ر.ي إلى بطاقتك — رتّب مع البائع تسليم المنتج`
+              ? `💸 أُعيد ${Number(latest.refundedAmount).toLocaleString()} ${sym || "ر.ي"} إلى بطاقتك — رتّب مع البائع تسليم المنتج`
               : "📦 رتّب مع البائع تسليم المنتج ليُعاد مبلغك"}
           </p>
         )}

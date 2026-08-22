@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import AdminSidebar from "../../../components/AdminSidebar";
 import { api } from "../../../lib/api";
 import { toast } from "../../../components/Toast";
+import { loadCurrencies, type Cur } from "../../../lib/currency";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const WD_STATUS: Record<string, string> = { pending: "⏳ معلّق", paid: "✅ حُوّل", rejected: "❌ مرفوض" };
@@ -22,7 +23,8 @@ export default function AdminCardsPage() {
   const [cards, setCards] = useState<any[]>([]);
   const [topups, setTopups] = useState<any[]>([]);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
-  const [batchForm, setBatchForm] = useState({ name: "", count: 50, value: 5000 });
+  const [batchForm, setBatchForm] = useState({ name: "", count: 50, value: 5000, currency: "" });
+  const [currencies, setCurrencies] = useState<Cur[]>([]);
   const [showBatchForm, setShowBatchForm] = useState(false);
   const [filterBatch, setFilterBatch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
@@ -37,8 +39,17 @@ export default function AdminCardsPage() {
   const loadYz = (q = yzQ) => api(`/admin/yz-cards${q ? `?q=${encodeURIComponent(q)}` : ""}`).then(setYzCards).catch((e) => toast(e.message, "error"));
   const loadEditReqs = () => api("/admin/card-edit-requests").then(setEditReqs).catch(() => {});
 
-  useEffect(() => { load(); loadBatches(); loadTopups(); loadWithdrawals(); loadYz(""); loadEditReqs(); }, []);
+  useEffect(() => { load(); loadBatches(); loadTopups(); loadWithdrawals(); loadYz(""); loadEditReqs();
+    loadCurrencies().then((list) => {
+      setCurrencies(list);
+      const def = list.find((c) => c.isDefault) || list[0];
+      if (def) setBatchForm((f) => (f.currency ? f : { ...f, currency: def.code }));
+    }).catch(() => {});
+  }, []);
   useEffect(() => { loadCards(); }, [filterBatch, filterStatus]);
+
+  // 💱 رمز عملة أي سجل مالي من قائمة عملات المنصة
+  const sym = (code?: string) => currencies.find((c) => c.code === code)?.symbol || code || "ر.ي";
 
   const createBatch = async () => {
     if (!batchForm.name || !batchForm.value) return toast("⚠️ أكمل بيانات الدفعة", "error");
@@ -46,7 +57,7 @@ export default function AdminCardsPage() {
       const r = await api("/admin/cards/batches", { method: "POST", body: JSON.stringify(batchForm) });
       toast(`🎫 وُلّدت ${r.generated} بطاقة بنجاح`);
       setShowBatchForm(false);
-      setBatchForm({ name: "", count: 50, value: 5000 });
+      setBatchForm({ name: "", count: 50, value: 5000, currency: batchForm.currency });
       load(); loadBatches(); loadCards();
     } catch (e: any) { toast(e.message, "error"); }
   };
@@ -96,7 +107,7 @@ export default function AdminCardsPage() {
         .num{font-weight:900;font-size:16px;direction:ltr} .pin{color:#6C3DF5;font-weight:900;direction:ltr}
         @media print{button{display:none}}</style></head><body>
         <h2>🎫 بطاقات يمن زون — ${name}</h2><div class="grid">
-        ${list.map((c: any) => `<div class="card"><div class="num">${c.cardNumber}</div><div>الرمز: <span class="pin">${c.pin}</span></div><div>${Number(c.value).toLocaleString()} ر.ي</div></div>`).join("")}
+        ${list.map((c: any) => `<div class="card"><div class="num">${c.cardNumber}</div><div>الرمز: <span class="pin">${c.pin}</span></div><div>${Number(c.value).toLocaleString()} ${sym(c.currency)}</div></div>`).join("")}
         </div><button onclick="print()">🖨️ طباعة</button></body></html>`);
       w.document.close();
     });
@@ -141,7 +152,14 @@ export default function AdminCardsPage() {
                   <h2>🎫 دفعة بطاقات جديدة</h2>
                   <input placeholder="اسم الدفعة (مثال: دفعة رمضان 5000)" value={batchForm.name} onChange={(e) => setBatchForm({ ...batchForm, name: e.target.value })} />
                   <input type="number" placeholder="عدد البطاقات (حتى 500)" value={batchForm.count} onChange={(e) => setBatchForm({ ...batchForm, count: +e.target.value })} />
-                  <input type="number" placeholder="قيمة البطاقة الواحدة (ر.ي)" value={batchForm.value} onChange={(e) => setBatchForm({ ...batchForm, value: +e.target.value })} />
+                  <div style={{ display: "flex", gap: ".5rem" }}>
+                    <input type="number" placeholder="قيمة البطاقة الواحدة" value={batchForm.value} onChange={(e) => setBatchForm({ ...batchForm, value: +e.target.value })} style={{ flex: 1 }} />
+                    {currencies.length > 0 && (
+                      <select value={batchForm.currency} onChange={(e) => setBatchForm({ ...batchForm, currency: e.target.value })} style={{ width: "9rem", marginBottom: 0 }}>
+                        {currencies.map((c) => <option key={c.code} value={c.code}>{c.name} ({c.symbol})</option>)}
+                      </select>
+                    )}
+                  </div>
                   <div className="row">
                     <button className="btn primary" onClick={createBatch}>⚡ توليد</button>
                     <button className="btn ghost" onClick={() => setShowBatchForm(false)}>إلغاء</button>
@@ -154,7 +172,7 @@ export default function AdminCardsPage() {
                 {batches.map((b) => (
                   <div key={b.id} className="assign-row">
                     <div>
-                      <strong>{b.name}</strong> — {b.count} بطاقة × {Number(b.value).toLocaleString()} ر.ي
+                      <strong>{b.name}</strong> — {b.count} بطاقة × {Number(b.value).toLocaleString()} {sym(b.currency)}
                       <p className="muted small">{new Date(b.createdAt).toLocaleDateString("ar-YE")}</p>
                     </div>
                     <button className="btn small ghost" onClick={() => printBatch(b.id, b.name)}>🖨️ طباعة</button>
@@ -184,7 +202,7 @@ export default function AdminCardsPage() {
                         <tr key={c.id}>
                           <td dir="ltr"><strong>{c.cardNumber}</strong></td>
                           <td dir="ltr">{c.pin}</td>
-                          <td>{Number(c.value).toLocaleString()}</td>
+                          <td>{Number(c.value).toLocaleString()} {sym(c.currency)}</td>
                           <td className="small">{c.batch?.name || "—"}</td>
                           <td><span className={`badge ${c.isDisabled ? "cancelled" : c.isUsed ? "shipped" : "active"}`}>{c.isDisabled ? "موقوفة" : c.isUsed ? "مستخدمة" : "متاحة"}</span></td>
                           <td>{!c.isUsed && <button className="btn small ghost" onClick={() => toggleCard(c.id)}>{c.isDisabled ? "▶️" : "⏸️"}</button>}</td>
@@ -220,7 +238,7 @@ export default function AdminCardsPage() {
                       👤 <strong>{c.holderName || c.ownerName || "—"}</strong> · 📱 <strong dir="ltr">{c.phone || c.ownerPhone || "—"}</strong>
                     </p>
                     <p className="muted small">
-                      💰 الرصيد: <strong>{c.balance.toLocaleString()} ر.ي</strong> · {c.topups} شحنة · {c.purchases} شراء خدمات · أُصدرت {new Date(c.createdAt).toLocaleDateString("ar-YE")}
+                      💰 الرصيد: <strong>{c.balance.toLocaleString()} {sym(c.currency)}</strong> · {c.topups} شحنة · {c.purchases} شراء خدمات · أُصدرت {new Date(c.createdAt).toLocaleDateString("ar-YE")}
                       {c.note ? ` · 📌 ${c.note}` : ""}
                     </p>
                   </div>
@@ -286,9 +304,12 @@ export default function AdminCardsPage() {
               {topups.length === 0 ? <p className="muted">لا توجد طلبات 🎉</p> : topups.map((t) => (
                 <div key={t.id} className="assign-row">
                   <div>
-                    <strong>{Number(t.amount).toLocaleString()} ر.ي</strong> — {t.customer?.name || t.seller?.name} ({t.customer?.phone || t.seller?.phone}) {t.seller ? "🛍️" : ""}
+                    <strong>{Number(t.amount).toLocaleString()} {sym(t.currency)}</strong> — {t.customer?.name || t.seller?.name} ({t.customer?.phone || t.seller?.phone}) {t.seller ? "🛍️" : ""}
                     <span className={`badge ${t.status}`}>{TP_STATUS[t.status]}</span>
-                    <p className="muted small">{t.method} · بطاقة <span dir="ltr">{t.card?.cardNumber}</span></p>
+                    <p className="muted small">
+                      {t.method} · بطاقة <span dir="ltr">{t.card?.cardNumber}</span>
+                      {t.creditedAmount != null && t.currency !== t.card?.currency ? ` · يُضاف للبطاقة: ${Number(t.creditedAmount).toLocaleString()}` : ""}
+                    </p>
                   </div>
                   <div className="row">
                     {t.proofImage && <button className="btn small ghost" onClick={() => setZoom(`${API_URL}${t.proofImage}`)}>🖼️</button>}
@@ -309,7 +330,7 @@ export default function AdminCardsPage() {
               {withdrawals.length === 0 ? <p className="muted">لا توجد طلبات 🎉</p> : withdrawals.map((wd) => (
                 <div key={wd.id} className="assign-row">
                   <div>
-                    <strong>{Number(wd.amount).toLocaleString()} ر.ي</strong> — {wd.wallet?.seller?.name}
+                    <strong>{Number(wd.amount).toLocaleString()} {sym(wd.currency || wd.wallet?.currency)}</strong> — {wd.wallet?.seller?.name}
                     <span className={`badge ${wd.status === "paid" ? "active" : wd.status}`}>{WD_STATUS[wd.status]}</span>
                     <p className="muted small">{wd.method}: {wd.accountInfo} · {new Date(wd.createdAt).toLocaleDateString("ar-YE")}</p>
                   </div>

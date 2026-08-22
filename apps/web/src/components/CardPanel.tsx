@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { toast } from "@/components/Toast";
+import { loadCurrencies, convertAmount, type Cur } from "@/lib/currency";
 
 const TP_STATUS: Record<string, { label: string; cls: string }> = {
   pending: { label: "⏳ قيد المراجعة", cls: "pending" },
@@ -15,7 +16,8 @@ export default function CardPanel({ base, backHref, backLabel }: { base: string;
   const [data, setData] = useState<any>(null);
   const [redeemForm, setRedeemForm] = useState({ cardNumber: "", pin: "" });
   const [gateways, setGateways] = useState<any[]>([]);
-  const [proofForm, setProofForm] = useState({ amount: "", gatewayName: "" });
+  const [currencies, setCurrencies] = useState<Cur[]>([]);
+  const [proofForm, setProofForm] = useState({ amount: "", gatewayName: "", currency: "" });
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [editForm, setEditForm] = useState({ holderName: "", phone: "", message: "" });
   const [busy, setBusy] = useState(false);
@@ -25,6 +27,11 @@ export default function CardPanel({ base, backHref, backLabel }: { base: string;
   useEffect(() => {
     load();
     api("/v1/payments/gateways?scope=topup").then((g) => { setGateways(g); if (g[0]) setProofForm((f) => ({ ...f, gatewayName: g[0].name })); }).catch(() => {});
+    loadCurrencies().then((list) => {
+      setCurrencies(list);
+      const def = list.find((c) => c.isDefault) || list[0];
+      if (def) setProofForm((f) => (f.currency ? f : { ...f, currency: def.code }));
+    }).catch(() => {});
   }, []);
 
   const redeem = async () => {
@@ -49,7 +56,7 @@ export default function CardPanel({ base, backHref, backLabel }: { base: string;
       if (!up.url) throw new Error(up.message || "فشل الرفع");
       await api(`${base}/topup-proof`, { method: "POST", body: JSON.stringify({ ...proofForm, amount: +proofForm.amount, proofImage: up.url }) });
       toast("✅ أُرسل طلب الشحن — سيُضاف الرصيد بعد المراجعة");
-      setProofForm({ amount: "", gatewayName: gateways[0]?.name || "" });
+      setProofForm({ amount: "", gatewayName: gateways[0]?.name || "", currency: proofForm.currency });
       setProofFile(null);
       load();
     } catch (e: any) { toast(e.message, "error"); }
@@ -72,6 +79,14 @@ export default function CardPanel({ base, backHref, backLabel }: { base: string;
   if (!data) return null;
   const { card, topups, editRequests = [], tips } = data;
 
+  // 💱 رموز العملات — بطاقة المستخدم بعملتها الأصلية، والسجلات بعملاتها المحفوظة
+  const curSymbol = (code?: string) => currencies.find((c) => c.code === code)?.symbol || code || "ر.ي";
+  const cardSym = curSymbol(card.currency);
+  // تقدير فوري: ما سيُضاف فعلاً لبطاقتك بعد تحويل عملة التحويل إلى عملة البطاقة
+  const fromCur = currencies.find((c) => c.code === proofForm.currency);
+  const cardCur = currencies.find((c) => c.code === card.currency);
+  const estCredit = proofForm.amount && fromCur && cardCur ? convertAmount(+proofForm.amount, fromCur, cardCur) : null;
+
   return (
     <div className="page">
       <main className="content" style={{ maxWidth: "40rem", margin: "0 auto" }}>
@@ -81,7 +96,7 @@ export default function CardPanel({ base, backHref, backLabel }: { base: string;
         <div className="card" style={{ background: "linear-gradient(135deg, var(--primary), #14b8a6)", color: "#fff", textAlign: "center", padding: "2rem 1.5rem" }}>
           <p style={{ opacity: .85, fontSize: ".85rem" }}>💳 بطاقة يمن زون</p>
           <p dir="ltr" style={{ fontSize: "1.4rem", fontWeight: 900, letterSpacing: 2, margin: ".5rem 0" }}>{card.cardNumber}</p>
-          <p style={{ fontSize: "2rem", fontWeight: 900 }}>{Number(card.balance).toLocaleString()} <span style={{ fontSize: ".9rem" }}>ر.ي</span></p>
+          <p style={{ fontSize: "2rem", fontWeight: 900 }}>{Number(card.balance).toLocaleString()} <span style={{ fontSize: ".9rem" }}>{cardSym}</span></p>
           <p style={{ opacity: .85, fontSize: ".8rem" }}>الرصيد المتاح</p>
           {!card.isActive && (
             <p style={{ marginTop: ".6rem", background: "rgba(220,38,38,.25)", borderRadius: "999px", padding: ".3rem .9rem", display: "inline-block", fontSize: ".8rem", fontWeight: 800 }}>
@@ -163,7 +178,20 @@ export default function CardPanel({ base, backHref, backLabel }: { base: string;
                 📌 {gateways.find((g) => g.name === proofForm.gatewayName)?.accountInfo} — {gateways.find((g) => g.name === proofForm.gatewayName)?.instructions}
               </p>
             )}
-            <input type="number" placeholder="المبلغ المحوّل (ر.ي)" value={proofForm.amount} onChange={(e) => setProofForm({ ...proofForm, amount: e.target.value })} />
+            <div style={{ display: "flex", gap: ".5rem" }}>
+              <input type="number" placeholder="المبلغ المحوّل" value={proofForm.amount} onChange={(e) => setProofForm({ ...proofForm, amount: e.target.value })} style={{ flex: 1 }} />
+              {currencies.length > 0 && (
+                <select value={proofForm.currency} onChange={(e) => setProofForm({ ...proofForm, currency: e.target.value })} style={{ width: "7.5rem" }}>
+                  {currencies.map((c) => <option key={c.code} value={c.code}>{c.name} ({c.symbol})</option>)}
+                </select>
+              )}
+            </div>
+            {/* 💱 تقدير فوري لما سيُضاف لبطاقتك إن كانت عملة التحويل مختلفة */}
+            {estCredit != null && proofForm.currency !== card.currency && (
+              <p className="muted small" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: ".6rem", borderRadius: ".6rem", color: "#166534" }}>
+                💱 سيُضاف لبطاقتك ≈ <strong>{estCredit.toLocaleString()} {cardSym}</strong> بسعر صرف الإدارة الحالي
+              </p>
+            )}
             <input type="file" accept="image/*" onChange={(e) => setProofFile(e.target.files?.[0] || null)} style={{ padding: ".5rem" }} />
             <button className="btn primary" style={{ width: "100%", justifyContent: "center" }} onClick={topupProof} disabled={busy}>
               {busy ? "⏳..." : "📤 إرسال طلب الشحن"}
@@ -177,9 +205,13 @@ export default function CardPanel({ base, backHref, backLabel }: { base: string;
           {topups.length === 0 ? <p className="muted">لا عمليات شحن بعد</p> : topups.map((t: any) => (
             <div key={t.id} className="assign-row">
               <div>
-                <strong>+{Number(t.amount).toLocaleString()} ر.ي</strong>
+                <strong>+{Number(t.creditedAmount ?? t.amount).toLocaleString()} {cardSym}</strong>
                 <span className={`badge ${TP_STATUS[t.status]?.cls}`}>{TP_STATUS[t.status]?.label}</span>
-                <p className="muted small">{t.method} · {new Date(t.createdAt).toLocaleDateString("ar-YE")}</p>
+                <p className="muted small">
+                  {t.method}
+                  {t.currency && t.currency !== card.currency ? ` · حوّلت ${Number(t.amount).toLocaleString()} ${curSymbol(t.currency)}` : ""}
+                  {" · "}{new Date(t.createdAt).toLocaleDateString("ar-YE")}
+                </p>
               </div>
             </div>
           ))}
