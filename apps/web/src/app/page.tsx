@@ -16,6 +16,7 @@ import Reveal from '@/components/Reveal';
 import AiAssistant from '@/components/AiAssistant';
 import LaunchSound from '@/components/home/LaunchSound';
 import LaunchRibbon from '@/components/home/LaunchRibbon';
+import WelcomeModal from '@/components/home/WelcomeModal';
 
 import { SERVER_API as API } from '@/lib/server-api';
 
@@ -145,6 +146,7 @@ export default async function Home() {
       <AiAssistant />
       {/* 🎵 جينجل الافتتاح — يعزف مرة عند أول تفاعل ويُكتم من زره */}
       <LaunchSound />
+      <WelcomeModal />
     </main>
   );
 }

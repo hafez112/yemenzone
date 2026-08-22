@@ -109,11 +109,18 @@ async function main() {
 
   // 4ب) 📢 إعلانات الافتتاح — إعلانات المنصة نفسها (صور مصممة + روابط داخلية)
   // تُدار لاحقاً من /admin/ads — upsert ثابت بالعنوان حتى لا تتكرر عند كل إقلاع
+  // سلايدر الرئيسية العلوي = 5 شرائح: العرض + التسجيل + الدليل التجاري + المستعمل + البيع برابط
   const launchAds = [
     { title: '🎉 عرض الافتتاح — الباقة الكاملة بـ 100 ر.س فقط', subtitle: 'كل المميزات مفتوحة 6 أشهر بمناسبة الانطلاق — السعر يعود 250 ر.س بعدها',
       image: '/ads/launch-offer.jpg', link: '/start', position: 'home_top', size: 'hero', sort: 1 },
     { title: '🛍️ افتح متجرك الإلكتروني مجاناً اليوم', subtitle: 'منتجات · إيجارات · فنادق · خدمات · مطاعم · مولات — لوحة عربية كاملة بلا خبرة برمجية',
       image: '/ads/join-sellers.jpg', link: '/auth/seller-register', position: 'home_top', size: 'wide', sort: 2 },
+    { title: '📖 الدليل التجاري اليمني — كل الأنشطة في مكان واحد', subtitle: 'تصفّح المتاجر والمطاعم والفنادق والخدمات في كل المحافظات — واعثر على ما تبحث عنه بثوانٍ',
+      image: '/ads/yemen-directory.jpg', link: '/stores', position: 'home_top', size: 'wide', sort: 3 },
+    { title: '♻️ سوق المستعمل — بِع ما لا تحتاجه بدون عمولة', subtitle: 'اعرض أغراضك المستعملة بصور واضحة وتواصل مباشر مع المشترين في مدينتك',
+      image: '/ads/used-market.jpg', link: '/tools/used-market', position: 'home_top', size: 'wide', sort: 4 },
+    { title: '🔗 البيع برابط — بِع أي شيء برابط واحد مجاناً', subtitle: 'أنشئ رابط بيع خلال دقيقة وشاركه في واتساب وتيليجرام — والزبون يطلب فوراً',
+      image: '/ads/quick-sell.jpg', link: '/tools/quick-sell', position: 'home_top', size: 'wide', sort: 5 },
     { title: '💳 بطاقة يمن زون — اشحن وادفع بأي عملة', subtitle: 'بطاقتك تتحوّل تلقائياً بأسعار الصرف المعتمدة — ادفع بها في كل المتاجر',
       image: '/ads/yz-card.jpg', link: '/customer/card', position: 'home_mid', size: 'wide', sort: 1 },
     { title: '🛵 اطلب من كل متاجر اليمن — توصيل حتى باب بيتك', subtitle: 'تتبع طلبك لحظة بلحظة من التجهيز حتى التسليم',
