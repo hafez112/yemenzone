@@ -206,6 +206,19 @@ async function main() {
     if (r.count) console.log(`🗂️ أُدرج ${r.count} متجراً قائماً في الدليل (ترحيل لمرة واحدة)`);
   }
 
+  // 15) 📰 مقالات المدونة — محتوى حقيقي يُزرع مرة واحدة ولا يمس تعديلات الإدارة لاحقاً
+  const posts = require('./blog-posts.js');
+  let seededPosts = 0;
+  for (const p of posts) {
+    const r = await prisma.blogPost.upsert({
+      where: { slug: p.slug },
+      update: {}, // لا نفرض المحتوى — تعديلات الإدارة من /admin/blog محفوظة
+      create: { ...p, publishedAt: new Date(p.publishedAt), isPublished: true },
+    });
+    if (r.createdAt.getTime() === r.updatedAt.getTime()) seededPosts++;
+  }
+  if (seededPosts) console.log(`📰 زُرعت ${seededPosts} مقالة جديدة في المدونة`);
+
   console.log('✅ تم تهيئة قاعدة البيانات — المدير: admin@yemenzone.com / admin123456');
 }
 
