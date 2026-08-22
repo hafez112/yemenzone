@@ -635,14 +635,24 @@ export class AdminService {
     return this.prisma.review.delete({ where: { id } });
   }
 
-  // 🧾 إعداد التقييم الموثوق: عند التفعيل لا يُقبل تقييم بلا طلب مكتمل مطابق
+  // 🧾 إعدادات التقييم: وضع المشترين فقط + مكافأة «قيّم واكسب»
   async reviewsConfig() {
     const row = await this.prisma.setting.findUnique({ where: { key: 'reviews.config' } });
-    return { onlyBuyers: !!(row?.value as any)?.onlyBuyers };
+    const v = (row?.value as any) || {};
+    return {
+      onlyBuyers: !!v.onlyBuyers,
+      rewardEnabled: v.rewardEnabled !== false, // مكافأة التقييم الموثوق مفعّلة افتراضياً
+      rewardPoints: Math.max(0, Math.min(100, Number(v.rewardPoints ?? 10))),
+    };
   }
 
-  async saveReviewsConfig(b: { onlyBuyers?: boolean }) {
-    const value = { onlyBuyers: !!b.onlyBuyers };
+  async saveReviewsConfig(b: { onlyBuyers?: boolean; rewardEnabled?: boolean; rewardPoints?: number }) {
+    const cur = await this.reviewsConfig();
+    const value = {
+      onlyBuyers: typeof b.onlyBuyers === 'boolean' ? b.onlyBuyers : cur.onlyBuyers,
+      rewardEnabled: typeof b.rewardEnabled === 'boolean' ? b.rewardEnabled : cur.rewardEnabled,
+      rewardPoints: Number.isFinite(b.rewardPoints) ? Math.max(0, Math.min(100, Number(b.rewardPoints))) : cur.rewardPoints,
+    };
     await this.prisma.setting.upsert({
       where: { key: 'reviews.config' },
       update: { value },

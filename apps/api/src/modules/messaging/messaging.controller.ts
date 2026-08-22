@@ -36,6 +36,12 @@ export class MessagingController {
     return this.svc.testSend(event, body.phone);
   }
 
+  // 💬 إعداد واتساب السريع — مزود + قوالب جاهزة بضغطة
+  @Post('whatsapp-quick-setup')
+  whatsappQuickSetup(@Body() body: { token: string; phoneNumberId: string }) {
+    return this.svc.whatsappQuickSetup(body);
+  }
+
   // ── السجل والإحصائيات ──
   @Get('logs')
   logs(@Query('event') event?: string, @Query('status') status?: string) {

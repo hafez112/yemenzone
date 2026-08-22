@@ -19,6 +19,7 @@ export class BackupController {
   @Get('offsite') offsite() { return this.svc.offsite(); }
   @Post('offsite/settings') offsiteSettings(@Body() body: any) { return this.svc.offsiteSettings(body); }
   @Post('offsite/trigger') offsiteTrigger() { return this.svc.offsiteTrigger(); }
+  @Post('offsite/verify') offsiteVerify() { return this.svc.offsiteVerify(); }
   @Post('offsite/test') offsiteTest() { return this.svc.offsiteTest(); }
 
   // ♻️ استعادة — تستبدل كل البيانات الحالية بمحتوى النسخة

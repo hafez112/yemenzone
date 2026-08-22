@@ -57,7 +57,9 @@ export default function ReviewsSection({ store, primary, isDark }: any) {
       setShowForm(false);
       setForm({ name: '', phone: '', rating: 5, comment: '', orderNumber: '' });
       setImgs([]);
-      toast(`🌟 شكراً لتقييمك! درجة ${kn.pageWord} الآن ${r.smartScore}`);
+      toast(r.pointsEarned > 0
+        ? `🎁 شكراً لتقييمك الموثوق — كسبت ${r.pointsEarned} نقطة!`
+        : `🌟 شكراً لتقييمك! درجة ${kn.pageWord} الآن ${r.smartScore}`);
     } catch (e: any) { toast(e.message, 'error'); }
     setSending(false);
   }

@@ -57,7 +57,19 @@ export default function OffsiteBackupPanel() {
     finally { setBusy(false); }
   };
 
+  // 🧪 تجربة استعادة — نسخة لم تُختبر استعادتها = لا نسخة
+  const verify = async () => {
+    setBusy(true);
+    try {
+      const r = await api("/admin/backups/offsite/verify", { method: "POST", body: "{}" });
+      toast(r.message || "🧪 بدأ الفحص");
+      setTimeout(load, 90_000);
+    } catch (e: any) { toast(e.message, "error"); }
+    finally { setBusy(false); }
+  };
+
   const st = data?.status;
+  const vf = data?.verify;
   const tgBadge = (s: string) =>
     s === "sent" ? <span className="text-emerald-600">✈️ أُرسلت لتيليجرام</span>
     : s === "failed" ? <span className="text-red-500">🔴 فشل إرسال تيليجرام</span>
@@ -122,7 +134,18 @@ export default function OffsiteBackupPanel() {
           onClick={test} disabled={busy || !data?.settings?.configured}>🔗 اختبار الربط</button>
         <button className="btn" style={{ background: "#f5f3ff", color: "#6d28d9", border: "1px solid #ddd6fe" }}
           onClick={trigger} disabled={busy}>🚀 نسخة فورية الآن</button>
+        <button className="btn" style={{ background: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0" }}
+          onClick={verify} disabled={busy}>🧪 تجربة استعادة</button>
       </div>
+
+      {/* 🧪 نتيجة آخر تجربة استعادة */}
+      {vf && (
+        <div className={`mt-2 rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-2 flex-wrap ${vf.ok ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
+          <span>{vf.ok ? "🧪✅ آخر تجربة استعادة نجحت — النسخة سليمة وقابلة للاسترجاع" : `🧪🔴 آخر تجربة فشلت: ${vf.error || "خطأ غير معروف"}`}</span>
+          {vf.ok && <span className="opacity-70">({vf.tables} جدولاً استُعيدت)</span>}
+          <span className="mr-auto opacity-60" dir="ltr">{new Date(vf.lastVerify).toLocaleString("ar-YE")}</span>
+        </div>
+      )}
 
       {/* النسخ المحلية الخارجية */}
       {data?.dumps?.length > 0 && (

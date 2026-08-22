@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MessagingAiService } from './messaging-ai.service';
 import { encryptSecret, decryptSecret, maskSecret } from '../../common/crypto.util';
@@ -31,12 +31,17 @@ export class MessagingService {
         return { sent: false, reason: 'no_provider', simulated: true };
       }
 
+      // 💬 واتساب يشترط الصيغة الدولية بالأرقام فقط: اليمني المحلي 7XXXXXXXX → 9677XXXXXXXX
+      const waPhone = phone.startsWith('+') ? phone.slice(1)
+        : /^7\d{8}$/.test(phone) ? `967${phone}`
+        : phone.replace(/^00/, '');
+
       // إرسال حقيقي عبر API المزود — 🔐 المفتاح يُفك تشفيره لحظة الاستخدام فقط
       try {
         const apiKey = decryptSecret(provider.apiKey) || '';
-        const url = this.render(provider.apiUrl, { phone, message: encodeURIComponent(body), apiKey });
+        const url = this.render(provider.apiUrl, { phone, waPhone, message: encodeURIComponent(body), apiKey });
         const payload = provider.template
-          ? JSON.parse(this.render(provider.template, { phone, message: body, apiKey }))
+          ? JSON.parse(this.render(provider.template, { phone, waPhone, message: body, apiKey }))
           : { phone, message: body };
         const res = await fetch(url, {
           method: provider.method || 'POST',
@@ -121,6 +126,47 @@ export class MessagingService {
     const t = await this.prisma.messageTemplate.findUnique({ where: { id } });
     if (!t) throw new NotFoundException('القالب غير موجود');
     return this.prisma.messageTemplate.update({ where: { id }, data: { isActive: !t.isActive } });
+  }
+
+  // 💬 إعداد واتساب السريع (WhatsApp Cloud API من ميتا) — بضغطة واحدة:
+  // ينشئ المزود ويحوّل قوالب OTP والطلبات والحجوزات إلى قناة واتساب
+  async whatsappQuickSetup(body: { token: string; phoneNumberId: string }) {
+    const token = (body.token || '').trim();
+    const phoneNumberId = (body.phoneNumberId || '').trim();
+    if (!token || !phoneNumberId) throw new BadRequestException('أدخل رمز الوصول ومعرّف رقم الهاتف');
+
+    // المزود: رابط ميتا + قالب JSON الرسمي (الرقم الدولي {waPhone} يُحسب تلقائياً)
+    const existing = await this.prisma.messagingProvider.findFirst({ where: { name: 'WhatsApp Cloud API' } });
+    const data = {
+      channel: 'whatsapp' as any,
+      name: 'WhatsApp Cloud API',
+      apiUrl: `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
+      method: 'POST',
+      template: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: '{waPhone}',
+        type: 'text',
+        text: { preview_url: false, body: '{message}' },
+      }),
+      isActive: true,
+    };
+    if (existing) {
+      await this.prisma.messagingProvider.update({ where: { id: existing.id }, data: { ...data, apiKey: encryptSecret(token) } });
+    } else {
+      await this.prisma.messagingProvider.create({ data: { ...data, apiKey: encryptSecret(token) } });
+    }
+
+    // تحويل القوالب الأساسية إلى واتساب (تُنشأ بالنص المقترح إن لم تكن موجودة)
+    const events = ['otp', 'order_new', 'order_status', 'booking_status', 'card_verify'];
+    for (const event of events) {
+      const preset = this.ai.EVENT_PRESETS[event];
+      await this.prisma.messageTemplate.upsert({
+        where: { event },
+        update: { channel: 'whatsapp', isActive: true },
+        create: { event, channel: 'whatsapp', body: preset?.suggested || '{code}', isActive: true },
+      });
+    }
+    return { ok: true, message: '💬 فُعّل واتساب بنجاح — أرسل رسالة تجريبية للتأكد' };
   }
 
   // إرسال تجريبي

@@ -12,6 +12,7 @@ DAILY=$DIR/daily
 WEEKLY=$DIR/weekly
 STATUS=$DIR/offsite-status.json
 TRIGGER=$DIR/TRIGGER_NOW
+VTRIGGER=$DIR/TRIGGER_VERIFY
 LOCK=$DIR/.backup-running
 TG_LIMIT=49000000   # حد بوتات تيليجرام ~50MB — نرسل تنبيهاً بدل الملف إن تجاوزه
 
@@ -76,10 +77,61 @@ run_backup() { # $1 = manual|auto
   rm -f "$LOCK"
 }
 
+write_verify() { # $1 ok(true/false), $2 tables, $3 rows, $4 error
+  cat > "$DIR/.verify-status.json" <<EOF
+{"lastVerify":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","ok":$1,"tables":${2:-0},"sampleRows":${3:-0},"error":"$4"}
+EOF
+}
+
+# 🧪 تجربة الاستعادة: نستعيد أحدث نسخة فعلياً في قاعدة مؤقتة ثم نحذفها
+# نسخة لم تُختبر استعادتها = لا نسخة
+run_verify() {
+  [ -f "$LOCK" ] && return
+  touch "$LOCK"
+  LATEST=$(ls -1t "$DAILY"/*.dump 2>/dev/null | head -1)
+  TG_TOKEN=$(cfg tgToken); TG_CHAT=$(cfg tgChatId)
+  if [ -z "$LATEST" ]; then
+    write_verify false 0 0 "لا توجد نسخة بعد"
+  else
+    TABLES=0; ROWS=0; ERR=""
+    # ١) سلامة ملف النسخة (قائمة المحتويات)
+    if ! pg_restore --list "$LATEST" >/dev/null 2>"$DIR/.last-verify-error"; then
+      ERR="ملف النسخة تالف: $(tail -1 "$DIR/.last-verify-error" | head -c 150)"
+    # ٢) استعادة فعلية كاملة في قاعدة مؤقتة
+    elif psql "$DB_URL" -c "CREATE DATABASE yz_verify_tmp" >/dev/null 2>&1; then
+      VURL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/yz_verify_tmp"
+      if pg_restore -d "$VURL" --no-owner --no-privileges "$LATEST" >/dev/null 2>&1; then
+        TABLES=$(psql "$VURL" -t -A -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'" 2>/dev/null)
+        ROWS=$(psql "$VURL" -t -A -c "SELECT (SELECT count(*) FROM stores) + (SELECT count(*) FROM products) + (SELECT count(*) FROM orders)" 2>/dev/null)
+      else
+        ERR="فشلت الاستعادة في القاعدة المؤقتة"
+      fi
+      psql "$DB_URL" -c "DROP DATABASE IF EXISTS yz_verify_tmp" >/dev/null 2>&1
+    else
+      ERR="تعذر إنشاء قاعدة مؤقتة للفحص"
+    fi
+    [ -z "$ERR" ] && write_verify true "$TABLES" "$ROWS" "" || write_verify false "$TABLES" "$ROWS" "$ERR"
+    # تنبيه تيليجرام بالنتيجة
+    if [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ]; then
+      if [ -z "$ERR" ]; then
+        MSG="🧪✅ تجربة استعادة يمن زون نجحت: $(basename "$LATEST") — $TABLES جدولاً استُعيدت سليمة"
+      else
+        MSG="🧪🔴 تجربة الاستعادة فشلت: $ERR"
+      fi
+      curl -s -m 30 -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" -d chat_id="$TG_CHAT" --data-urlencode "text=$MSG" >/dev/null
+    fi
+    echo "[$(date)] 🧪 verify: tables=$TABLES rows=$ROWS err=$ERR"
+  fi
+  rm -f "$LOCK"
+}
+
 echo "🛡️ خدمة النسخ الاحتياطي الخارجي تعمل — الفحص كل 60 ثانية"
 while true; do
   # تشغيل فوري من لوحة الإدارة
   [ -f "$TRIGGER" ] && { rm -f "$TRIGGER"; run_backup manual; }
+
+  # 🧪 تجربة استعادة فورية من لوحة الإدارة
+  [ -f "$VTRIGGER" ] && { rm -f "$VTRIGGER"; run_verify; }
 
   # الموعد اليومي المضبوط من لوحة الإدارة
   ENABLED=$(cfg enabled)

@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Query, UseGuards, BadRequestException, Hea
 import { PrismaService } from '../../prisma/prisma.service';
 import { RateLimit } from '../../common/guards/rate-limit.guard';
 import { CacheService } from '../../common/cache.service';
+import { FREE_FEATURES, FEATURE_AR } from '../../common/features';
 
 // API عام قراءة فقط: /api/v1/*
 // ⚡ الجلسة 6: النقاط العامة الثقيلة مغلّفة بكاش قصير الأمد (Redis أو ذاكرة)
@@ -41,7 +42,8 @@ export class PublicController {
     };
   }
 
-  // 💎 الباقات النشطة — لصفحة الهبوط (قراءة عامة، بيانات حقيقية من الإدارة)
+  // 💎 الباقات النشطة — لصفحة الهبوط وصفحة المقارنة (بيانات حقيقية من الإدارة)
+  // كل باقة تُرجع ميزاتها الفعالة (مدمجة مع ميزات الأساس المجاني) + التسميات العربية
   @Get('plans')
   @Header('Cache-Control', 'public, max-age=300, stale-while-revalidate=600')
   async publicPlans() {
@@ -53,7 +55,15 @@ export class PublicController {
         priceMonthly: true, priceYearly: true, currency: true, features: true,
       },
     });
-    return plans.map(p => ({ ...p, priceMonthly: Number(p.priceMonthly), priceYearly: p.priceYearly === null ? null : Number(p.priceYearly) }));
+    return {
+      plans: plans.map(p => ({
+        ...p,
+        priceMonthly: Number(p.priceMonthly),
+        priceYearly: p.priceYearly === null ? null : Number(p.priceYearly),
+        effectiveFeatures: { ...FREE_FEATURES, ...((p.features as any) || {}) },
+      })),
+      featureLabels: FEATURE_AR,
+    };
   }
 
   @Get('stores')

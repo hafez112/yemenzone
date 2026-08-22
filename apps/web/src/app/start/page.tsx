@@ -26,7 +26,7 @@ async function getData() {
     return {
       stats: spot?.stats || null,
       testimonials: Array.isArray(testi) ? testi : [],
-      plans: Array.isArray(plans) ? plans : [],
+      plans: Array.isArray(plans?.plans) ? plans.plans : [],
     };
   } catch { return { stats: null, testimonials: [], plans: [] }; }
 }
@@ -120,6 +120,11 @@ export default async function StartPage() {
         <section className="max-w-4xl mx-auto px-4 pb-14">
           <Reveal><h2 className="text-2xl md:text-3xl font-black text-center mb-2">باقات تنمو معك 💎</h2></Reveal>
           <Reveal><p className="text-center text-gray-500 text-sm mb-8">ابدأ مجاناً ورقِّ متى احتجت — الأسعار من إدارة المنصة مباشرة</p></Reveal>
+          <div className="text-center mb-6">
+            <Link href="/plans" className="text-xs font-black hover:underline" style={{ color: 'var(--primary)' }}>
+              ⚖️ قارن الباقات ميزة بميزة
+            </Link>
+          </div>
           <div className={`grid gap-3 ${plans.length === 1 ? 'max-w-xs mx-auto' : plans.length === 2 ? 'grid-cols-2 max-w-lg mx-auto' : 'grid-cols-1 sm:grid-cols-3'}`}>
             {plans.map((p: any, i: number) => {
               const monthly = Number(p.priceMonthly);

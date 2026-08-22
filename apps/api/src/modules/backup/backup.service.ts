@@ -165,6 +165,9 @@ export class BackupService {
     const cfg: any = (row?.value as any) || {};
     let status: any = null;
     try { status = JSON.parse(fs.readFileSync(path.join(BACKUP_DIR, 'offsite-status.json'), 'utf8')); } catch {}
+    // 🧪 نتيجة آخر تجربة استعادة (فحص سلامة النسخة)
+    let verify: any = null;
+    try { verify = JSON.parse(fs.readFileSync(path.join(BACKUP_DIR, '.verify-status.json'), 'utf8')); } catch {}
     const dumps: any[] = [];
     for (const sub of ['daily', 'weekly']) {
       try {
@@ -184,8 +187,16 @@ export class BackupService {
         configured: !!(cfg.tgToken && cfg.tgChatId),
       },
       status,
+      verify,
       dumps: dumps.slice(0, 20),
     };
+  }
+
+  // 🧪 تجربة استعادة فورية — تستعيد أحدث نسخة في قاعدة مؤقتة للتأكد من سلامتها
+  async offsiteVerify() {
+    this.ensureDir();
+    fs.writeFileSync(path.join(BACKUP_DIR, 'TRIGGER_VERIFY'), String(Date.now()));
+    return { ok: true, message: '🧪 بدأت تجربة الاستعادة — تستغرق دقيقة تقريباً والنتيجة تظهر هنا وتصلك تيليجرام' };
   }
 
   async offsiteSettings(body: any) {

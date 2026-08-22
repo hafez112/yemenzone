@@ -230,7 +230,7 @@ export class AdminController {
   reviewsConfig() { return this.admin.reviewsConfig(); }
   @UseGuards(PermsGuard('reviews'))
   @Post('reviews-config')
-  saveReviewsConfig(@Body() b: { onlyBuyers?: boolean }) { return this.admin.saveReviewsConfig(b); }
+  saveReviewsConfig(@Body() b: { onlyBuyers?: boolean; rewardEnabled?: boolean; rewardPoints?: number }) { return this.admin.saveReviewsConfig(b); }
 
   // الإشراف: rentals | hotel | services
   @UseGuards(PermsGuard('supervision'))

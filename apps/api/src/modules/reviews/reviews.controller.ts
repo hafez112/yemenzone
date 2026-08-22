@@ -118,6 +118,28 @@ export class ReviewsController {
       },
     });
 
+    // 🎁 «قيّم واكسب» — نقاط مكافأة للتقييم الموثوق المرتبط بطلب فعلي
+    let pointsEarned = 0;
+    if (orderId) {
+      const cfgRow = await this.prisma.setting.findUnique({ where: { key: 'reviews.config' } });
+      const rewards = (cfgRow?.value as any) || {};
+      const pts = rewards.rewardEnabled === false ? 0 : Math.max(0, Math.min(100, Number(rewards.rewardPoints ?? 10)));
+      if (pts > 0) {
+        pointsEarned = pts;
+        await this.prisma.customer.update({ where: { id: customer.id }, data: { points: { increment: pts } } });
+        await this.prisma.pointsTransaction.create({
+          data: { customerId: customer.id, points: pts, reason: `⭐ تقييم موثوق للطلب ${orderNumber}`, refId: review.id },
+        });
+        // 🔔 إشعار العميل بمكافأته — صامت لا يعطّل العملية
+        this.notifications.push('customer', customer.id, {
+          icon: '🎁',
+          title: `كسبت ${pts} نقطة على تقييمك!`,
+          body: 'شكراً لتقييمك الموثوق ✅ — نقاطك تنتظرك في صفحة «نقاطي»',
+          link: '/customer?tab=points',
+        }).catch(() => {});
+      }
+    }
+
     // 🤖 إعادة حساب الدرجة الذكية فوراً
     const newScore = await this.smart.compute(store.id);
 
@@ -131,7 +153,7 @@ export class ReviewsController {
       });
     }
 
-    return { review, smartScore: newScore };
+    return { review, smartScore: newScore, pointsEarned };
   }
 
   // إعجاب / إلغاء إعجاب بمتجر

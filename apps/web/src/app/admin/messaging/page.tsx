@@ -19,6 +19,23 @@ export default function AdminMessagingPage() {
   const [providerForm, setProviderForm] = useState<any>({ ...emptyProvider });
   const [showProviderForm, setShowProviderForm] = useState(false);
   const [testPhone, setTestPhone] = useState("");
+  // 💬 إعداد واتساب السريع (WhatsApp Cloud API)
+  const [waToken, setWaToken] = useState("");
+  const [waPhoneId, setWaPhoneId] = useState("");
+  const [waBusy, setWaBusy] = useState(false);
+  const [showWaGuide, setShowWaGuide] = useState(false);
+
+  const waQuickSetup = async () => {
+    if (!waToken.trim() || !waPhoneId.trim()) return toast("⚠️ أدخل رمز الوصول ومعرّف الرقم", "error");
+    setWaBusy(true);
+    try {
+      const r = await api("/admin/messaging/whatsapp-quick-setup", { method: "POST", body: JSON.stringify({ token: waToken, phoneNumberId: waPhoneId }) });
+      toast(r.message || "✅ فُعّل واتساب");
+      setWaToken("");
+      load();
+    } catch (e: any) { toast(e.message, "error"); }
+    setWaBusy(false);
+  };
 
   const load = () => {
     api("/admin/messaging/stats").then(setStats).catch((e) => toast(e.message, "error"));
@@ -81,6 +98,32 @@ export default function AdminMessagingPage() {
         <AdminSidebar />
         <main className="content">
           <h1>💬 مركز المراسلة</h1>
+
+          {/* 💬 إعداد واتساب السريع — القناة الأولى في اليمن */}
+          <section className="card" style={{ border: "1px solid #25D36655" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+              <h2 style={{ margin: 0 }}>💬 واتساب للمنصة <small style={{ color: "#888", fontWeight: 400 }}>OTP + إشعارات الطلبات والحجوزات تصل عملاءك على واتساب</small></h2>
+              <button className="btn" onClick={() => setShowWaGuide(!showWaGuide)}>{showWaGuide ? "إخفاء الدليل" : "📖 دليل الإعداد"}</button>
+            </div>
+            {showWaGuide && (
+              <div style={{ background: "#0d1f14", borderRadius: 12, padding: "1rem", margin: "0.8rem 0", fontSize: "0.85rem", lineHeight: 1.9 }}>
+                <b>خطوات الحصول على واتساب Cloud API (مجاني من ميتا):</b>
+                <ol style={{ margin: "0.4rem 1.2rem 0" }}>
+                  <li>ادخل <span dir="ltr">developers.facebook.com</span> وأنشئ تطبيقاً نوعه «Business»</li>
+                  <li>من لوحة التطبيق أضف منتج <b>WhatsApp</b> ثم افتح <b>API Setup</b></li>
+                  <li>انسخ <b>Temporary access token</b> (أو أنشئ رمزاً دائماً من System User) و <b>Phone number ID</b></li>
+                  <li>ألصقهما هنا واضغط «تفعيل» — تُضبط القوالب تلقائياً ✅</li>
+                  <li>أضف رقم جوالك الحقيقي وأكّده ليصبح الإرسال فعلياً 📲</li>
+                </ol>
+              </div>
+            )}
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.6rem" }}>
+              <input type="password" value={waToken} onChange={(e) => setWaToken(e.target.value)} placeholder="🔑 رمز الوصول (Access Token)" dir="ltr" className="input" style={{ flex: 2, minWidth: 220 }} />
+              <input value={waPhoneId} onChange={(e) => setWaPhoneId(e.target.value)} placeholder="🆔 معرّف رقم الهاتف (Phone Number ID)" dir="ltr" className="input" style={{ flex: 1, minWidth: 180 }} />
+              <button className="btn primary" onClick={waQuickSetup} disabled={waBusy}>{waBusy ? "⏳..." : "⚡ تفعيل واتساب"}</button>
+            </div>
+            <p style={{ fontSize: "0.75rem", color: "#888", marginTop: "0.5rem" }}>بعد التفعيل جرّب من تبويب القوالب: أدخل جوالك واضغط «تجربة» على قالب رمز التحقق 🔐</p>
+          </section>
 
           {/* إحصائيات + نصائح ذكية */}
           {stats && (

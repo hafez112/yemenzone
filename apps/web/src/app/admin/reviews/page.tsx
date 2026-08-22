@@ -30,6 +30,14 @@ export default function AdminReviews() {
     } catch (e: any) { toast(e.message, 'error'); }
   }
 
+  async function saveReward(patch: any) {
+    try {
+      const next = await api('/admin/reviews-config', { method: 'POST', body: JSON.stringify(patch) });
+      setCfg(next);
+      toast('✅ حُفظت إعدادات المكافأة');
+    } catch (e: any) { toast(e.message, 'error'); }
+  }
+
   async function act(fn: () => Promise<any>, msg: string) {
     try { await fn(); toast(msg); await load(); }
     catch (e: any) { toast(e.message, 'error'); }
@@ -53,6 +61,27 @@ export default function AdminReviews() {
                 className={`px-4 py-2 rounded-full text-xs font-black transition ${cfg.onlyBuyers ? 'bg-emerald-500 text-white' : 'bg-white/10 text-gray-400'}`}>
                 {cfg.onlyBuyers ? '🟢 مفعّل' : '⚪ متوقف'}
               </button>
+            </div>
+          )}
+
+          {/* 🎁 «قيّم واكسب» — نقاط مكافأة للتقييم الموثوق */}
+          {cfg && (
+            <div className="glass-dark rounded-2xl p-3.5 mb-4 flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <div className="text-white font-extrabold text-xs">🎁 قيّم واكسب</div>
+                <div className="text-[10px] text-gray-500 mt-0.5">كل تقييم موثوق ✅ (مرتبط بطلب فعلي) يكسب صاحبه نقاطاً تلقائياً — تشجع العملاء على التقييم</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="number" min={0} max={100} value={cfg.rewardPoints}
+                  onChange={(e) => setCfg({ ...cfg, rewardPoints: Number(e.target.value) })}
+                  onBlur={() => saveReward({ rewardPoints: cfg.rewardPoints })}
+                  className="w-16 bg-white/5 border border-white/10 rounded-xl px-2 py-1.5 text-xs font-black text-white text-center" />
+                <span className="text-[10px] text-gray-400 font-bold">نقطة</span>
+                <button onClick={() => saveReward({ rewardEnabled: !cfg.rewardEnabled })}
+                  className={`px-4 py-2 rounded-full text-xs font-black transition ${cfg.rewardEnabled ? 'bg-emerald-500 text-white' : 'bg-white/10 text-gray-400'}`}>
+                  {cfg.rewardEnabled ? '🟢 مفعّلة' : '⚪ متوقفة'}
+                </button>
+              </div>
             </div>
           )}
 
