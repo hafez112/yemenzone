@@ -115,25 +115,40 @@ body {
 .anim-bounce-in { animation: bounceIn 0.4s ease both; }
 .anim-blob { animation: blob 9s ease-in-out infinite; }
 
-/* ظهور تدريجي عند التمرير */
-.stagger > * { opacity: 0; animation: fadeUp 0.7s ease forwards; }
-.stagger > *:nth-child(1) { animation-delay: 0.05s }
-.stagger > *:nth-child(2) { animation-delay: 0.15s }
-.stagger > *:nth-child(3) { animation-delay: 0.25s }
-.stagger > *:nth-child(4) { animation-delay: 0.35s }
-.stagger > *:nth-child(5) { animation-delay: 0.45s }
-.stagger > *:nth-child(6) { animation-delay: 0.55s }
+/* ظهور تدريجي عند التمرير — تحسين تجميلي فقط: المحتوى ظاهر افتراضياً دائماً،
+   والإخفاء الأولي يُفعَّل حصراً على الأجهزة التي تسمح بالحركة (يمنع اختفاء الأقسام
+   على الأجهزة المفعّل فيها «إزالة الحركات» من إعدادات أندرويد/سامسونج) */
+@media (prefers-reduced-motion: no-preference) {
+  .stagger > * { opacity: 0; animation: fadeUp 0.7s ease forwards; }
+  .stagger > *:nth-child(1) { animation-delay: 0.05s }
+  .stagger > *:nth-child(2) { animation-delay: 0.15s }
+  .stagger > *:nth-child(3) { animation-delay: 0.25s }
+  .stagger > *:nth-child(4) { animation-delay: 0.35s }
+  .stagger > *:nth-child(5) { animation-delay: 0.45s }
+  .stagger > *:nth-child(6) { animation-delay: 0.55s }
+}
 
 /* ═══ مكونات الزجاج ═══ */
 .glass {
-  backdrop-filter: blur(18px);
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.92); /* أساس مصمت — يعمل في كل المتصفحات */
   border: 1px solid rgba(255, 255, 255, 0.5);
 }
 .glass-dark {
-  backdrop-filter: blur(18px);
-  background: rgba(10, 10, 20, 0.7);
+  background: rgba(10, 10, 20, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.08);
+}
+/* التمويه الزجاجي تحسين تجميلي — يُطبَّق فقط حيث يُدعم (مع بادئة سفاري) */
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .glass {
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    background: rgba(255, 255, 255, 0.65);
+  }
+  .glass-dark {
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    background: rgba(10, 10, 20, 0.7);
+  }
 }
 
 /* نص متدرج */
@@ -197,7 +212,7 @@ img, video { max-width: 100%; }
 
 
 /* ═══════════ الجلسة 11: نظام التوصيل ═══════════ */
-.page { min-height: 100vh; padding: 5rem 0.75rem 1.5rem; background: linear-gradient(135deg, #faf5ff, #f0fdfa); }
+.page { min-height: 100vh; min-height: 100dvh; /* dvh = ارتفاع الشاشة الحقيقي في الجوال بعد شريط المتصفح */ padding: 5rem 0.75rem 1.5rem; background: linear-gradient(135deg, #faf5ff, #f0fdfa); }
 .center-page { display: flex; align-items: center; justify-content: center; }
 .layout { max-width: 72rem; margin: 0 auto; display: flex; flex-direction: column; gap: 1rem; }
 @media (min-width: 768px) { .layout { flex-direction: row; } }
@@ -395,8 +410,12 @@ img, video { max-width: 100%; }
 .card-glow-top:hover::before { opacity: 1; }
 
 /* ظهور عند التمرير — يُفعّل بجافاسكربت IntersectionObserver */
-.reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
-.reveal.revealed { opacity: 1; transform: none; }
+/* الظهور عند التمرير — يُسلَّح من JS فقط بعد التأكد أن الحركة مسموحة والمراقب يعمل:
+   بلا JS أو مع «إزالة الحركات» يبقى المحتوى ظاهراً 100% — لا أقسام فارغة أبداً */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal.armed { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
+  .reveal.armed.revealed { opacity: 1; transform: none; }
+}
 
 /* زر بلمعان متحرك */
 .btn-shine { position: relative; overflow: hidden; }
@@ -429,7 +448,6 @@ img, video { max-width: 100%; }
 
 @media (prefers-reduced-motion: reduce) {
   .bg-aurora, .gradient-border, .grad-text-animated, .btn-shine::after, .anim-soft-pulse, .anim-bobble { animation: none !important; }
-  .reveal { opacity: 1; transform: none; transition: none; }
 }
 
 

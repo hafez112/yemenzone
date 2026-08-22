@@ -12,6 +12,7 @@ const cairo = Cairo({
 import TopBar from '@/components/TopBar';
 import BottomNav from '@/components/BottomNav';
 import NativeApp from '@/components/NativeApp';
+import MotionFallback from '@/components/MotionFallback';
 import WebStudio from '@/components/WebStudio';
 import ToastHost from '@/components/Toast';
 import PwaRegister from '@/components/PwaRegister';
@@ -122,6 +123,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {seo.gaId && <GaTracker gaId={seo.gaId} />}
         <ToastHost />
         <PwaRegister />
+        <MotionFallback />
         <NativeApp />
         <WebStudio />
         <TopBar />
