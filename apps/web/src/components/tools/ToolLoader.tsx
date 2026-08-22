@@ -42,6 +42,27 @@ const MAP: Record<string, any> = {
   requests: dynamic(() => import('./RequestsTool'), { loading: () => loading, ssr: false }),
   posts: dynamic(() => import('./PostsTool'), { loading: () => loading, ssr: false }),
   'used-market': dynamic(() => import('./UsedMarketTool'), { loading: () => loading, ssr: false }),
+  // 💎 الخدمات المدفوعة العشرون
+  inventory: dynamic(() => import('./InventoryTool'), { loading: () => loading, ssr: false }),
+  crm: dynamic(() => import('./CrmTool'), { loading: () => loading, ssr: false }),
+  delivery: dynamic(() => import('./DeliveryTool'), { loading: () => loading, ssr: false }),
+  expenses: dynamic(() => import('./ExpensesTool'), { loading: () => loading, ssr: false }),
+  coupons: dynamic(() => import('./CouponsTool'), { loading: () => loading, ssr: false }),
+  quotes: dynamic(() => import('./QuotesTool'), { loading: () => loading, ssr: false }),
+  vouchers: dynamic(() => import('./VouchersTool'), { loading: () => loading, ssr: false }),
+  'sales-report': dynamic(() => import('./SalesReportTool'), { loading: () => loading, ssr: false }),
+  backup: dynamic(() => import('./BackupTool'), { loading: () => loading, ssr: false }),
+  appointments: dynamic(() => import('./AppointmentsTool'), { loading: () => loading, ssr: false }),
+  'menu-qr': dynamic(() => import('./MenuQrTool'), { loading: () => loading, ssr: false }),
+  rooms: dynamic(() => import('./RoomsTool'), { loading: () => loading, ssr: false }),
+  'rental-contract': dynamic(() => import('./RentalContractTool'), { loading: () => loading, ssr: false }),
+  tickets: dynamic(() => import('./TicketsTool'), { loading: () => loading, ssr: false }),
+  cv: dynamic(() => import('./CvTool'), { loading: () => loading, ssr: false }),
+  warranties: dynamic(() => import('./WarrantiesTool'), { loading: () => loading, ssr: false }),
+  vault: dynamic(() => import('./VaultTool'), { loading: () => loading, ssr: false }),
+  budget: dynamic(() => import('./BudgetTool'), { loading: () => loading, ssr: false }),
+  'quiz-maker': dynamic(() => import('./QuizMakerTool'), { loading: () => loading, ssr: false }),
+  polls: dynamic(() => import('./PollsTool'), { loading: () => loading, ssr: false }),
 };
 
 export default function ToolLoader({ slug }: { slug: string }) {

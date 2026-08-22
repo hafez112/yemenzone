@@ -5,6 +5,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 const MERCHANT_TOOLS = new Set([
   'invoice', 'qr', 'barcode', 'writer', 'catalog',
   'pricing', 'installments', 'debts', 'docs', 'posts',
+  // 💎 خدمات التاجر المدفوعة
+  'inventory', 'crm', 'delivery', 'expenses', 'coupons',
+  'quotes', 'vouchers', 'sales-report', 'backup', 'appointments',
+  'menu-qr', 'rooms', 'rental-contract', 'tickets',
 ]);
 
 const SLUG_RE = /^[a-z0-9-]{1,40}$/;

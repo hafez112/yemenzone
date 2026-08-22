@@ -10,7 +10,7 @@ import { DEFAULT_APP_BUTTONS } from "@/components/home/AppQuickButtons";
 const APP_SECTIONS: [string, string][] = [
   ["quickActions", "🔘 أزرار الخدمات"], ["hero", "🎯 قسم البطل"], ["slider", "🖼️ السلايدر"],
   ["flashSale", "⚡ عرض الفلاش"], ["trending", "🔥 يُباع الآن"], ["rising", "📈 متاجر صاعدة"],
-  ["features", "✨ المميزات"], ["freeServices", "🧰 الخدمات المجانية"], ["newest", "🆕 وصل حديثاً"], ["templates", "🎨 قوالب المتاجر"],
+  ["features", "✨ المميزات"], ["freeServices", "🧰 خدمات المنصة"], ["newest", "🆕 وصل حديثاً"], ["templates", "🎨 قوالب المتاجر"],
   ["stores", "🏪 شريط المتاجر"], ["services", "🧩 خدمات المنصة"], ["blog", "📰 المدونة"],
   ["cta", "🚀 الدعوة الأخيرة"], ["ads", "📢 الإعلانات"],
 ];
@@ -53,13 +53,13 @@ const APP_THEMES = [
 ];
 const SECTIONS: Record<string, string> = {
   hero: "قسم البطل (Hero)", slider: "السلايدر", flashSale: "عرض الفلاش", ads: "الإعلانات", trending: "يُباع الآن",
-  rising: "متاجر صاعدة", features: "المميزات", freeServices: "الخدمات المجانية", newest: "وصل حديثاً",
+  rising: "متاجر صاعدة", features: "المميزات", freeServices: "خدمات المنصة", newest: "وصل حديثاً",
   templates: "قوالب المتاجر", stores: "شريط المتاجر", services: "خدمات المنصة", blog: "المدونة", cta: "الدعوة الأخيرة",
 };
 // ترتيب الأقسام القابل للسحب — مفاتيح العرض في الواجهة
 const ORDER_LABELS: Record<string, string> = {
   hero: "🎯 قسم البطل", slider: "🖼️ السلايدر", flashSale: "⚡ عرض الفلاش", ads_top: "📢 إعلانات أعلى الرئيسية",
-  trending: "🔥 يُباع الآن", rising: "📈 متاجر صاعدة", features: "✨ المميزات", freeServices: "🧰 الخدمات المجانية", newest: "🆕 وصل حديثاً",
+  trending: "🔥 يُباع الآن", rising: "📈 متاجر صاعدة", features: "✨ المميزات", freeServices: "🧰 خدمات المنصة", newest: "🆕 وصل حديثاً",
   templates: "🎨 قوالب المتاجر", ads_mid: "📢 إعلانات وسط الرئيسية", stores: "🏪 شريط المتاجر",
   services: "🧩 خدمات المنصة", blog: "📰 المدونة", cta: "🚀 الدعوة الأخيرة",
 };

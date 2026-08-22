@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ToolsService } from './tools.service';
 import { RateLimit } from '../../common/guards/rate-limit.guard';
@@ -20,6 +20,28 @@ export class ToolsController {
   @Post(':key/buy')
   @UseGuards(AuthGuard)
   buy(@CurrentUser() u: any, @Param('key') key: string) { return this.tools.buyTool(u.typ, u.sub, key); }
+
+  // ═══ 📢 المستندات المشتركة للخدمات المدفوعة (منيو/اختبار/استطلاع/فعالية) ═══
+  @Post('share')
+  @UseGuards(AuthGuard)
+  shareCreate(@CurrentUser() u: any, @Body() body: any) { return this.tools.shareCreate(u.typ, u.sub, body); }
+
+  @Put('share/:slug')
+  @UseGuards(AuthGuard)
+  shareUpdate(@CurrentUser() u: any, @Param('slug') slug: string, @Body() body: any) { return this.tools.shareUpdate(u.typ, u.sub, slug, body); }
+
+  @Get('share-mine')
+  @UseGuards(AuthGuard)
+  shareMine(@CurrentUser() u: any) { return this.tools.shareMine(u.typ, u.sub); }
+
+  // قراءة عامة — تعرضها صفحة /s/[slug] بدون دخول
+  @Get('share/:slug')
+  shareGet(@Param('slug') slug: string) { return this.tools.shareGet(slug); }
+
+  // 🗳️ تصويت عام في استطلاع — بحد معدل لمنع العبث
+  @UseGuards(RateLimit(40, 60_000, 'share-vote'))
+  @Post('share/:slug/vote')
+  shareVote(@Param('slug') slug: string, @Body() body: any) { return this.tools.shareVote(slug, body?.index); }
 
   // القائمة العامة (الأدوات الظاهرة + أسعار الصرف)
   @Get()

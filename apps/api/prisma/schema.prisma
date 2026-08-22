@@ -1770,3 +1770,21 @@ model UserTool {
   @@index([userType, userId])
   @@map("user_tools")
 }
+
+// 📢 مستند مشترك برابط عام قصير — منيو مطعم / اختبار / استطلاع / فعالية
+// تنشئه الخدمات المدفوعة وتعرضه صفحة /s/[slug] بدون تسجيل دخول
+model SharedDoc {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  type      String // menu | quiz | poll | ticket
+  ownerType String // seller | customer
+  ownerId   String
+  title     String   @default("")
+  payload   Json // محتوى المستند (أقسام المنيو، أسئلة الاختبار، خيارات الاستطلاع وأصواتها...)
+  views     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerType, ownerId])
+  @@map("shared_docs")
+}

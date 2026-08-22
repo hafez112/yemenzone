@@ -58,3 +58,42 @@ export const myAccess = (): Promise<{ purchased: string[]; purchases: any[] }> =
 // 💳 شراء خدمة ببطاقة يمن زون — تفتح فوراً بعد الدفع
 export const buyTool = (slug: string) =>
   api(`/v1/tools/${slug}/buy`, { method: 'POST' });
+
+// ═══ 📢 المستندات المشتركة — صفحات عامة برابط قصير (منيو/اختبار/استطلاع/فعالية) ═══
+export interface SharedDoc {
+  slug: string; type: 'menu' | 'quiz' | 'poll' | 'ticket';
+  title: string; payload: any; views: number; createdAt: string; updatedAt: string;
+}
+
+// إنشاء مستند مشترك (يتطلب دخول) ← يرجع الرابط القصير
+export const shareCreate = (type: string, title: string, payload: any): Promise<{ slug: string }> =>
+  api('/v1/tools/share', { method: 'POST', body: JSON.stringify({ type, title, payload }) });
+
+// تحديث مستند أملكه
+export const shareUpdate = (slug: string, title: string, payload: any) =>
+  api(`/v1/tools/share/${slug}`, { method: 'PUT', body: JSON.stringify({ title, payload }) });
+
+// مستنداتي المشتركة (مع النتائج والمشاهدات)
+export const shareMine = (): Promise<SharedDoc[]> => api('/v1/tools/share-mine');
+
+// قراءة عامة بدون دخول — لصفحة العرض /s/[slug]
+export async function shareGet(slug: string): Promise<SharedDoc | null> {
+  try {
+    const API = process.env.NEXT_PUBLIC_API_URL || '';
+    const r = await fetch(`${API}/api/v1/tools/share/${slug}`, { cache: 'no-store' });
+    if (!r.ok) return null;
+    return r.json();
+  } catch { return null; }
+}
+
+// تصويت عام في استطلاع
+export async function shareVote(slug: string, index: number): Promise<any> {
+  const API = process.env.NEXT_PUBLIC_API_URL || '';
+  const r = await fetch(`${API}/api/v1/tools/share/${slug}/vote`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ index }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.message || 'تعذّر التصويت');
+  return d;
+}

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { TOOLS } from '@/lib/tools';
 import { sessionType } from '@/lib/tool-db';
 
-// 🧰 قسم «الخدمات المجانية» في الصفحة الرئيسية
+// 🧰 قسم «خدمات المنصة» في الصفحة الرئيسية (مجانية + مدفوعة بشارة 💎)
 // يظهر ضمن أقسام إدارة التصميم (/admin/design) — تتحكم الإدارة بموقعه وإظهاره/إخفائه
 // 🛍️ خدمات التاجر تظهر للبائعين فقط — الزائر والعميل يريان الخدمات العامة
 export default function FreeServicesSection() {
@@ -19,8 +19,8 @@ export default function FreeServicesSection() {
         <div className="flex items-center gap-3">
           <span className="section-chip">🧰</span>
           <div>
-            <h2 className="f-2xl font-black">الخدمات المجانية</h2>
-            <p className="text-gray-500 f-xs mt-0.5">{tools.length} خدمة قوية ومجانية بالكامل — سجّل دخولك واستخدمها فوراً</p>
+            <h2 className="f-2xl font-black">خدمات المنصة</h2>
+            <p className="text-gray-500 f-xs mt-0.5">{tools.length} خدمة قوية — المجانية تعمل فوراً، والمدفوعة 💎 تُفتح للأبد ببطاقة يمن زون</p>
           </div>
         </div>
         <Link href="/tools"

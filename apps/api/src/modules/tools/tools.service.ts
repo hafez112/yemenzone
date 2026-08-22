@@ -10,7 +10,21 @@ export const TOOL_KEYS = [
   'catalog', 'pricing', 'installments', 'debts', 'whatsapp', 'zakat', 'prayer',
   'compressor', 'ocr', 'docs', 'bio', 'site-check', 'tech', 'card-scan', 'add-me', 'logo-ai', 'ad-maker',
   'quick-sell', 'share-card', 'price-hunt', 'requests', 'posts', 'used-market',
+  // 💎 الخدمات المدفوعة العشرون — تُشترى ببطاقة يمن زون وتفتح فوراً
+  'inventory', 'crm', 'delivery', 'expenses', 'coupons',
+  'quotes', 'vouchers', 'sales-report', 'backup', 'appointments',
+  'menu-qr', 'rooms', 'rental-contract', 'tickets',
+  'cv', 'warranties', 'vault', 'budget', 'quiz-maker', 'polls',
 ] as const;
+
+// 💰 الأسعار الافتراضية للخدمات المدفوعة (بالريال اليمني — مثل أسعار الباقات)
+// تُطبَّق عند إنشاء الصفوف أول مرة فقط — وتعديلها بعدها من لوحة الإدارة
+export const TOOL_DEFAULT_PRICES: Record<string, number> = {
+  inventory: 5000, crm: 7000, delivery: 8000, expenses: 5000, coupons: 7000,
+  quotes: 4000, vouchers: 4000, 'sales-report': 6000, backup: 10000, appointments: 8000,
+  'menu-qr': 10000, rooms: 12000, 'rental-contract': 7000, tickets: 14000,
+  cv: 3000, warranties: 3000, vault: 4000, budget: 3000, 'quiz-maker': 8000, polls: 2000,
+};
 
 // أسماء عربية للخدمات — تُستخدم في تسميات مواضع الإعلانات ولوحة الإدارة
 export const TOOL_LABELS: Record<string, string> = {
@@ -24,6 +38,14 @@ export const TOOL_LABELS: Record<string, string> = {
   'quick-sell': 'بع برابط واحد', 'share-card': 'بطاقة مشاركة المنتج',
   'price-hunt': 'مقارن الأسعار الذكي', requests: 'اطلبها ونوفرها', posts: 'منشورات السوشيال الجاهزة',
   'used-market': 'سوق المستعمل',
+  // 💎 الخدمات المدفوعة
+  inventory: 'إدارة المخزون الذكية', crm: 'سجل العملاء', delivery: 'متتبع الطلبات والتوصيل',
+  expenses: 'دفتر المصروفات والأرباح', coupons: 'منشئ الكوبونات والعروض', quotes: 'عروض الأسعار الاحترافية',
+  vouchers: 'سندات القبض والصرف', 'sales-report': 'تقرير المبيعات الأسبوعي', backup: 'النسخ الاحتياطي السحابي',
+  appointments: 'حجوزات ومواعيد الخدمات', 'menu-qr': 'المنيو الرقمي بـ QR', rooms: 'مدير حجوزات الغرف',
+  'rental-contract': 'عقود الإيجار الإلكترونية', tickets: 'تذاكر الفعاليات بـ QR',
+  cv: 'صانع السيرة الذاتية', warranties: 'أرشيف الضمانات الذكي', vault: 'خزنة كلمات المرور',
+  budget: 'مدير الميزانية الشخصية', 'quiz-maker': 'منشئ الاختبارات والشهادات', polls: 'صانع الاستطلاعات',
 };
 
 const CONFIG_KEY = 'tools.config';
@@ -39,7 +61,8 @@ export class ToolsService {
     const missing = TOOL_KEYS.filter((k) => !have.has(k));
     if (missing.length) {
       await this.prisma.platformTool.createMany({
-        data: missing.map((key) => ({ key, order: TOOL_KEYS.indexOf(key as any) })),
+        // 💰 الخدمات المدفوعة تُولد بسعرها الافتراضي — والإدارة تعدّله من لوحة الخدمات
+        data: missing.map((key) => ({ key, order: TOOL_KEYS.indexOf(key as any), price: TOOL_DEFAULT_PRICES[key] ?? null })),
       });
     }
   }
@@ -152,6 +175,68 @@ export class ToolsService {
       }),
     ]);
     return { unlocked: true, amount: price, message: `🎉 تم الدفع من بطاقتك — الخدمة «${TOOL_LABELS[key] || key}» مفتوحة لك الآن دائماً` };
+  }
+
+  // ═══ 📢 المستندات المشتركة — صفحات عامة برابط قصير للخدمات المدفوعة ═══
+  private static SHARE_TYPES = ['menu', 'quiz', 'poll', 'ticket'];
+  private static SHARE_CAP = 180_000; // حد حجم المحتوى (حرف)
+
+  private checkSharePayload(type: string, title: string, payload: any) {
+    if (!ToolsService.SHARE_TYPES.includes(type)) throw new BadRequestException('نوع المستند غير معروف');
+    const size = JSON.stringify(payload ?? null)?.length || 0;
+    if (!size || size > ToolsService.SHARE_CAP) throw new BadRequestException('محتوى المستند كبير جداً');
+    return String(title || '').trim().slice(0, 120);
+  }
+
+  // إنشاء مستند مشترك — يرجع الرابط القصير
+  async shareCreate(ownerType: string, ownerId: string, body: any) {
+    const type = String(body?.type || '');
+    const title = this.checkSharePayload(type, body?.title, body?.payload);
+    const doc = await this.prisma.sharedDoc.create({
+      data: { slug: randomBytes(4).toString('hex'), type, ownerType, ownerId, title, payload: body.payload },
+    });
+    return { slug: doc.slug };
+  }
+
+  // تحديث مستند — المالك فقط
+  async shareUpdate(ownerType: string, ownerId: string, slug: string, body: any) {
+    const doc = await this.prisma.sharedDoc.findUnique({ where: { slug } });
+    if (!doc || doc.ownerType !== ownerType || doc.ownerId !== ownerId) throw new NotFoundException('المستند غير موجود');
+    const title = this.checkSharePayload(doc.type, body?.title ?? doc.title, body?.payload);
+    await this.prisma.sharedDoc.update({ where: { slug }, data: { title, payload: body.payload } });
+    return { ok: true };
+  }
+
+  // مستنداتي — مع المحتوى (نتائج الاستطلاعات) وعدد المشاهدات
+  async shareMine(ownerType: string, ownerId: string) {
+    return this.prisma.sharedDoc.findMany({
+      where: { ownerType, ownerId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: { slug: true, type: true, title: true, payload: true, views: true, createdAt: true, updatedAt: true },
+    });
+  }
+
+  // قراءة عامة — تزيد المشاهدات بصمت
+  async shareGet(slug: string) {
+    const doc = await this.prisma.sharedDoc.findUnique({ where: { slug } });
+    if (!doc) throw new NotFoundException('الرابط غير موجود أو حُذف');
+    this.prisma.sharedDoc.update({ where: { slug }, data: { views: { increment: 1 } } }).catch(() => {});
+    return { slug: doc.slug, type: doc.type, title: doc.title, payload: doc.payload, views: doc.views, createdAt: doc.createdAt, updatedAt: doc.updatedAt };
+  }
+
+  // 🗳️ تصويت عام في استطلاع — خيار واحد في كل مرة
+  async shareVote(slug: string, index: number) {
+    const doc = await this.prisma.sharedDoc.findUnique({ where: { slug } });
+    if (!doc || doc.type !== 'poll') throw new NotFoundException('الاستطلاع غير موجود');
+    const payload: any = doc.payload || {};
+    const opts: any[] = Array.isArray(payload.options) ? payload.options : [];
+    const i = Math.trunc(Number(index));
+    if (i < 0 || i >= opts.length) throw new BadRequestException('خيار غير موجود');
+    opts[i] = { ...opts[i], votes: (Number(opts[i]?.votes) || 0) + 1 };
+    const next = { ...payload, options: opts };
+    await this.prisma.sharedDoc.update({ where: { slug }, data: { payload: next } });
+    return { ok: true, payload: next };
   }
 
   // 👑 للإدارة: كل الأدوات مع الحالة والعدادات (استخدام + زيارات)
