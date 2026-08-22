@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, MinLength, IsEmail, Matches, IsIn } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, MinLength, IsEmail, Matches, IsIn, IsBoolean } from 'class-validator';
 
 export class SendOtpDto {
   @IsString() @Matches(/^[+0-9]{7,20}$/, { message: 'رقم الجوال غير صحيح' })
@@ -7,8 +7,8 @@ export class SendOtpDto {
   @IsIn(['seller', 'customer'])
   userType!: 'seller' | 'customer';
 
-  @IsIn(['register', 'login'])
-  purpose!: 'register' | 'login';
+  @IsIn(['register', 'login', 'reset'])
+  purpose!: 'register' | 'login' | 'reset';
 
   @IsOptional() @IsString() captchaId?: string;     // 🤖 لست روبوت
   @IsOptional() @IsString() captchaAnswer?: string;
@@ -18,9 +18,10 @@ export class VerifyOtpDto {
   @IsString() @IsNotEmpty() phone!: string;
   @IsString() @IsNotEmpty() code!: string;
   @IsIn(['seller', 'customer']) userType!: 'seller' | 'customer';
-  @IsIn(['register', 'login']) purpose!: 'register' | 'login';
+  @IsIn(['register', 'login', 'reset']) purpose!: 'register' | 'login' | 'reset';
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() refCode?: string; // 🎁 رمز إحالة (اختياري)
+  @IsOptional() @IsBoolean() agreedTerms?: boolean; // 📜 موافقة السياسات (إلزامية للتسجيل)
 }
 
 export class PhoneLoginDto {
@@ -37,8 +38,17 @@ export class RegisterDto {
   @IsString() @MinLength(6) password!: string;
   @IsIn(['seller', 'customer']) userType!: 'seller' | 'customer';
   @IsOptional() @IsString() refCode?: string; // 🎁 رمز إحالة (اختياري)
+  @IsOptional() @IsBoolean() agreedTerms?: boolean; // 📜 موافقة السياسات (إلزامية)
   @IsOptional() @IsString() captchaId?: string;
   @IsOptional() @IsString() captchaAnswer?: string;
+}
+
+// 🔑 استعادة كلمة المرور — بعد التحقق من رمز OTP
+export class ResetPasswordDto {
+  @IsString() @Matches(/^[+0-9]{7,20}$/) phone!: string;
+  @IsIn(['seller', 'customer']) userType!: 'seller' | 'customer';
+  @IsString() @IsNotEmpty({ message: 'رمز الاستعادة مفقود' }) resetToken!: string;
+  @IsString() @MinLength(8, { message: 'كلمة المرور 8 أحرف على الأقل' }) password!: string;
 }
 
 export class AdminLoginDto {

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { api, saveSession } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import CaptchaBox from '@/components/CaptchaBox';
+import TermsConsent from '@/components/TermsConsent';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -18,6 +19,7 @@ export default function CustomerRegister() {
   const [loading, setLoading] = useState(false);
   const [captcha, setCaptcha] = useState({ id: '', answer: '' });
   const [capKey, setCapKey] = useState(0);
+  const [agreed, setAgreed] = useState(false);
 
   // التقاط رمز الدعوة من الرابط ?ref=
   useEffect(() => {
@@ -52,7 +54,7 @@ export default function CustomerRegister() {
       } else {
         const data = await api('/auth/register', {
           method: 'POST',
-          body: JSON.stringify({ ...form, userType: 'customer', refCode: refCode.trim() || undefined, captchaId: captcha.id || undefined, captchaAnswer: captcha.answer || undefined }),
+          body: JSON.stringify({ ...form, userType: 'customer', agreedTerms: true, refCode: refCode.trim() || undefined, captchaId: captcha.id || undefined, captchaAnswer: captcha.answer || undefined }),
         });
         saveSession(data, 'customer');
         toast(refName ? `تم إنشاء حسابك — وصلتك نقاط هدية ${refName} 🎁` : 'تم إنشاء حسابك بنجاح 🎉');
@@ -70,7 +72,7 @@ export default function CustomerRegister() {
         method: 'POST',
         body: JSON.stringify({
           phone: form.phone, code, userType: 'customer', purpose: 'register',
-          name: form.name, refCode: refCode.trim() || undefined,
+          name: form.name, agreedTerms: true, refCode: refCode.trim() || undefined,
         }),
       });
       saveSession(data, 'customer');
@@ -104,11 +106,12 @@ export default function CustomerRegister() {
                 <div className="text-xs font-bold text-red-500 mt-1">❌ الرمز غير صحيح — تأكد منه أو أكمل بدونه</div>
               )}
             </div>
+            <TermsConsent checked={agreed} onChange={setAgreed} />
             <CaptchaBox key={capKey} scope="register" onChange={(id, answer) => setCaptcha({ id, answer })} />
-            <button disabled={loading}
+            <button disabled={loading || !agreed}
               className="w-full py-3 rounded-xl text-white font-extrabold shadow-lg disabled:opacity-50"
               style={{ background: 'linear-gradient(135deg, var(--secondary), #00BFA5)' }}>
-              {loading ? '⏳...' : 'إنشاء الحساب'}
+              {loading ? '⏳...' : agreed ? 'إنشاء الحساب' : '📜 وافق على الشروط أولاً'}
             </button>
           </form>
         ) : (

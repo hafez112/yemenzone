@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { api, saveSession } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import CaptchaBox from '@/components/CaptchaBox';
+import ForgotPassword from '@/components/ForgotPassword';
 
 // دخول العملاء برقم الجوال — /auth/customer-login
 export default function CustomerLogin() {
@@ -13,6 +14,7 @@ export default function CustomerLogin() {
   const [loading, setLoading] = useState(false);
   const [captcha, setCaptcha] = useState({ id: '', answer: '' });
   const [capKey, setCapKey] = useState(0);
+  const [forgot, setForgot] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,8 +34,11 @@ export default function CustomerLogin() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-purple-50 px-4 pt-20 pb-24">
       <div className="w-full max-w-md backdrop-blur-xl bg-white/70 rounded-3xl shadow-xl p-6 border border-white/40">
-        <h1 className="text-2xl font-extrabold text-center mb-1 text-teal-600">دخول العملاء</h1>
-        <p className="text-center text-gray-500 text-sm mb-6">تسوّق وتتبّع طلباتك بسهولة</p>
+        <h1 className="text-2xl font-extrabold text-center mb-1 text-teal-600">{forgot ? '🔑 استعادة كلمة المرور' : 'دخول العملاء'}</h1>
+        <p className="text-center text-gray-500 text-sm mb-6">{forgot ? 'ثلاث خطوات وتعود لحسابك' : 'تسوّق وتتبّع طلباتك بسهولة'}</p>
+        {forgot ? (
+          <ForgotPassword userType="customer" onClose={() => setForgot(false)} />
+        ) : (
         <form onSubmit={submit} className="space-y-4">
           <input value={phone} onChange={e => setPhone(e.target.value)} required placeholder="رقم الجوال" dir="ltr"
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-teal-400 outline-none" />
@@ -45,7 +50,12 @@ export default function CustomerLogin() {
             style={{ background: 'linear-gradient(135deg, var(--secondary), #00BFA5)' }}>
             {loading ? '⏳...' : 'دخول'}
           </button>
+          <button type="button" onClick={() => setForgot(true)}
+            className="w-full text-center text-sm font-bold text-teal-600 hover:underline">
+            🔑 نسيت كلمة المرور؟ استعدها برمز تحقق
+          </button>
         </form>
+        )}
         <p className="text-center text-sm text-gray-500 mt-5">
           جديد هنا؟ <a href="/auth/customer-register" className="text-teal-600 font-bold">أنشئ حساب عميل</a>
         </p>

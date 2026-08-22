@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { api, saveSession } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import CaptchaBox from '@/components/CaptchaBox';
+import TermsConsent from '@/components/TermsConsent';
 
 // إنشاء حساب بائع جديد — /auth/seller-register (يدعم ?ref= رمز دعوة تاجر)
 export default function SellerRegister() {
@@ -17,6 +18,7 @@ export default function SellerRegister() {
   const [otpStep, setOtpStep] = useState(false);
   const [code, setCode] = useState('');
   const [refCode, setRefCode] = useState('');
+  const [agreed, setAgreed] = useState(false);
 
   // 🤝 التقاط رمز دعوة التاجر من الرابط ?ref=
   useEffect(() => {
@@ -42,7 +44,7 @@ export default function SellerRegister() {
         if (!password) { toast('أدخل كلمة المرور', 'error'); setLoading(false); return; }
         const data = await api('/auth/register', {
           method: 'POST',
-          body: JSON.stringify({ phone, name, password, userType: 'seller', refCode: refCode.trim() || undefined, captchaId: captcha.id || undefined, captchaAnswer: captcha.answer || undefined }),
+          body: JSON.stringify({ phone, name, password, userType: 'seller', agreedTerms: true, refCode: refCode.trim() || undefined, captchaId: captcha.id || undefined, captchaAnswer: captcha.answer || undefined }),
         });
         saveSession(data, 'seller');
         toast('تم إنشاء حسابك بنجاح 🎉');
@@ -58,7 +60,7 @@ export default function SellerRegister() {
     try {
       const data = await api('/auth/verify', {
         method: 'POST',
-        body: JSON.stringify({ phone, code, userType: 'seller', purpose: 'register', name, refCode: refCode.trim() || undefined }),
+        body: JSON.stringify({ phone, code, userType: 'seller', purpose: 'register', name, agreedTerms: true, refCode: refCode.trim() || undefined }),
       });
       saveSession(data, 'seller');
       toast('تم إنشاء حسابك بنجاح 🎉');
@@ -99,11 +101,12 @@ export default function SellerRegister() {
                 placeholder="6 أحرف على الأقل"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none" />
             </div>
+            <TermsConsent checked={agreed} onChange={setAgreed} />
             <CaptchaBox key={capKey} scope="register" onChange={(id, answer) => setCaptcha({ id, answer })} />
-            <button disabled={loading}
+            <button disabled={loading || !agreed}
               className="w-full py-3 rounded-xl text-white font-extrabold shadow-lg disabled:opacity-50"
               style={{ background: 'linear-gradient(135deg, var(--primary), #9D6BFF)' }}>
-              {loading ? '⏳ جاري الإنشاء...' : 'إنشاء الحساب 🚀'}
+              {loading ? '⏳ جاري الإنشاء...' : agreed ? 'إنشاء الحساب 🚀' : '📜 وافق على الشروط أولاً'}
             </button>
           </form>
         ) : (

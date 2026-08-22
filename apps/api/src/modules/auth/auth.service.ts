@@ -9,7 +9,7 @@ import { MessagingService } from '../messaging/messaging.service';
 import { ReferralsService } from '../referrals/referrals.service';
 import { ShieldService } from '../shield/shield.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { SendOtpDto, VerifyOtpDto, PhoneLoginDto, RegisterDto, AdminLoginDto } from './dto';
+import { SendOtpDto, VerifyOtpDto, PhoneLoginDto, RegisterDto, AdminLoginDto, ResetPasswordDto } from './dto';
 import { verifyTotp } from '../../common/totp';
 import { decryptSecret } from '../../common/crypto.util';
 
@@ -31,10 +31,21 @@ export class AuthService {
     if (!this.security.checkAttempts(key, 5)) {
       throw new BadRequestException('محاولات كثيرة — انتظر 10 دقائق');
     }
+    // 🔑 استعادة كلمة المرور: الرمز يُرسل فقط لحساب موجود ونشط له كلمة مرور
+    if (dto.purpose === 'reset') {
+      const user = await this.findUser(dto.userType, dto.phone);
+      if (!user) throw new BadRequestException('لا يوجد حساب مسجل بهذا الرقم — أنشئ حساباً جديداً');
+      if (user.status !== 'active') throw new BadRequestException('الحساب موقوف — تواصل مع الدعم الفني');
+      if (!user.passwordHash) throw new BadRequestException('هذا الحساب يدخل برمز التحقق ولا يملك كلمة مرور');
+    }
+
     const otpEnabled = await this.security.isOtpEnabled();
 
     // إذا قالب OTP معطّل من الإدارة: تخطَّ التحقق تماماً
     if (!otpEnabled) {
+      if (dto.purpose === 'reset') {
+        return { otpRequired: false, message: 'استعادة كلمة المرور برمز التحقق غير متاحة حالياً — تواصل مع الدعم الفني من لوحتك' };
+      }
       return { otpRequired: false, message: 'التحقق برمز OTP معطّل — أكمل التسجيل مباشرة' };
     }
 
@@ -71,11 +82,68 @@ export class AuthService {
     await this.prisma.otpCode.update({ where: { id: rec.id }, data: { usedAt: new Date() } });
     this.security.clearAttempts(`otp:${dto.phone}`);
 
-    // إنشاء الحساب إن كان تسجيلاً جديداً
+    // 🔑 استعادة كلمة المرور: نجاح التحقق يُصدر رمز استعادة قصير العمر (10 دقائق)
+    if (dto.purpose === 'reset') {
+      const resetToken = crypto.randomBytes(24).toString('hex');
+      await this.prisma.otpCode.create({
+        data: { phone: dto.phone, code: resetToken, purpose: 'reset-token', expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
+      });
+      await this.security.log('reset_verified', { ip, userType: dto.userType, details: { phone: dto.phone } });
+      return { resetToken, message: 'تم التحقق من جوالك — عيّن كلمة مرور جديدة الآن' };
+    }
+
+    // إنشاء الحساب إن كان تسجيلاً جديداً — 📜 الموافقة على السياسات إلزامية
     if (dto.purpose === 'register') {
+      if (dto.agreedTerms !== true) {
+        throw new BadRequestException('يجب الموافقة على سياسة الخصوصية وشروط الاستخدام لإنشاء الحساب');
+      }
       return this.createAccount(dto.userType, dto.phone, dto.name || 'مستخدم جديد', undefined, ip, dto.refCode);
     }
     return this.loginByPhone(dto.userType, dto.phone, ip);
+  }
+
+  // ═══ 2ب) إعادة تعيين كلمة المرور برمز الاستعادة ═══
+  async resetPassword(dto: ResetPasswordDto, ip: string) {
+    const key = `reset:${dto.phone}`;
+    if (!this.security.checkAttempts(key, 5)) {
+      throw new BadRequestException('محاولات كثيرة — انتظر 10 دقائق');
+    }
+    // 🔑 نفس سياسة كلمات المرور في التسجيل
+    if (!/^(?=.*[A-Za-z\u0600-\u06FF])(?=.*\d).{8,}$/.test(dto.password)) {
+      throw new BadRequestException('كلمة المرور ضعيفة — 8 أحرف على الأقل وتجمع أحرفاً وأرقاماً');
+    }
+    const rec = await this.prisma.otpCode.findFirst({
+      where: { phone: dto.phone, code: dto.resetToken, purpose: 'reset-token', usedAt: null },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!rec || rec.expiresAt < new Date()) {
+      this.security.failAttempt(key);
+      throw new UnauthorizedException('رمز الاستعادة غير صالح أو منتهي — أعد الخطوات من البداية');
+    }
+    const user = await this.findUser(dto.userType, dto.phone);
+    if (!user) throw new UnauthorizedException('الحساب غير موجود');
+    if (user.status !== 'active') throw new UnauthorizedException('الحساب موقوف — تواصل مع الدعم الفني');
+
+    const passwordHash = await argon2.hash(dto.password);
+    dto.userType === 'seller'
+      ? await this.prisma.seller.update({ where: { id: user.id }, data: { passwordHash } })
+      : await this.prisma.customer.update({ where: { id: user.id }, data: { passwordHash } });
+    await this.prisma.otpCode.update({ where: { id: rec.id }, data: { usedAt: new Date() } });
+
+    // 🔐 إنهاء كل الجلسات السابقة — حماية كاملة بعد تغيير كلمة المرور
+    await this.prisma.session.updateMany({
+      where: { ...(dto.userType === 'seller' ? { sellerId: user.id } : { customerId: user.id }), revokedAt: null },
+      data: { revokedAt: new Date() },
+    }).catch(() => {});
+    this.security.clearAttempts(key);
+    await this.security.log('password_reset', { ip, userType: dto.userType, userId: user.id });
+    await this.notifications.push(dto.userType, user.id, {
+      icon: '🔑',
+      title: 'تم تغيير كلمة مرورك',
+      body: `أُعيد تعيين كلمة المرور ${new Date().toLocaleString('ar-YE')} — إن لم تكن أنت، تواصل مع الدعم فوراً`,
+      link: dto.userType === 'seller' ? '/seller/support' : '/customer/support',
+    }).catch(() => {});
+    return { message: 'تم تغيير كلمة المرور بنجاح — سجّل دخولك الآن' };
   }
 
   // ═══ 3) تسجيل حساب جديد (بدون OTP إن كان معطلاً) ═══
@@ -84,6 +152,10 @@ export class AuthService {
     // 🔑 سياسة كلمات المرور: 8+ أحرف تجمع أحرفاً وأرقاماً — تحمي حسابات البائعين والعملاء من التخمين
     if (!/^(?=.*[A-Za-z\u0600-\u06FF])(?=.*\d).{8,}$/.test(dto.password)) {
       throw new BadRequestException('كلمة المرور ضعيفة — 8 أحرف على الأقل وتجمع أحرفاً وأرقاماً');
+    }
+    // 📜 الموافقة على السياسات إلزامية لإنشاء أي حساب
+    if (dto.agreedTerms !== true) {
+      throw new BadRequestException('يجب الموافقة على سياسة الخصوصية وشروط الاستخدام لإنشاء الحساب');
     }
     const otpEnabled = await this.security.isOtpEnabled();
     if (otpEnabled) {
@@ -192,7 +264,8 @@ export class AuthService {
     const exists = await this.findUser(type, phone);
     if (exists) throw new ConflictException('رقم الجوال مسجل مسبقاً — سجّل الدخول');
     const passwordHash = password ? await argon2.hash(password) : null;
-    const data: any = { phone, name, passwordHash };
+    // 📜 توثيق لحظة الموافقة على السياسات مع الحساب
+    const data: any = { phone, name, passwordHash, termsAcceptedAt: new Date() };
     const user = type === 'seller'
       ? await this.prisma.seller.create({ data })
       : await this.prisma.customer.create({ data });

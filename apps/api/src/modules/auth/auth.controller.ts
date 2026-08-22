@@ -1,7 +1,7 @@
 import { Controller, Post, Body, UseGuards, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SecurityService } from '../../common/security.service';
-import { SendOtpDto, VerifyOtpDto, PhoneLoginDto, RegisterDto, AdminLoginDto, RefreshDto } from './dto';
+import { SendOtpDto, VerifyOtpDto, PhoneLoginDto, RegisterDto, AdminLoginDto, RefreshDto, ResetPasswordDto } from './dto';
 import { ClientIp, CurrentUser } from '../../common/decorators';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RateLimit } from '../../common/guards/rate-limit.guard';
@@ -39,6 +39,13 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: PhoneLoginDto, @ClientIp() ip: string) {
     return this.auth.phoneLogin(dto, ip);
+  }
+
+  // 🔑 إعادة تعيين كلمة المرور (بعد التحقق من OTP بغرض reset) — 🚦 10 محاولات/10د
+  @UseGuards(RateLimit(10, 10 * 60_000, 'reset-password'))
+  @Post('reset-password')
+  resetPassword(@Body() dto: ResetPasswordDto, @ClientIp() ip: string) {
+    return this.auth.resetPassword(dto, ip);
   }
 
   // دخول الإدارة — صفحة منفصلة بالبريد الإلكتروني — 🚦 10 محاولات/10د

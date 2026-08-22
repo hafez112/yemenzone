@@ -98,6 +98,7 @@ model Seller {
   status       UserStatus @default(active)
   googleId     String?    @unique
   lastLoginAt  DateTime?
+  termsAcceptedAt DateTime? // 📜 وقت الموافقة على سياسة الخصوصية وشروط الاستخدام
   // 🤝 إحالة التجار — كل بائع له رمز دعوة خاص، ويُسجَّل من دعاه
   referralCode String?   @unique
   referredById String?
@@ -130,6 +131,7 @@ model Customer {
   lat          Float?
   lng          Float?
   lastLoginAt  DateTime?
+  termsAcceptedAt DateTime? // 📜 وقت الموافقة على سياسة الخصوصية وشروط الاستخدام
   // 🎁 نظام الإحالة والنقاط
   referralCode String     @unique @default(cuid()) // رمز إحالة خاص بكل عميل
   referredById String? // من دعاه (معرّف العميل المُحيل)

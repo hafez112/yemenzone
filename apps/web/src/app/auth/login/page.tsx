@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { api, saveSession } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import CaptchaBox from '@/components/CaptchaBox';
+import ForgotPassword from '@/components/ForgotPassword';
 
 // دخول البائعين برقم الجوال — /auth/login
 export default function SellerLogin() {
@@ -14,6 +15,7 @@ export default function SellerLogin() {
   const [captcha, setCaptcha] = useState({ id: '', answer: '' });
   const [capKey, setCapKey] = useState(0);
   const [otpStep, setOtpStep] = useState(false);
+  const [forgot, setForgot] = useState(false);
   const [code, setCode] = useState('');
 
   async function submit(e: React.FormEvent) {
@@ -63,7 +65,12 @@ export default function SellerLogin() {
         <h1 className="text-2xl font-extrabold text-center mb-1" style={{ color: 'var(--primary)' }}>دخول البائعين</h1>
         <p className="text-center text-gray-500 text-sm mb-6">سجّل دخولك برقم جوالك لإدارة متجرك</p>
 
-        {!otpStep ? (
+        {forgot ? (
+          <>
+            <h2 className="text-lg font-extrabold text-center mb-4" style={{ color: 'var(--primary)' }}>🔑 استعادة كلمة المرور</h2>
+            <ForgotPassword userType="seller" onClose={() => setForgot(false)} />
+          </>
+        ) : !otpStep ? (
           <form onSubmit={submit} className="space-y-4">
             <div>
               <label className="block text-sm font-bold mb-1">رقم الجوال</label>
@@ -82,6 +89,10 @@ export default function SellerLogin() {
               className="w-full py-3 rounded-xl text-white font-extrabold shadow-lg disabled:opacity-50"
               style={{ background: 'linear-gradient(135deg, var(--primary), #9D6BFF)' }}>
               {loading ? '⏳ جاري الدخول...' : 'دخول'}
+            </button>
+            <button type="button" onClick={() => setForgot(true)}
+              className="w-full text-center text-sm font-bold text-purple-600 hover:underline">
+              🔑 نسيت كلمة المرور؟ استعدها برمز تحقق
             </button>
           </form>
         ) : (
