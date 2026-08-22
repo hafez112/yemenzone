@@ -1,0 +1,5 @@
+# 🛡️ خدمة النسخ الاحتياطي الخارجي — نفس إصدار postgres لضمان توافق pg_dump
+FROM postgres:16-alpine
+RUN apk add --no-cache curl
+COPY scripts/offsite-backup.sh /backup.sh
+CMD ["sh", "/backup.sh"]
