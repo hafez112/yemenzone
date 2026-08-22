@@ -798,6 +798,10 @@ model Plan {
   priceMonthly  Decimal        @db.Decimal(12, 2)
   priceYearly   Decimal?       @db.Decimal(12, 2)
   currency      String         @default("YER")
+  // 🎉 عرض محدود — السعر قبل العرض (يُعرض مشطوباً) + نهاية العرض (عداد تنازلي) + شارة
+  priceBefore   Decimal?       @db.Decimal(12, 2)
+  offerEndsAt   DateTime?
+  offerBadge    String?
   features      Json           @default("{}") // حدود: منتجات/صور/أنواع متاجر...
   isActive      Boolean        @default(true)
   sort          Int            @default(0)
@@ -1246,6 +1250,7 @@ model Slide {
 model Ad {
   id        String    @id @default(cuid())
   title     String
+  subtitle  String? // سطر ثانٍ تحت العنوان — يُدار من لوحة الإعلانات
   image     String
   link      String?
   position  String    @default("home_top") // home_top | home_mid | home_bottom | store_top

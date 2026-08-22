@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import AdminSidebar from "../../../components/AdminSidebar";
 import { api } from "../../../lib/api";
 import { toast } from "../../../components/Toast";
+import { useCurrency } from "../../../lib/currency";
 
 // مفاتيح ميزات الخطة — تطابق نظام الميزات المركزي في الخادم
 const FEATURE_KEYS: Record<string, string> = {
@@ -28,9 +29,10 @@ const KIND_KEYS: Record<string, string> = {
   malls: "🏬 المولات التجارية",
 };
 const emptyFeats = { maxProducts: 100, maxImages: 6, maxUnits: "", maxRooms: "", maxServices: "", analytics: false, coupons: false, api: false, customDesign: false, customDomain: false, campaigns: false, storeAds: false, pwa: false, finance: false, inventory: false, crm: false };
-const empty = { id: "", name: "", slug: "", kind: "", priceMonthly: 0, priceYearly: "", sort: 0, isActive: true, feats: { ...emptyFeats } };
+const empty = { id: "", name: "", slug: "", kind: "", priceMonthly: 0, priceYearly: "", currency: "", priceBefore: "", offerEndsAt: "", offerBadge: "", sort: 0, isActive: true, feats: { ...emptyFeats } };
 
 export default function AdminPlansPage() {
+  const { list: CURS, def: defCur } = useCurrency();
   const [plans, setPlans] = useState<any[]>([]);
   const [subs, setSubs] = useState<any[]>([]);
   const [form, setForm] = useState<any>({ ...empty });
@@ -50,7 +52,12 @@ export default function AdminPlansPage() {
         slug: form.slug || undefined,
         priceMonthly: Number(form.priceMonthly),
         priceYearly: form.priceYearly ? Number(form.priceYearly) : null,
+        currency: form.currency || undefined,
         kind: form.kind || null,
+        // 🎉 حقول العرض المحدود — فارغة = بلا عرض
+        priceBefore: form.priceBefore ? Number(form.priceBefore) : null,
+        offerEndsAt: form.offerEndsAt || null,
+        offerBadge: form.offerBadge || null,
         // كل مفاتيح الميزات — لا يُمسح أي مفتاح عند التعديل
         features: {
           maxProducts: Number(form.feats.maxProducts),
@@ -113,6 +120,16 @@ export default function AdminPlansPage() {
               )}
               <input type="number" placeholder="السعر الشهري (0 = مجاني)" value={form.priceMonthly} onChange={(e) => setForm({ ...form, priceMonthly: e.target.value })} />
               <input type="number" placeholder="السعر السنوي (اختياري)" value={form.priceYearly} onChange={(e) => setForm({ ...form, priceYearly: e.target.value })} />
+              {/* 💱 عملة سعر الخطة — من عملات المنصة المعتمدة */}
+              <select value={form.currency || defCur?.code || ""} onChange={(e) => setForm({ ...form, currency: e.target.value })}>
+                {CURS.map((c) => <option key={c.code} value={c.code}>{c.name} ({c.code}) — {c.symbol}</option>)}
+              </select>
+              {/* 🎉 عرض محدود (اختياري): سعر ما قبل العرض + نهاية العرض + شارة تظهر في صفحات الباقات */}
+              <div className="row">
+                <input type="number" placeholder="🎉 السعر قبل العرض (يُعرض مشطوباً)" value={form.priceBefore} onChange={(e) => setForm({ ...form, priceBefore: e.target.value })} />
+                <input type="date" title="تاريخ انتهاء العرض — عداد تنازلي" value={form.offerEndsAt} onChange={(e) => setForm({ ...form, offerEndsAt: e.target.value })} />
+              </div>
+              <input placeholder="شارة العرض (مثال: 🎉 عرض الافتتاح — لفترة محدودة)" value={form.offerBadge} onChange={(e) => setForm({ ...form, offerBadge: e.target.value })} />
               <div className="row">
                 <input type="number" placeholder="أقصى منتجات (-1 = ∞)" value={form.feats.maxProducts} onChange={(e) => setForm({ ...form, feats: { ...form.feats, maxProducts: e.target.value } })} />
                 <input type="number" placeholder="أقصى صور/منتج" value={form.feats.maxImages} onChange={(e) => setForm({ ...form, feats: { ...form.feats, maxImages: e.target.value } })} />
@@ -158,12 +175,16 @@ export default function AdminPlansPage() {
                     {Object.keys(FEATURE_KEYS).filter((k) => (p.features as any)?.[k]).map((k) => FEATURE_KEYS[k].split(" ")[0]).join(" ") || "—"}
                   </p>
                   {p.priceYearly && <p className="small muted">سنوي: {Number(p.priceYearly).toLocaleString()}</p>}
+                  {p.offerBadge && <p className="small" style={{ color: "#b45309" }}>{p.offerBadge}{p.offerEndsAt ? ` — حتى ${new Date(p.offerEndsAt).toLocaleDateString("ar-YE")}` : ""}</p>}
                   <p className={p.isActive ? "ok small" : "bad small"}>{p.isActive ? "✅ مفعّلة" : "⛔ معطّلة"}</p>
                   <button className="btn ghost small" onClick={() => {
                     const f = (p.features as any) || {};
                     setForm({
                       id: p.id, name: p.name, slug: p.slug, kind: p.kind || "", priceMonthly: Number(p.priceMonthly),
-                      priceYearly: p.priceYearly ? Number(p.priceYearly) : "", sort: p.sort, isActive: p.isActive,
+                      priceYearly: p.priceYearly ? Number(p.priceYearly) : "", currency: p.currency || "",
+                      priceBefore: p.priceBefore ? Number(p.priceBefore) : "",
+                      offerEndsAt: p.offerEndsAt ? new Date(p.offerEndsAt).toISOString().slice(0, 10) : "",
+                      offerBadge: p.offerBadge || "", sort: p.sort, isActive: p.isActive,
                       feats: {
                         ...emptyFeats, ...f,
                         maxUnits: f.maxUnits ?? "", maxRooms: f.maxRooms ?? "", maxServices: f.maxServices ?? "",

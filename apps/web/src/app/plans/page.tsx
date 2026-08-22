@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SERVER_API as API, serverCurSymbols } from '@/lib/server-api';
+import { offerLeftText } from '@/lib/offer';
 
 export const metadata: Metadata = {
   title: 'الباقات والأسعار — يمن زون',
@@ -64,6 +65,12 @@ export default async function PlansPage() {
                     <div className={`rounded-[calc(1.5rem-4px)] p-5 text-center h-full ${highlight ? 'bg-night text-white' : 'glass'}`}>
                       {highlight && <div className="text-[10px] font-black text-amber-300 mb-1">⭐ الأكثر اختياراً</div>}
                       <h2 className="font-black text-lg">{p.name}</h2>
+                      {p.offerBadge && Number(p.priceBefore) > monthly && (
+                        <div className="mt-1 space-y-1">
+                          <span className="inline-block text-[11px] font-black text-amber-950 bg-gradient-to-l from-amber-300 to-amber-400 rounded-full px-3 py-1 anim-soft-pulse">{p.offerBadge}</span>
+                          <div className="text-xs font-bold opacity-60"><s>{Number(p.priceBefore).toLocaleString('en-US')} {dsym(p.currency)}</s></div>
+                        </div>
+                      )}
                       <div className="my-3">
                         {monthly === 0 ? (
                           <div className="text-3xl font-black text-emerald-500">مجاناً 🎁</div>
@@ -71,6 +78,9 @@ export default async function PlansPage() {
                           <>
                             <span className="text-3xl font-black" style={highlight ? {} : { color: 'var(--primary)' }}>{monthly.toLocaleString('en-US')}</span>
                             <span className="text-xs font-bold opacity-60"> {dsym(p.currency)} / شهر</span>
+                            {offerLeftText(p.offerEndsAt) && (
+                              <span className="block text-[11px] font-black text-red-500 mt-1">{offerLeftText(p.offerEndsAt)}</span>
+                            )}
                           </>
                         )}
                         {yearly !== null && yearly > 0 && monthly > 0 && (

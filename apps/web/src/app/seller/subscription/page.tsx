@@ -5,6 +5,7 @@ import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import SellerSidebar from '@/components/SellerSidebar';
 import { useCurrency } from '@/lib/currency';
+import { offerLeftText } from '@/lib/offer';
 import { KIND_INFO, type StoreKind } from '@/lib/activity';
 
 // 💎 اشتراكي — الخطة الحالية + الميزات + الترقية بموافقة الإدارة + طلب التمييز
@@ -196,11 +197,20 @@ export default function SubscriptionPage() {
                       {KIND_INFO[p.kind as StoreKind].icon} مصممة لـ{KIND_INFO[p.kind as StoreKind].label}
                     </span>
                   )}
+                  {p.offerBadge && Number(p.priceBefore) > Number(p.priceMonthly) && (
+                    <div className="mt-2 space-y-1">
+                      <span className="inline-block text-[10px] font-black text-amber-950 bg-gradient-to-l from-amber-300 to-amber-400 rounded-full px-3 py-1 anim-soft-pulse">{p.offerBadge}</span>
+                      <div className={`text-[11px] font-bold ${isCurrent ? 'text-gray-400' : 'text-gray-400'}`}><s>{Number(p.priceBefore).toLocaleString()} {planSym(p.currency)}</s></div>
+                    </div>
+                  )}
                   <div className="my-3">
                     <span className="text-3xl font-black grad-text">
                       {Number(p.priceMonthly) === 0 ? 'مجاناً' : Number(p.priceMonthly).toLocaleString()}
                     </span>
                     {Number(p.priceMonthly) > 0 && <span className="text-xs opacity-70"> {planSym(p.currency)}/شهر</span>}
+                    {Number(p.priceMonthly) > 0 && offerLeftText(p.offerEndsAt) && (
+                      <span className="block text-[11px] font-black text-red-500 mt-1">{offerLeftText(p.offerEndsAt)}</span>
+                    )}
                   </div>
                   <ul className={`space-y-1.5 text-xs mb-4 ${isCurrent ? 'text-gray-300' : 'text-gray-500'}`}>
                     <li>{limitText(f, storeKind)}</li>

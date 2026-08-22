@@ -135,6 +135,10 @@ export class PlansService {
       priceMonthly: Number(body.priceMonthly || 0),
       priceYearly: body.priceYearly ? Number(body.priceYearly) : null,
       currency: planCurrency,
+      // 🎉 عرض محدود — حقول اختيارية تُدار من لوحة الخطط
+      priceBefore: body.priceBefore ? Number(body.priceBefore) : null,
+      offerEndsAt: body.offerEndsAt ? new Date(body.offerEndsAt) : null,
+      offerBadge: String(body.offerBadge || '').trim() || null,
       features: body.features || {},
       isActive: body.isActive ?? true,
       sort: Number(body.sort || 0),

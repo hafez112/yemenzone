@@ -46,59 +46,54 @@ async function main() {
     }
   }
 
-  // 3) الخطط الثلاث — features هي مصدر صلاحيات البائع (المدير يتحكم بها من /admin/plans)
-  const plans = [
-    { name: 'مجاني',    slug: 'free',  priceMonthly: 0,     sort: 1,
-      features: { maxProducts: 20, maxImages: 3, storeKinds: ['products'],
-        analytics: false, coupons: false, api: false, customDesign: false, customDomain: false, campaigns: false } },
-    { name: 'أساسي',    slug: 'basic', priceMonthly: 5000,  sort: 2,
-      features: { maxProducts: 200, maxImages: 6, storeKinds: ['products', 'services'],
-        analytics: true, coupons: true, api: false, customDesign: true, customDomain: false, campaigns: true } },
-    { name: 'احترافي',  slug: 'pro',   priceMonthly: 12000, sort: 3,
-      features: { maxProducts: -1, maxImages: 10, storeKinds: ['products', 'rentals', 'hotel', 'services'],
-        analytics: true, coupons: true, api: true, customDesign: true, customDomain: true, campaigns: true,
-        finance: true, inventory: true, crm: true } },
-    // 👑 الخطة الذهبية — كل الميزات + بنرات المتجر + تطبيق الويب التقدمي
-    { name: 'ذهبي 👑',  slug: 'gold',  priceMonthly: 25000, sort: 4,
-      features: { maxProducts: -1, maxImages: 15, storeKinds: ['products', 'rentals', 'hotel', 'services'],
-        analytics: true, coupons: true, api: true, customDesign: true, customDomain: true, campaigns: true,
-        storeAds: true, pwa: true, finance: true, inventory: true, crm: true } },
-  ];
-  for (const p of plans) {
-    // تحديث الميزات دائماً — يضمن وصول مفاتيح الميزات الجديدة للخطط المزروعة سابقاً
-    await prisma.plan.upsert({ where: { slug: p.slug }, update: { features: p.features }, create: p });
-  }
+  // 3) 🚀 باقات الافتتاح — لكل نوع نشاط: مجانية + الكاملة (100 ر.س — عرض 6 أشهر)
+  // features هي مصدر صلاحيات البائع (المدير يتحكم بها من /admin/plans)
+  // الخطط القديمة تُخفى (isActive=false) وتبقى اشتراكاتها القائمة سارية حتى نهايتها
+  const legacySlugs = ['free', 'basic', 'pro', 'gold',
+    'rentals-basic', 'rentals-pro', 'hotel-basic', 'hotel-pro', 'services-basic', 'services-pro'];
+  await prisma.plan.updateMany({ where: { slug: { in: legacySlugs } }, data: { isActive: false } });
 
-  // 3ب) باقات متخصصة لكل نشاط تجاري — حدود تناسب طبيعة النشاط (وحدات/غرف/خدمات)
-  // الباقات الأربع أعلاه عامة (kind=null) — وهذه مخصصة تظهر لأصحاب النشاط المطابق فقط
-  const kindPlans = [
-    // 🏠 الإيجارات
-    { name: 'إيجارات أساسي', slug: 'rentals-basic', kind: 'rentals', priceMonthly: 6000, sort: 11,
-      features: { maxUnits: 10, maxImages: 6, storeKinds: ['rentals'],
-        analytics: true, coupons: false, api: false, customDesign: true, customDomain: false, campaigns: false } },
-    { name: 'إيجارات احترافي', slug: 'rentals-pro', kind: 'rentals', priceMonthly: 14000, sort: 12,
-      features: { maxUnits: -1, maxImages: 12, storeKinds: ['rentals'],
-        analytics: true, coupons: true, api: false, customDesign: true, customDomain: true, campaigns: true,
-        finance: true, crm: true } },
-    // 🛎️ الفنادق
-    { name: 'فندقي أساسي', slug: 'hotel-basic', kind: 'hotel', priceMonthly: 8000, sort: 13,
-      features: { maxRooms: 8, maxImages: 8, storeKinds: ['hotel'],
-        analytics: true, coupons: true, api: false, customDesign: true, customDomain: false, campaigns: false } },
-    { name: 'فندقي احترافي', slug: 'hotel-pro', kind: 'hotel', priceMonthly: 18000, sort: 14,
-      features: { maxRooms: -1, maxImages: 15, storeKinds: ['hotel'],
-        analytics: true, coupons: true, api: true, customDesign: true, customDomain: true, campaigns: true,
-        finance: true, crm: true, storeAds: true, pwa: true } },
-    // 🛠️ الخدمات
-    { name: 'خدمات أساسي', slug: 'services-basic', kind: 'services', priceMonthly: 4000, sort: 15,
-      features: { maxServices: 10, maxImages: 4, storeKinds: ['services'],
-        analytics: true, coupons: false, api: false, customDesign: true, customDomain: false, campaigns: false } },
-    { name: 'خدمات احترافي', slug: 'services-pro', kind: 'services', priceMonthly: 10000, sort: 16,
-      features: { maxServices: -1, maxImages: 10, storeKinds: ['services'],
-        analytics: true, coupons: true, api: false, customDesign: true, customDomain: true, campaigns: true,
-        finance: true, crm: true } },
-  ];
-  for (const p of kindPlans) {
-    await prisma.plan.upsert({ where: { slug: p.slug }, update: { features: p.features, kind: p.kind }, create: p });
+  // مفاتيح الحدود حسب النشاط — كل نشاط يُقاس بمورده الأساسي
+  const KIND_LIMIT = {
+    products:    { key: 'maxProducts', free: 15,  ar: 'منتجات' },
+    restaurants: { key: 'maxProducts', free: 25,  ar: 'صنف بالمنيو' },
+    malls:       { key: 'maxProducts', free: 30,  ar: 'منتجات' },
+    rentals:     { key: 'maxUnits',    free: 5,   ar: 'وحدات إيجار' },
+    hotel:       { key: 'maxRooms',    free: 4,   ar: 'غرف' },
+    services:    { key: 'maxServices', free: 5,   ar: 'خدمات' },
+  };
+  const KIND_AR = { products: 'متجر منتجات', restaurants: 'مطعم', malls: 'مول تجاري',
+    rentals: 'إيجارات', hotel: 'فندق', services: 'خدمات' };
+  // كل مفاتيح المميزات — الخطة الكاملة تفتحها جميعاً
+  const ALL_ON = { analytics: true, coupons: true, api: true, customDesign: true,
+    customDomain: true, campaigns: true, storeAds: true, pwa: true,
+    finance: true, inventory: true, crm: true };
+  const ALL_OFF = Object.fromEntries(Object.keys(ALL_ON).map((k) => [k, false]));
+
+  const launchPlans = [];
+  for (const [kind, lim] of Object.entries(KIND_LIMIT)) {
+    launchPlans.push({
+      name: 'مجانية', slug: `free-${kind}`, kind, priceMonthly: 0, currency: 'SAR', sort: 1,
+      features: { [lim.key]: lim.free, maxImages: 3, storeKinds: [kind], ...ALL_OFF },
+    });
+    launchPlans.push({
+      name: 'الكاملة 👑', slug: `pro-${kind}`, kind,
+      priceMonthly: 100, priceYearly: 1000, currency: 'SAR', sort: 2,
+      // 🎉 عرض الافتتاح — 100 ر.س بدل 250 لمدة 6 أشهر (تُثبت النهاية عند أول إنشاء فقط)
+      priceBefore: 250, offerBadge: '🎉 عرض الافتتاح — لفترة محدودة',
+      features: { [lim.key]: -1, maxImages: 15, storeKinds: [kind], ...ALL_ON },
+    });
+  }
+  for (const p of launchPlans) {
+    const offerEndsAt = new Date(Date.now() + 183 * 86400000); // ≈ 6 أشهر
+    const existing = await prisma.plan.findUnique({ where: { slug: p.slug } });
+    if (existing) {
+      // تحديث الميزات والإظهار فقط — أسعار/عروض عدّلها المدير تُحترم
+      await prisma.plan.update({ where: { slug: p.slug },
+        data: { features: p.features, kind: p.kind, isActive: true, sort: p.sort } });
+    } else {
+      await prisma.plan.create({ data: { ...p, offerEndsAt: p.priceBefore ? offerEndsAt : null } });
+    }
   }
 
   // 4) العملات
@@ -109,6 +104,24 @@ async function main() {
   ];
   for (const c of currencies) {
     await prisma.currency.upsert({ where: { code: c.code }, update: {}, create: c });
+  }
+
+
+  // 4ب) 📢 إعلانات الافتتاح — إعلانات المنصة نفسها (صور مصممة + روابط داخلية)
+  // تُدار لاحقاً من /admin/ads — upsert ثابت بالعنوان حتى لا تتكرر عند كل إقلاع
+  const launchAds = [
+    { title: '🎉 عرض الافتتاح — الباقة الكاملة بـ 100 ر.س فقط', subtitle: 'كل المميزات مفتوحة 6 أشهر بمناسبة الانطلاق — السعر يعود 250 ر.س بعدها',
+      image: '/ads/launch-offer.jpg', link: '/start', position: 'home_top', size: 'hero', sort: 1 },
+    { title: '🛍️ افتح متجرك الإلكتروني مجاناً اليوم', subtitle: 'منتجات · إيجارات · فنادق · خدمات · مطاعم · مولات — لوحة عربية كاملة بلا خبرة برمجية',
+      image: '/ads/join-sellers.jpg', link: '/auth/seller-register', position: 'home_top', size: 'wide', sort: 2 },
+    { title: '💳 بطاقة يمن زون — اشحن وادفع بأي عملة', subtitle: 'بطاقتك تتحوّل تلقائياً بأسعار الصرف المعتمدة — ادفع بها في كل المتاجر',
+      image: '/ads/yz-card.jpg', link: '/customer/card', position: 'home_mid', size: 'wide', sort: 1 },
+    { title: '🛵 اطلب من كل متاجر اليمن — توصيل حتى باب بيتك', subtitle: 'تتبع طلبك لحظة بلحظة من التجهيز حتى التسليم',
+      image: '/ads/fast-delivery.jpg', link: '/explore', position: 'home_bottom', size: 'wide', sort: 1 },
+  ];
+  for (const a of launchAds) {
+    const found = await prisma.ad.findFirst({ where: { title: a.title, storeId: null } });
+    if (!found) await prisma.ad.create({ data: a });
   }
 
   // 5) محافظات اليمن

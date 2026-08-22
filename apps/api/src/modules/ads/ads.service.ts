@@ -73,6 +73,7 @@ export class AdsService {
   async save(body: any) {
     const data = {
       title: String(body.title || '').trim(),
+      subtitle: String(body.subtitle || '').trim() || null,
       image: body.image,
       link: body.link?.trim() || null,
       position: AD_POSITIONS[body.position] ? body.position : 'home_top',
@@ -118,7 +119,7 @@ export class AdsService {
       },
       orderBy: { sort: 'asc' },
       take: 6,
-      select: { id: true, title: true, image: true, link: true, size: true },
+      select: { id: true, title: true, subtitle: true, image: true, link: true, size: true },
     });
     // تسجيل المشاهدات دون حجب الاستجابة
     if (ads.length) {

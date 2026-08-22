@@ -4,6 +4,7 @@ import Reveal from '@/components/Reveal';
 import { CountUpStat, TestimonialsMarquee } from '@/components/info/InfoWidgets';
 
 import { SERVER_API as API, serverCurSymbols } from '@/lib/server-api';
+import { offerLeftText } from '@/lib/offer';
 
 export const metadata: Metadata = {
   title: 'كيف تبدأ متجرك — يمن زون',
@@ -137,6 +138,12 @@ export default async function StartPage() {
                   <div className={`rounded-3xl p-5 h-full text-center card-hover ${highlight ? 'gradient-border' : 'glass'}`}>
                     <div className={highlight ? 'bg-night rounded-[calc(1.5rem-2px)] p-5 -m-3 text-white' : ''}>
                       <h3 className="font-black text-lg">{p.name}</h3>
+                      {p.offerBadge && Number(p.priceBefore) > monthly && (
+                        <div className="mt-2 space-y-1">
+                          <span className="inline-block text-[11px] font-black text-amber-950 bg-gradient-to-l from-amber-300 to-amber-400 rounded-full px-3 py-1 anim-soft-pulse">{p.offerBadge}</span>
+                          <div className="text-xs font-bold text-gray-400"><s>{Number(p.priceBefore).toLocaleString('en-US')} {dsym(p.currency)}</s></div>
+                        </div>
+                      )}
                       <div className="mt-2">
                         {monthly === 0 ? (
                           <div className="text-3xl font-black text-emerald-500">مجاناً 🎁</div>
@@ -144,6 +151,9 @@ export default async function StartPage() {
                           <div className="text-3xl font-black" style={highlight ? {} : { color: 'var(--primary)' }}>
                             {monthly.toLocaleString('en-US')} <span className="text-xs font-bold opacity-70">{dsym(p.currency)}/شهر</span>
                           </div>
+                        )}
+                        {offerLeftText(p.offerEndsAt) && monthly > 0 && (
+                          <div className="text-[11px] font-black text-red-500 mt-1">{offerLeftText(p.offerEndsAt)}</div>
                         )}
                         {yearly !== null && yearly > 0 && (
                           <div className={`text-[11px] font-bold mt-1 ${highlight ? 'text-amber-300' : 'text-amber-600'}`}>

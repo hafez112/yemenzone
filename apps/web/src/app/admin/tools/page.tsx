@@ -9,7 +9,7 @@ import ImageUpload from '@/components/ImageUpload';
 import { TOOLS } from '@/lib/tools';
 
 interface ToolRow { key: string; isVisible: boolean; order: number; uses: number; views: number; seoTitle?: string; seoDesc?: string; seoKeys?: string; price?: number | null; currency?: string }
-interface AdRow { id: string; title: string; image: string; link?: string; position: string; size: string; isActive: boolean; views: number; clicks: number; positionLabel?: string; sizeLabel?: string }
+interface AdRow { id: string; title: string; subtitle?: string; image: string; link?: string; position: string; size: string; isActive: boolean; views: number; clicks: number; positionLabel?: string; sizeLabel?: string }
 
 // 👑 إدارة تكنولوجيا المنصة — خدمات + زيارات + SEO + إعلانات مستهدفة + أسعار صرف
 export default function AdminToolsPage() {
@@ -33,7 +33,7 @@ export default function AdminToolsPage() {
   const [ads, setAds] = useState<AdRow[]>([]);
   const [positions, setPositions] = useState<Record<string, string>>({});
   const [sizes, setSizes] = useState<Record<string, string>>({});
-  const [adForm, setAdForm] = useState({ title: '', image: '', link: '', position: 'tools_all', size: 'wide' });
+  const [adForm, setAdForm] = useState({ title: '', subtitle: '', image: '', link: '', position: 'tools_all', size: 'wide' });
 
   const load = useCallback(async () => {
     try {
@@ -119,7 +119,7 @@ export default function AdminToolsPage() {
     if (!adForm.title.trim() || !adForm.image) { toast('أدخل عنوان الإعلان وارفع صورته', 'error'); return; }
     try {
       await api('/admin/ads', { method: 'POST', body: JSON.stringify(adForm) });
-      setAdForm({ title: '', image: '', link: '', position: 'tools_all', size: 'wide' });
+      setAdForm({ title: '', subtitle: '', image: '', link: '', position: 'tools_all', size: 'wide' });
       toast('📢 نُشر الإعلان — يظهر فوراً في موضعه');
       load();
     } catch (e: any) { toast(e.message || 'تعذّر النشر', 'error'); }
@@ -277,6 +277,7 @@ export default function AdminToolsPage() {
             <div className="p-4 border-b border-gray-100 bg-gray-50/50 space-y-3">
               <div className="grid sm:grid-cols-2 gap-3">
                 <input value={adForm.title} onChange={(e) => setAdForm({ ...adForm, title: e.target.value })} placeholder="عنوان الإعلان *" className={inp} />
+                <input value={adForm.subtitle} onChange={(e) => setAdForm({ ...adForm, subtitle: e.target.value })} placeholder="سطر ثانٍ تحت العنوان (اختياري) — يظهر بحركة في الرئيسية" className={inp} />
                 <input value={adForm.link} onChange={(e) => setAdForm({ ...adForm, link: e.target.value })} placeholder="رابط عند النقر (https://...)" className={inp} dir="ltr" />
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
@@ -303,6 +304,7 @@ export default function AdminToolsPage() {
                   <img src={imgUrl(a.image)} className="w-20 h-12 object-cover rounded-lg border border-gray-200" alt="" />
                   <div className="flex-1 min-w-0">
                     <p className="font-extrabold text-sm text-gray-800 truncate">{a.title}</p>
+                    {a.subtitle && <p className="text-[11px] text-gray-500 truncate">{a.subtitle}</p>}
                     <p className="text-[11px] text-gray-400 truncate">{a.positionLabel || a.position} · {a.sizeLabel || a.size}</p>
                   </div>
                   <span className="text-[11px] font-bold text-sky-600 shrink-0">👁️ {a.views.toLocaleString()}</span>

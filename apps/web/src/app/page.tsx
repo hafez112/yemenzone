@@ -14,6 +14,8 @@ import FreeServicesSection from '@/components/home/FreeServicesSection';
 import StyleSwitcher from '@/components/StyleSwitcher';
 import Reveal from '@/components/Reveal';
 import AiAssistant from '@/components/AiAssistant';
+import LaunchSound from '@/components/home/LaunchSound';
+import LaunchRibbon from '@/components/home/LaunchRibbon';
 
 import { SERVER_API as API } from '@/lib/server-api';
 
@@ -82,7 +84,7 @@ export default async function Home() {
 
   // 🧩 خريطة الأقسام — الترتيب والإظهار من لوحة التحكم
   const sections: Record<string, any> = {
-    hero: <Hero platform={platform} stats={spotlight.stats} />,
+    hero: <><Hero platform={platform} stats={spotlight.stats} /><LaunchRibbon /></>,
     slider: <Slider slides={theme?.slides || []} />,
     // 🔘 أزرار الخدمات السريعة — تظهر داخل تطبيق أندرويد فقط (تُدار من تبويب التطبيق)
     quickActions: <AppQuickButtons buttons={theme?.app?.serviceButtons} />,
@@ -141,6 +143,8 @@ export default async function Home() {
       <StyleSwitcher />
       {/* 🤖 أيقونة الذكاء الاصطناعي — تظهر وتعمل حسب تحديد الإدارة */}
       <AiAssistant />
+      {/* 🎵 جينجل الافتتاح — يعزف مرة عند أول تفاعل ويُكتم من زره */}
+      <LaunchSound />
     </main>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useCurrency } from '@/lib/currency';
+import { offerLeftText } from '@/lib/offer';
 
 // الأسعار — من قاعدة البيانات (الخطط المزروعة)
 export default function Pricing({ plans }: { plans: any[] }) {
@@ -28,11 +29,20 @@ export default function Pricing({ plans }: { plans: any[] }) {
                 </span>
               )}
               <h3 className="font-extrabold text-lg mb-1">{p.name}</h3>
+              {p.offerBadge && Number(p.priceBefore) > Number(p.priceMonthly) && (
+                <div className="mb-2 space-y-1">
+                  <span className="inline-block text-[11px] font-black text-amber-950 bg-gradient-to-l from-amber-300 to-amber-400 rounded-full px-3 py-1 anim-soft-pulse">{p.offerBadge}</span>
+                  <div className="text-xs font-bold opacity-60"><s>{Number(p.priceBefore).toLocaleString()} {planSym(p.currency)}</s></div>
+                </div>
+              )}
               <div className="mb-4">
                 <span className="text-4xl font-black grad-text">
                   {Number(p.priceMonthly) === 0 ? 'مجاناً' : Number(p.priceMonthly).toLocaleString()}
                 </span>
                 {Number(p.priceMonthly) > 0 && <span className="text-sm opacity-70"> {planSym(p.currency)} / شهرياً</span>}
+                {Number(p.priceMonthly) > 0 && offerLeftText(p.offerEndsAt) && (
+                  <span className="block text-[11px] font-black text-red-400 mt-1">{offerLeftText(p.offerEndsAt)}</span>
+                )}
               </div>
               <ul className={`space-y-2 text-sm mb-6 ${popular ? 'text-gray-300' : 'text-gray-500'}`}>
                 <li>📦 {feat.maxProducts === -1 ? 'منتجات غير محدودة' : `حتى ${feat.maxProducts} منتجاً`}</li>

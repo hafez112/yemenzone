@@ -137,8 +137,9 @@ export class StoresService {
       });
     }
 
-    // ربط بالخطة المجانية تلقائياً
-    const freePlan = await this.prisma.plan.findUnique({ where: { slug: 'free' } });
+    // ربط بالخطة المجانية الخاصة بنوع النشاط تلقائياً (مع الرجوع للعامة إن وُجدت)
+    const freePlan = await this.prisma.plan.findUnique({ where: { slug: `free-${store.type.kind}` } })
+      || await this.prisma.plan.findUnique({ where: { slug: 'free' } });
     if (freePlan) {
       await this.prisma.subscription.create({
         data: { storeId: store.id, planId: freePlan.id },
