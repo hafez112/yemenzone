@@ -9,6 +9,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { AuthGuard, RolesGuard } from '../../common/guards/auth.guard';
 import { CurrentUser } from '../../common/decorators';
 import { RateLimit } from '../../common/guards/rate-limit.guard';
+import { normalizePhone } from '../../libs/security';
 import sharp from 'sharp';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -55,6 +56,8 @@ export class ReviewsController {
     const store = await this.prisma.store.findUnique({ where: { slug } });
     if (!store || store.status !== 'active') throw new NotFoundException('المتجر غير موجود');
     if (!body.name?.trim() || !body.phone?.trim()) throw new BadRequestException('الاسم والجوال مطلوبان');
+    // 🌍 توحيد الرقم بمفتاح الدولة — لمطابقة الطلب وحساب العميل مهما كانت صيغة الإدخال
+    body.phone = normalizePhone(body.phone) || body.phone.trim();
     const rating = Math.max(1, Math.min(5, Number(body.rating || 0)));
 
     // العميل (موجود أو جديد)

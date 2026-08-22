@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { getCart, saveCart, updateQty, clearCart, cartTotal, cartCount, rememberStoreId, CartItem } from '@/lib/cart';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import PhoneInput from '@/components/PhoneInput';
 import { useCurrency } from '@/lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
@@ -119,7 +120,12 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
       if (myCard.isActive === false) return toast('⚠️ بطاقتك موقوفة — تواصل مع الدعم', 'error');
       // الدفع بالبطاقة مرتبط بجوال حساب العميل — الخادم يرفض غير ذلك
       const digits = (s: string) => (s || '').replace(/\D/g, '');
-      if (digits(form.customerPhone) !== digits(user.phone || ''))
+      // 🌍 توافق الصيغ: الدولي اليمني (+9677…) يعادل المحلي (7…) — نقارن بآخر 9 أرقام
+      const samePhone = (a: string, b: string) => {
+        const da = digits(a), db = digits(b);
+        return da === db || da.slice(-9) === db.slice(-9);
+      };
+      if (!samePhone(form.customerPhone, user.phone || ''))
         return toast('⚠️ الدفع بالبطاقة يتطلب أن يكون جوال الطلب هو جوال حسابك المسجل', 'error');
       if (Number(myCard.balance) < finalTotal)
         return toast(`⚠️ رصيد بطاقتك (${Number(myCard.balance).toLocaleString()}) لا يكفي — اشحنها من صفحة بطاقتك`, 'error');
@@ -413,9 +419,7 @@ export default function CartDrawer({ store, primary }: { store: any; primary: st
                 <input value={form.customerName} onChange={e => setForm({ ...form, customerName: e.target.value })}
                   placeholder="الاسم الكامل *"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none" />
-                <input value={form.customerPhone} onChange={e => setForm({ ...form, customerPhone: e.target.value })}
-                  placeholder="رقم الجوال *" dir="ltr"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none" />
+                <PhoneInput value={form.customerPhone} onChange={(v) => setForm({ ...form, customerPhone: v })} />
                 <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })}
                   placeholder="العنوان (المحافظة — الحي)"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none" />

@@ -4,7 +4,7 @@ import { MessagingService } from '../messaging/messaging.service';
 import { WebPushService } from '../notifications/push.service';
 import { CacheService } from '../../common/cache.service';
 import { effectiveFeatures } from '../../common/features';
-import { sanitizePhone, sanitizeText } from '../../libs/security';
+import { sanitizePhone, sanitizeText, normalizePhone } from '../../libs/security';
 
 // نظام الحجوزات الموحد: وحدات إيجار + غرف فندقية + خدمات
 @Injectable()
@@ -210,7 +210,7 @@ export class BookingsService {
     }
     // 🛡️ تعقيم مدخلات العميل قبل الحفظ (مكتبة libs/security)
     const customerName = sanitizeText(body.customerName, 80);
-    const customerPhone = sanitizePhone(body.customerPhone);
+    const customerPhone = normalizePhone(body.customerPhone) || sanitizePhone(body.customerPhone);
     const details = sanitizeText(body.details, 500);
     if (!customerName || !customerPhone) {
       throw new BadRequestException('الاسم ورقم الجوال مطلوبان');

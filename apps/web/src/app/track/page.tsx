@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "../../components/Toast";
 import CaptchaBox from "../../components/CaptchaBox";
+import PhoneInput from "../../components/PhoneInput";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -79,10 +80,8 @@ function TrackPage() {
             <input className="input pr-10 font-black tracking-wider" dir="ltr" placeholder="ORD-XXXXXX"
               value={number} onChange={(e) => setNumber(e.target.value.toUpperCase())} />
           </div>
-          <div className="relative mb-3">
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">📱</span>
-            <input className="input pr-10" dir="ltr" placeholder="77XXXXXXX" inputMode="tel"
-              value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <div className="mb-3">
+            <PhoneInput value={phone} onChange={setPhone} />
           </div>
           <button className="w-full py-4 rounded-2xl text-white font-black text-lg shadow-xl transition-all hover:opacity-90 active:scale-[0.99] disabled:opacity-50"
             style={{ background: "linear-gradient(135deg, var(--primary), #9333ea)" }}

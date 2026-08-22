@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { api, imgUrl } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import PhoneInput from '@/components/PhoneInput';
 import { KIND_INFO, type StoreKind } from '@/lib/activity';
 
 // قسم التقييمات والإعجاب — في واجهة النشاط (يحترم اسم كل نشاط: متجر/فندق/معرض إيجارات/مركز خدمات)
@@ -108,8 +109,7 @@ export default function ReviewsSection({ store, primary, isDark }: any) {
           <div className="grid grid-cols-2 gap-2">
             <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
               placeholder="اسمك *" className="px-4 py-3 rounded-xl border border-gray-200 input-theme text-gray-900" />
-            <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
-              placeholder="جوالك *" dir="ltr" className="px-4 py-3 rounded-xl border border-gray-200 input-theme text-gray-900" />
+            <PhoneInput value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
           </div>
           <textarea value={form.comment} onChange={e => setForm({ ...form, comment: e.target.value })}
             placeholder="رأيك في المتجر (اختياري)" rows={2}

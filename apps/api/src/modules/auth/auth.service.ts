@@ -11,6 +11,7 @@ import { ShieldService } from '../shield/shield.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SendOtpDto, VerifyOtpDto, PhoneLoginDto, RegisterDto, AdminLoginDto, ResetPasswordDto } from './dto';
 import { verifyTotp } from '../../common/totp';
+import { normalizePhone, phoneVariants } from '../../libs/security';
 import { decryptSecret } from '../../common/crypto.util';
 
 @Injectable()
@@ -26,6 +27,7 @@ export class AuthService {
 
   // ═══ 1) إرسال رمز OTP ═══
   async sendOtp(dto: SendOtpDto, ip: string) {
+    dto.phone = this.normPhone(dto.phone);
     await this.shield.requireCaptcha('otp', dto.captchaId, dto.captchaAnswer, ip); // 🤖 لست روبوت (إن فُعّل)
     const key = `otp:${dto.phone}`;
     if (!this.security.checkAttempts(key, 5)) {
@@ -70,6 +72,7 @@ export class AuthService {
 
   // ═══ 2) التحقق من OTP ═══
   async verifyOtp(dto: VerifyOtpDto, ip: string) {
+    dto.phone = this.normPhone(dto.phone);
     const rec = await this.prisma.otpCode.findFirst({
       where: { phone: dto.phone, code: dto.code, purpose: dto.purpose, usedAt: null },
       orderBy: { createdAt: 'desc' },
@@ -104,6 +107,7 @@ export class AuthService {
 
   // ═══ 2ب) إعادة تعيين كلمة المرور برمز الاستعادة ═══
   async resetPassword(dto: ResetPasswordDto, ip: string) {
+    dto.phone = this.normPhone(dto.phone);
     const key = `reset:${dto.phone}`;
     if (!this.security.checkAttempts(key, 5)) {
       throw new BadRequestException('محاولات كثيرة — انتظر 10 دقائق');
@@ -148,6 +152,7 @@ export class AuthService {
 
   // ═══ 3) تسجيل حساب جديد (بدون OTP إن كان معطلاً) ═══
   async register(dto: RegisterDto, ip: string) {
+    dto.phone = this.normPhone(dto.phone);
     await this.shield.requireCaptcha('register', dto.captchaId, dto.captchaAnswer, ip); // 🤖
     // 🔑 سياسة كلمات المرور: 8+ أحرف تجمع أحرفاً وأرقاماً — تحمي حسابات البائعين والعملاء من التخمين
     if (!/^(?=.*[A-Za-z\u0600-\u06FF])(?=.*\d).{8,}$/.test(dto.password)) {
@@ -166,6 +171,7 @@ export class AuthService {
 
   // ═══ 4) دخول برقم الجوال + كلمة مرور ═══
   async phoneLogin(dto: PhoneLoginDto, ip: string) {
+    dto.phone = this.normPhone(dto.phone);
     await this.shield.requireCaptcha('login', dto.captchaId, dto.captchaAnswer, ip); // 🤖
     const key = `login:${dto.phone}`;
     if (!this.security.checkAttempts(key, 5)) {
@@ -247,10 +253,20 @@ export class AuthService {
   }
 
   // ═══ أدوات داخلية ═══
+  // 🌍 توحيد رقم الجوال (مفتاح الدولة + تحقق) — يرفض الأرقام غير الصالحة برسالة واضحة
+  private normPhone(raw: string): string {
+    const n = normalizePhone(raw);
+    if (!n) throw new BadRequestException('رقم الجوال غير صحيح — اختر مفتاح الدولة وأدخل الرقم كاملاً');
+    return n;
+  }
+
+  // البحث بكل الصيغ المحتملة — يضمن دخول الحسابات المسجلة بأي صيغة قديمة
   private async findUser(type: string, phone: string) {
+    const variants = phoneVariants(phone);
+    const where = variants.length > 1 ? { OR: variants.map(v => ({ phone: v })) } : { phone };
     return type === 'seller'
-      ? this.prisma.seller.findUnique({ where: { phone } })
-      : this.prisma.customer.findUnique({ where: { phone } });
+      ? this.prisma.seller.findFirst({ where })
+      : this.prisma.customer.findFirst({ where });
   }
 
   private async createAccount(type: 'seller' | 'customer', phone: string, name: string, password?: string, ip?: string, refCode?: string) {

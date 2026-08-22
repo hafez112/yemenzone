@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import PhoneInput from '@/components/PhoneInput';
 import CaptchaBox from '@/components/CaptchaBox';
 
 // 🔑 استعادة كلمة المرور — 3 خطوات: الجوال ← رمز التحقق ← كلمة مرور جديدة
@@ -93,7 +94,7 @@ export default function ForgotPassword({ userType, onClose }: { userType: 'custo
       {step === 1 && (
         <form onSubmit={sendCode} className="space-y-4">
           <p className="text-xs font-bold text-gray-500 text-center">أدخل رقم جوالك المسجل — سنرسل لك رمز تحقق</p>
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="رقم الجوال" dir="ltr" className={inp} />
+          <PhoneInput value={phone} onChange={setPhone} required />
           <CaptchaBox key={capKey} scope="login" onChange={(id, answer) => setCaptcha({ id, answer })} />
           <button disabled={loading} className="w-full py-3 rounded-xl text-white font-extrabold shadow-lg disabled:opacity-50" style={{ background: grad }}>
             {loading ? '⏳...' : '📩 إرسال رمز التحقق'}

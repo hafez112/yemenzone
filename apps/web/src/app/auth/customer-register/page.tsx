@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, saveSession } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import PhoneInput from '@/components/PhoneInput';
 import CaptchaBox from '@/components/CaptchaBox';
 import TermsConsent from '@/components/TermsConsent';
 
@@ -91,8 +92,7 @@ export default function CustomerRegister() {
           <form onSubmit={submit} className="space-y-4">
             <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required placeholder="الاسم الكامل"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-teal-400 outline-none" />
-            <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required placeholder="رقم الجوال" dir="ltr"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-teal-400 outline-none" />
+            <PhoneInput value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} required />
             <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required placeholder="كلمة المرور (6+ أحرف)"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-teal-400 outline-none" />
             {/* 🎁 رمز الدعوة */}

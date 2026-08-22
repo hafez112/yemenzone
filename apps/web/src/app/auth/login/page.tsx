@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, saveSession } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import PhoneInput from '@/components/PhoneInput';
 import CaptchaBox from '@/components/CaptchaBox';
 import ForgotPassword from '@/components/ForgotPassword';
 
@@ -74,9 +75,7 @@ export default function SellerLogin() {
           <form onSubmit={submit} className="space-y-4">
             <div>
               <label className="block text-sm font-bold mb-1">رقم الجوال</label>
-              <input value={phone} onChange={e => setPhone(e.target.value)} required
-                placeholder="77xxxxxxx" dir="ltr"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none" />
+              <PhoneInput value={phone} onChange={setPhone} required />
             </div>
             <div>
               <label className="block text-sm font-bold mb-1">كلمة المرور <span className="text-gray-400 font-normal">(إن كان OTP معطلاً)</span></label>

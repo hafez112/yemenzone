@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, saveSession } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import PhoneInput from '@/components/PhoneInput';
 import CaptchaBox from '@/components/CaptchaBox';
 import ForgotPassword from '@/components/ForgotPassword';
 
@@ -40,8 +41,7 @@ export default function CustomerLogin() {
           <ForgotPassword userType="customer" onClose={() => setForgot(false)} />
         ) : (
         <form onSubmit={submit} className="space-y-4">
-          <input value={phone} onChange={e => setPhone(e.target.value)} required placeholder="رقم الجوال" dir="ltr"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-teal-400 outline-none" />
+          <PhoneInput value={phone} onChange={setPhone} required />
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="كلمة المرور"
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-teal-400 outline-none" />
           <CaptchaBox key={capKey} scope="login" onChange={(id, answer) => setCaptcha({ id, answer })} />

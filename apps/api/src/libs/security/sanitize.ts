@@ -32,6 +32,32 @@ export function sanitizePhone(input: unknown): string {
   return t.replace(/(?!^)\+/g, '').replace(/[^\d+]/g, '').slice(0, 20);
 }
 
+// 🌍 توحيد رقم الجوال بعد اختيار مفتاح الدولة:
+//   اليمني (+967/00967/967 + 7XXXXXXXX أو محلي) → يُخزَّن محلياً 7XXXXXXXX توافقاً مع الحسابات الحالية
+//   الأجنبي (+الكود…) → يُخزَّن بالصيغة الدولية E.164
+//   يعيد null إن كان الرقم غير صالح إطلاقاً
+export function normalizePhone(input: unknown): string | null {
+  const t = sanitizePhone(input);
+  if (!t) return null;
+  // يمني بأي صيغة
+  const ye = t.match(/^(?:\+?967|00967)?(7\d{8})$/);
+  if (ye) return ye[1];
+  // دولي بصيغة E.164
+  if (/^\+[1-9]\d{7,14}$/.test(t)) return t;
+  // دولي ببادئة 00
+  const intl = t.match(/^00([1-9]\d{7,14})$/);
+  if (intl) return `+${intl[1]}`;
+  return null;
+}
+
+// كل الصيغ المحتملة لرقم مخزَّن قديماً (للبحث عن الحساب أياً كانت صيغة إدخاله)
+export function phoneVariants(normalized: string): string[] {
+  if (/^7\d{8}$/.test(normalized)) {
+    return [normalized, `+967${normalized}`, `967${normalized}`, `00967${normalized}`, `0${normalized}`];
+  }
+  return [normalized];
+}
+
 // تعقيم عميق: يمشي على الكائن وينظف كل النصوص فيه (القيم غير النصية تُترك)
 export function sanitizeObject<T>(obj: T, maxLen = 500): T {
   if (typeof obj === 'string') return sanitizeText(obj, maxLen) as unknown as T;

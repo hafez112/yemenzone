@@ -4,6 +4,7 @@ import { MessagingService } from '../messaging/messaging.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { WebPushService } from '../notifications/push.service';
 import { FinanceService } from '../finance/finance.service';
+import { normalizePhone } from '../../libs/security';
 
 // 📍 المسافة الجوية بين نقطتين (كم) — هافرساين
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -48,6 +49,8 @@ export class OrdersService {
     if (!body.customerName?.trim() || !body.customerPhone?.trim()) {
       throw new BadRequestException('الاسم ورقم الجوال مطلوبان');
     }
+    // 🌍 توحيد رقم الجوال (مفتاح الدولة) — يضمن مطابقة «المشترٍ الموثّق» والتتبع
+    body.customerPhone = normalizePhone(body.customerPhone) || body.customerPhone.trim();
 
     // حساب المنتجات من قاعدة البيانات (حماية من تلاعب الأسعار)
     const ids = body.items.map(i => i.productId);
@@ -427,8 +430,11 @@ export class OrdersService {
   }
 
   async track(number: string, phone: string) {
+    // 🌍 يقبل الرقم بأي صيغة (محلي/دولي) ويطابق ما خُزّن مع الطلب
+    const normalized = normalizePhone(phone);
+    const phones = [...new Set([phone, normalized, normalized?.replace(/^\+967/, ''), normalized ? `+967${normalized}` : null].filter(Boolean))] as string[];
     const order = await this.prisma.order.findFirst({
-      where: { number: number.toUpperCase(), customerPhone: phone },
+      where: { number: number.toUpperCase(), customerPhone: { in: phones } },
       include: {
         items: true,
         store: { select: { name: true, slug: true, whatsapp: true } },
