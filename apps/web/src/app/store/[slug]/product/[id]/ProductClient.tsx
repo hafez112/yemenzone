@@ -8,7 +8,6 @@ import { recordRecent, toggleCompare, isInCompare } from '@/lib/recent';
 import { api, getUser } from '@/lib/api';
 import WishlistButton from '@/components/WishlistButton';
 import ProductQA from '@/components/ProductQA';
-import CrossStoreReco from '@/components/CrossStoreReco';
 import { useCurrency } from '@/lib/currency';
 import { productKindInfo, specChips } from '@/lib/activity';
 
@@ -416,8 +415,6 @@ export default function ProductClient({ store, product, similar }: any) {
           </section>
         )}
 
-        {/* 🛍️ توصيات عابرة للمتاجر */}
-        <CrossStoreReco productId={product.id} isDark={isDark} />
       </div>
 
       <CartDrawer store={store} primary={primary} />
