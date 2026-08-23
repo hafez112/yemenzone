@@ -13,9 +13,22 @@ export default function AdminDriversPage() {
   const [form, setForm] = useState<any>({ ...empty });
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  // 💸 طلبات سحب السائقين
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
+  const [wdCounts, setWdCounts] = useState<Record<string, number>>({});
 
   const load = () => api(`/admin/drivers${q ? `?q=${q}` : ""}`).then(setDrivers).catch((e) => toast(e.message, "error"));
-  useEffect(() => { load(); }, []);
+  const loadWd = () => api("/admin/driver-withdrawals").then((d) => { setWithdrawals(d.withdrawals || []); setWdCounts(d.counts || {}); }).catch(() => {});
+  useEffect(() => { load(); loadWd(); }, []);
+
+  const processWd = async (id: string, approve: boolean) => {
+    if (!approve && !confirm("رفض طلب السحب؟ سيُعاد المبلغ لمحفظة السائق")) return;
+    try {
+      await api(`/admin/driver-withdrawals/${id}/process`, { method: "POST", body: JSON.stringify({ approve }) });
+      toast(approve ? "✅ تم الاعتماد — سلّم المبلغ للسائق" : "⚠️ رُفض الطلب وأُعيد المبلغ للمحفظة");
+      loadWd();
+    } catch (e: any) { toast(e.message, "error"); }
+  };
 
   const save = async () => {
     if (!form.name || !form.phone) return toast("⚠️ الاسم ورقم الجوال مطلوبان", "error");
@@ -51,6 +64,26 @@ export default function AdminDriversPage() {
         <AdminSidebar />
         <main className="content">
           <h1>🛵 إدارة السائقين</h1>
+
+          {/* 💸 طلبات سحب السائقين — اعتماد أو رفض (الرفض يعيد المبلغ للمحفظة) */}
+          {withdrawals.filter((w) => w.status === "pending").length > 0 && (
+            <section className="card" style={{ border: "2px solid #f59e0b55", background: "#fffbeb" }}>
+              <h2>💸 طلبات سحب معلقة ({wdCounts.pending || 0})</h2>
+              {withdrawals.filter((w) => w.status === "pending").map((w) => (
+                <div key={w.id} className="row" style={{ alignItems: "center", gap: ".6rem", padding: ".6rem 0", borderBottom: "1px solid #f59e0b22", flexWrap: "wrap" }}>
+                  <div style={{ flex: 1, minWidth: 180 }}>
+                    <b>{w.driver?.name}</b> <span className="muted small" dir="ltr">{w.driver?.phone}</span>
+                    <div className="small" style={{ marginTop: ".2rem" }}>
+                      💰 <b>{Number(w.amount).toLocaleString()} {w.currency}</b> — {w.method}
+                    </div>
+                    <div className="muted small">📋 {w.accountInfo} · {new Date(w.createdAt).toLocaleString("ar-YE")}</div>
+                  </div>
+                  <button className="btn primary" onClick={() => processWd(w.id, true)}>✅ تم الصرف</button>
+                  <button className="btn ghost" style={{ color: "#dc2626" }} onClick={() => processWd(w.id, false)}>❌ رفض</button>
+                </div>
+              ))}
+            </section>
+          )}
 
           <div className="row" style={{ marginBottom: "1rem" }}>
             <input placeholder="🔍 بحث بالاسم أو الجوال..." value={q} onChange={(e) => setQ(e.target.value)}

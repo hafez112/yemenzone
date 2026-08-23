@@ -1085,6 +1085,7 @@ model Driver {
   createdAt    DateTime      @default(now())
   orders       Order[]
   stores       StoreDriver[]
+  wallet       DriverWallet?
 
   @@map("drivers")
 }
@@ -1857,4 +1858,51 @@ model PageView {
   @@index([createdAt])
   @@index([path, createdAt])
   @@map("page_views")
+}
+
+// ─── 🛵 محفظة السائق — تُضاف إليها أجرة التوصيل عند الدفع ببطاقة يمن زون ───
+model DriverWallet {
+  id           String                    @id @default(cuid())
+  driverId     String                    @unique
+  driver       Driver                    @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  balance      Decimal                   @default(0) @db.Decimal(12, 2)
+  currency     String                    @default("YER")
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  transactions DriverWalletTransaction[]
+  withdrawals  DriverWithdrawal[]
+
+  @@map("driver_wallets")
+}
+
+model DriverWalletTransaction {
+  id          String       @id @default(cuid())
+  walletId    String
+  wallet      DriverWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type        TxType
+  amount      Decimal      @db.Decimal(12, 2)
+  currency    String       @default("YER")
+  note        String?
+  referenceId String? // رقم الطلب
+  createdAt   DateTime     @default(now())
+
+  @@index([walletId, createdAt])
+  @@map("driver_wallet_transactions")
+}
+
+model DriverWithdrawal {
+  id          String         @id @default(cuid())
+  walletId    String
+  wallet      DriverWallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  amount      Decimal        @db.Decimal(12, 2)
+  currency    String         @default("YER")
+  method      String? // حوالة / بنك / كاش
+  accountInfo String?
+  status      WithdrawStatus @default(pending)
+  note        String?
+  createdAt   DateTime       @default(now())
+  processedAt DateTime?
+
+  @@index([status, createdAt])
+  @@map("driver_withdrawals")
 }

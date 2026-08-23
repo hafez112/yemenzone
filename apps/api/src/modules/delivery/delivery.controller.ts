@@ -38,6 +38,17 @@ export class DriverController {
     return this.svc.driverUpdateLocation(u.sub, body);
   }
 
+  // 💰 محفظة السائق — الرصيد والحركات وطلبات السحب
+  @Get('wallet')
+  wallet(@CurrentUser() u: any) {
+    return this.svc.driverWallet(u.sub);
+  }
+
+  @Post('wallet/withdraw')
+  withdraw(@CurrentUser() u: any, @Body() body: any) {
+    return this.svc.driverWithdraw(u.sub, body);
+  }
+
   @Post('location/stop')
   clearLocation(@CurrentUser() u: any) {
     return this.svc.driverClearLocation(u.sub);
@@ -123,6 +134,17 @@ export class AdminDeliveryController {
   }
 
   // 🔗 ربط السائقين وشركات التوصيل بمتاجر البائعين
+  // 💸 طلبات سحب السائقين
+  @Get('driver-withdrawals')
+  driverWithdrawals(@Query('status') status?: string) {
+    return this.svc.adminDriverWithdrawals(status);
+  }
+
+  @Post('driver-withdrawals/:id/process')
+  processDriverWithdrawal(@Param('id') id: string, @Body() body: any) {
+    return this.svc.adminProcessDriverWithdrawal(id, body?.approve !== false, body?.note);
+  }
+
   @Get('delivery/links')
   deliveryLinks(@Query('q') q?: string) {
     return this.svc.adminDeliveryLinks(q);

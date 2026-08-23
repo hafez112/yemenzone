@@ -8,7 +8,7 @@ export class NotificationsService {
   constructor(private prisma: PrismaService, private webPush: WebPushService) {}
 
   // دفع تنبيه — لا يرمي أخطاء أبداً حتى لا يعطّل العملية الأم
-  async push(userType: 'seller' | 'customer', userId: string, n: { icon?: string; title: string; body?: string; link?: string }) {
+  async push(userType: 'seller' | 'customer' | 'driver', userId: string, n: { icon?: string; title: string; body?: string; link?: string }) {
     const row = await this.prisma.notification.create({
       data: {
         userType, userId,

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { api, getUser, logout } from "../../lib/api";
 import { toast } from "../../components/Toast";
 import DashboardPwa from "../../components/DashboardPwa";
@@ -106,6 +107,10 @@ export default function DriverDashboard() {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-white/20 backdrop-blur">📦 نشطة: {totalActive}</span>
               <span className="px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-white/20 backdrop-blur">✅ اليوم: {counts.delivered || 0}</span>
+              <Link href="/driver/wallet"
+                className="px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-white/20 border border-white/30 hover:bg-white/30 transition-all">
+                💰 محفظتي
+              </Link>
               <button onClick={() => logout()}
                 className="px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-white/15 border border-white/30 hover:bg-white/25 transition-all">
                 خروج

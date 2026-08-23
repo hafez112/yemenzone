@@ -95,6 +95,8 @@ export class DeliveryService {
     // 🤝 خصم عمولة المنصة عند التسليم (مرة واحدة)
     if (status === 'delivered') {
       await this.finance.chargeCommissionForOrder(orderId).catch(() => {});
+      // 💰 أجرة التوصيل تُودع في محفظة السائق عندما يكون الدفع مسبقاً ببطاقة يمن زون
+      await this.creditDriverForOrder(orderId).catch(() => {});
     }
 
     // 🔔 تنبيه العميل: طلبه في الطريق أو وصل
@@ -117,6 +119,123 @@ export class DeliveryService {
       });
     }
     return updated;
+  }
+
+  // ═══════════════ 💰 محفظة السائق ═══════════════
+
+  // إيداع أجرة التوصيل — مرة واحدة لكل طلب (idempotent عبر referenceId)
+  private async creditDriverForOrder(orderId: string) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order || !order.driverId) return;
+    // فقط المدفوع مسبقاً ببطاقة يمن زون — النقدي يحصّله السائق من العميل مباشرة
+    if (order.paymentMethod !== 'card') return;
+    const fee = Number(order.deliveryFee || 0);
+    if (fee <= 0) return;
+    const wallet = await this.prisma.driverWallet.upsert({
+      where: { driverId: order.driverId },
+      update: {},
+      create: { driverId: order.driverId },
+    });
+    // حماية من الإيداع المزدوج
+    const dup = await this.prisma.driverWalletTransaction.findFirst({
+      where: { walletId: wallet.id, referenceId: order.number, type: 'credit' },
+    });
+    if (dup) return;
+    await this.prisma.$transaction([
+      this.prisma.driverWallet.update({ where: { id: wallet.id }, data: { balance: { increment: fee } } }),
+      this.prisma.driverWalletTransaction.create({
+        data: { walletId: wallet.id, type: 'credit', amount: fee, currency: order.currency || 'YER', note: `أجرة توصيل الطلب ${order.number}`, referenceId: order.number },
+      }),
+    ]);
+    await this.notifications.push('driver', order.driverId, {
+      icon: '💰', title: 'أُودعت أجرة التوصيل في محفظتك',
+      body: `${fee.toLocaleString()} ${order.currency || 'ر.ي'} — الطلب ${order.number}`,
+      link: '/driver/wallet',
+    }).catch(() => {});
+  }
+
+  // 💰 محفظة السائق: الرصيد + الحركات + طلبات السحب
+  async driverWallet(driverId: string) {
+    const wallet = await this.prisma.driverWallet.upsert({
+      where: { driverId }, update: {}, create: { driverId },
+    });
+    const [transactions, withdrawals] = await Promise.all([
+      this.prisma.driverWalletTransaction.findMany({ where: { walletId: wallet.id }, orderBy: { createdAt: 'desc' }, take: 50 }),
+      this.prisma.driverWithdrawal.findMany({ where: { walletId: wallet.id }, orderBy: { createdAt: 'desc' }, take: 20 }),
+    ]);
+    return { balance: Number(wallet.balance), currency: wallet.currency, transactions, withdrawals };
+  }
+
+  // 📤 طلب سحب — يحجز المبلغ فوراً، ويُعاد عند الرفض
+  async driverWithdraw(driverId: string, body: any) {
+    const amount = Math.round(Number(body.amount || 0));
+    if (!isFinite(amount) || amount <= 0) throw new BadRequestException('المبلغ غير صالح');
+    if (amount < 1000) throw new BadRequestException('أقل مبلغ للسحب 1,000 ر.ي');
+    const wallet = await this.prisma.driverWallet.upsert({
+      where: { driverId }, update: {}, create: { driverId },
+    });
+    if (Number(wallet.balance) < amount) throw new BadRequestException('الرصيد غير كافٍ');
+    const method = String(body.method || '').trim().slice(0, 50);
+    const accountInfo = String(body.accountInfo || '').trim().slice(0, 200);
+    if (!method || !accountInfo) throw new BadRequestException('حدد طريقة الاستلام وبياناته');
+
+    const [withdrawal] = await this.prisma.$transaction([
+      this.prisma.driverWithdrawal.create({
+        data: { walletId: wallet.id, amount, currency: wallet.currency, method, accountInfo },
+      }),
+      this.prisma.driverWallet.update({ where: { id: wallet.id }, data: { balance: { decrement: amount } } }),
+      this.prisma.driverWalletTransaction.create({
+        data: { walletId: wallet.id, type: 'debit', amount, currency: wallet.currency, note: 'حجز لطلب سحب' },
+      }),
+    ]);
+    await this.security.log('driver_withdraw_request', { userType: 'driver', userId: driverId, details: `سحب ${amount} ${wallet.currency} عبر ${method}` });
+    return { ok: true, withdrawal };
+  }
+
+  // ── الإدارة: طلبات سحب السائقين ──
+  async adminDriverWithdrawals(status?: string) {
+    const where: any = status && status !== 'all' ? { status } : {};
+    const rows = await this.prisma.driverWithdrawal.findMany({
+      where, orderBy: { createdAt: 'desc' }, take: 100,
+      include: { wallet: { include: { driver: { select: { id: true, name: true, phone: true, governorate: true } } } } },
+    });
+    const counts = await this.prisma.driverWithdrawal.groupBy({ by: ['status'], _count: { status: true } });
+    return {
+      withdrawals: rows.map((w) => ({ ...w, driver: w.wallet.driver, wallet: undefined })),
+      counts: Object.fromEntries(counts.map((c) => [c.status, c._count.status])),
+    };
+  }
+
+  // ✅ اعتماد/رفض طلب السحب — الرفض يعيد المبلغ للمحفظة
+  async adminProcessDriverWithdrawal(id: string, approve: boolean, note?: string) {
+    const w = await this.prisma.driverWithdrawal.findUnique({ where: { id } });
+    if (!w) throw new NotFoundException('الطلب غير موجود');
+    if (w.status !== 'pending') throw new BadRequestException('الطلب عولج مسبقاً');
+    if (approve) {
+      await this.prisma.driverWithdrawal.update({
+        where: { id }, data: { status: 'paid', processedAt: new Date(), note: note || w.note },
+      });
+    } else {
+      await this.prisma.$transaction([
+        this.prisma.driverWithdrawal.update({
+          where: { id }, data: { status: 'rejected', processedAt: new Date(), note: note || w.note },
+        }),
+        this.prisma.driverWallet.update({ where: { id: w.walletId }, data: { balance: { increment: w.amount } } }),
+        this.prisma.driverWalletTransaction.create({
+          data: { walletId: w.walletId, type: 'credit', amount: w.amount, currency: w.currency, note: 'إعادة مبلغ سحب مرفوض' },
+        }),
+      ]);
+    }
+    const wallet = await this.prisma.driverWallet.findUnique({ where: { id: w.walletId } });
+    if (wallet) {
+      await this.notifications.push('driver', wallet.driverId, {
+        icon: approve ? '✅' : '⚠️',
+        title: approve ? 'تم صرف طلب السحب' : 'رُفض طلب السحب وأُعيد المبلغ',
+        body: `${Number(w.amount).toLocaleString()} ${w.currency}`,
+        link: '/driver/wallet',
+      }).catch(() => {});
+    }
+    return { ok: true };
   }
 
   // ── البائع: السائقون + اقتراح ذكي ──
