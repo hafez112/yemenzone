@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ReviewsSection from '@/components/ReviewsSection';
 import MallProductCard from '@/components/mall/MallProductCard';
+import StorePwaInstall from '@/components/StorePwaInstall';
 import StoreMap from '@/components/store/StoreMap';
 import { getCart } from '@/lib/cart';
 import { adImgUrl } from '@/lib/api';
@@ -405,6 +406,9 @@ export default function MallClient({ store, banners, bannerIdx, setBannerIdx }: 
           💬
         </a>
       )}
+
+      {/* زر تثبيت تطبيق المول (PWA) */}
+      <StorePwaInstall store={store} />
     </main>
   );
 }

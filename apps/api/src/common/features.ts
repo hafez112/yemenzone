@@ -22,6 +22,7 @@ export const FREE_FEATURES: Record<string, any> = {
   finance: false,      // التقرير المالي المتقدم للمتجر
   inventory: false,    // إدارة المخزون الذكية
   crm: false,          // إدارة العملاء وتحليلهم
+  smartAdd: false,     // الإضافة الذكية للمنتجات بالذكاء الاصطناعي
 };
 
 // الأسماء العربية للميزات القابلة للقفل — تظهر في شاشات القفل ولوحة المدير
@@ -37,6 +38,7 @@ export const FEATURE_AR: Record<string, string> = {
   finance: '💹 التقرير المالي المتقدم',
   inventory: '📦 إدارة المخزون الذكية',
   crm: '👥 إدارة العملاء',
+  smartAdd: '🤖 الإضافة الذكية للمنتجات',
 };
 
 // هل الاشتراك ساري فعلاً الآن؟

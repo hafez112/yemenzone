@@ -7,6 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { encryptSecret, decryptSecret, maskSecret } from '../../common/crypto.util';
 import { UPLOADS_DIR } from '../../common/upload';
 import { sanitizeText } from '../../libs/security';
+import { requireFeature, effectiveFeatures } from '../../common/features';
 import {
   answerAssistant, generateProductDescription,
   normalizeArabic, ASSISTANT_TOPICS,
@@ -352,5 +353,193 @@ export class AiCenterService {
       reply: 'سؤال جميل! 🤔 لم أفهمه تماماً بعد — جرّب أحد المواضيع بالأسفل، أو أعد صياغة سؤالك بكلمات أبسط.',
       matched: null, chips: local.chips, source: 'fallback',
     };
+  }
+
+  // ═══════════════ 🤖 الإضافة الذكية للمنتجات (خدمة مدفوعة مرتبطة بالمتجر) ═══════════════
+
+  private async sellerStore(sellerId: string) {
+    const store = await this.prisma.store.findFirst({
+      where: { sellerId }, include: { subscription: { include: { plan: true } }, type: true },
+    });
+    if (!store) throw new NotFoundException('لا يوجد متجر مرتبط بحسابك');
+    return store;
+  }
+
+  // 🔑 إعدادات الذكاء الخارجي الخاصة بالتاجر — يضيف مفتاحه بنفسه (تُحفظ مشفّرة في متجره)
+  async smartAddSettings(sellerId: string) {
+    const store = await this.sellerStore(sellerId);
+    const ext = (store.themeJson as any)?.externalAi || {};
+    return {
+      hasKey: !!ext.apiKey,
+      baseUrl: ext.baseUrl || 'https://api.openai.com/v1',
+      model: ext.model || 'gpt-4o-mini',
+      maskedKey: ext.apiKey ? maskSecret(ext.apiKey) : '',
+      featureOn: !!effectiveFeatures(store).smartAdd,
+    };
+  }
+
+  async saveSmartAddSettings(sellerId: string, body: any) {
+    const store = await this.sellerStore(sellerId);
+    const theme = { ...((store.themeJson as any) || {}) };
+    const apiKey = String(body.apiKey || '').trim();
+    if (!apiKey) {
+      delete theme.externalAi; // إزالة المفتاح = العودة للذكاء المحلي
+    } else {
+      theme.externalAi = {
+        baseUrl: String(body.baseUrl || 'https://api.openai.com/v1').trim().replace(/\/+$/, ''),
+        apiKey,
+        model: String(body.model || 'gpt-4o-mini').trim(),
+      };
+    }
+    await this.prisma.store.update({ where: { id: store.id }, data: { themeJson: theme } });
+    return { ok: true, hasKey: !!apiKey };
+  }
+
+  // 🧠 توليد اقتراحات منتجات كاملة لصنف محدد — خارجي (مفتاح التاجر) أو محلي
+  async suggestProducts(sellerId: string, body: any) {
+    const store = await this.sellerStore(sellerId);
+    requireFeature(store, 'smartAdd');
+    const categoryId = String(body.categoryId || '');
+    const category = await this.prisma.category.findFirst({ where: { id: categoryId, storeId: store.id } });
+    if (!category) throw new NotFoundException('الصنف غير موجود في متجرك');
+    const count = Math.min(Math.max(Number(body.count) || 5, 1), 10);
+    const hint = sanitizeText(body.hint, 200);
+
+    // تجنّب تكرار منتجات موجودة أصلاً في الصنف
+    const existing = await this.prisma.product.findMany({
+      where: { storeId: store.id, categoryId }, select: { name: true }, take: 100,
+    });
+    const existingNames = existing.map((p) => p.name);
+
+    const ext = (store.themeJson as any)?.externalAi;
+    let items: any[] = [];
+    let source = 'local';
+    if (ext?.apiKey) {
+      items = await this.suggestExternal(ext, category.name, count, hint, existingNames).catch(() => []);
+      if (items.length) source = 'external';
+    }
+    if (!items.length) items = this.suggestLocal(category.name, count, hint, existingNames);
+
+    // 🖼️ صورة ذكية لكل منتج — توليد فوري عبر pollinations (بدون مفتاح)
+    return {
+      source, category: { id: category.id, name: category.name },
+      items: items.map((it, i) => ({
+        ...it,
+        imageUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent((it.imagePrompt || it.name) + ', professional product photography, clean white background, studio lighting, e-commerce style')}?width=800&height=600&nologo=true&seed=${Date.now() % 100000 + i}`,
+      })),
+    };
+  }
+
+  // 🌐 توليد عبر مفتاح التاجر الخارجي (OpenAI-compatible)
+  private async suggestExternal(ext: any, catName: string, count: number, hint: string, existing: string[]) {
+    const sys = 'أنت خبير تسويق إلكتروني يمني. أجب بـ JSON فقط: مصفوفة منتجات، كل منتج: {"name":"اسم واقعي مختصر","price":رقم,"salePrice":رقم أو null,"description":"وصف تسويقي 2-3 أسطر","features":["ميزة1","ميزة2","ميزة3"],"imagePrompt":"english product photo keywords"} — بلا أي نص خارج JSON.';
+    const usr = `اقترح ${count} منتجات واقعية تُباع في صنف «${catName}» لمتجر يمني، بأسعار منطقية بالريال اليمني.${hint ? ` توجيه التاجر: ${hint}.` : ''} تجنّب هذه الأسماء الموجودة مسبقاً: ${existing.slice(0, 30).join('، ') || 'لا يوجد'}.`;
+    const res = await fetch(`${ext.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ext.apiKey}` },
+      body: JSON.stringify({
+        model: ext.model,
+        messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }],
+        temperature: 0.9,
+      }),
+      signal: AbortSignal.timeout(45000),
+    });
+    if (!res.ok) throw new Error('external ai failed');
+    const data: any = await res.json();
+    const text = data?.choices?.[0]?.message?.content || '';
+    const m = text.match(/\[[\s\S]*\]/);
+    if (!m) throw new Error('bad json');
+    const arr = JSON.parse(m[0]);
+    if (!Array.isArray(arr)) throw new Error('bad array');
+    return arr.slice(0, count).map((p: any) => ({
+      name: sanitizeText(p.name, 120), price: Math.max(Math.round(Number(p.price) || 0), 100),
+      salePrice: p.salePrice ? Math.max(Math.round(Number(p.salePrice)), 50) : null,
+      description: sanitizeText(p.description, 500),
+      features: Array.isArray(p.features) ? p.features.slice(0, 5).map((f: any) => sanitizeText(f, 80)) : [],
+      imagePrompt: sanitizeText(p.imagePrompt, 200) || p.name,
+    })).filter((p: any) => p.name && p.price > 0);
+  }
+
+  // 🏠 توليد محلي ذكي — قوالب واقعية من اسم الصنف (بدون أي مفتاح)
+  private suggestLocal(catName: string, count: number, hint: string, existing: string[]) {
+    const brands = ['الأصيل', 'رويال', 'بريميوم', 'الذهبي', 'كلاسيك', 'برو', 'الفاخر', 'سمارت', 'توب', 'ماستر'];
+    const types = ['عادي', 'ممتاز', 'ديلوكس', 'اقتصادي', 'الاحترافي', 'الخاص'];
+    const featsPool = ['جودة عالية مضمونة', 'خامة أصلية متينة', 'ضمان استبدال', 'تغليف أنيق', 'وصول سريع', 'سعر منافس', 'مطابق للمواصفات', 'تجربة استخدام مريحة'];
+    const ranges: [number, number][] = [[1500, 6000], [4000, 15000], [8000, 30000], [20000, 80000], [3000, 12000]];
+    const seedRand = (i: number, salt: number) => {
+      const h = crypto.createHash('md5').update(`${catName}|${hint}|${i}|${salt}|${Date.now()}`).digest();
+      return h.readUInt32LE(0) / 0xffffffff;
+    };
+    const used = new Set(existing.map((n) => normalizeArabic(n)));
+    const out: any[] = [];
+    for (let i = 0; out.length < count && i < count * 4; i++) {
+      const brand = brands[Math.floor(seedRand(i, 1) * brands.length)];
+      const typ = types[Math.floor(seedRand(i, 2) * types.length)];
+      const name = `${catName} ${brand} — ${typ}`;
+      if (used.has(normalizeArabic(name))) continue;
+      used.add(normalizeArabic(name));
+      const [lo, hi] = ranges[Math.floor(seedRand(i, 3) * ranges.length)];
+      const price = Math.round((lo + seedRand(i, 4) * (hi - lo)) / 100) * 100;
+      const onSale = seedRand(i, 5) > 0.6;
+      const feats = [...featsPool].sort(() => seedRand(out.length, 6) - 0.5).slice(0, 3 + (out.length % 3));
+      out.push({
+        name, price,
+        salePrice: onSale ? Math.round(price * 0.85 / 100) * 100 : null,
+        description: `✨ ${name} — اختيار مثالي من صنف ${catName}.\nجودة موثوقة وسعر مدروس يناسب السوق اليمني، مع عناية بأدق التفاصيل.\n✅ جودة مضمونة | 🚚 توصيل سريع | 💵 دفع عند الاستلام`,
+        features: feats,
+        imagePrompt: `${catName} ${typ} product`,
+      });
+    }
+    return out;
+  }
+
+  // ➕ إضافة المنتج المُراجع مباشرة إلى متجر التاجر (مع تنزيل الصورة الذكية وتحويلها WebP)
+  async quickAddProduct(sellerId: string, body: any) {
+    const store = await this.sellerStore(sellerId);
+    requireFeature(store, 'smartAdd');
+    const feats = effectiveFeatures(store);
+    const max = Number(feats.maxProducts ?? 20);
+    const countNow = await this.prisma.product.count({ where: { storeId: store.id } });
+    if (countNow >= max) throw new ForbiddenException({ message: `خطتك تسمح بـ ${max} منتجاً فقط — رقِّ خطتك`, featureCode: 'maxProducts', locked: true });
+
+    const name = sanitizeText(body.name, 120);
+    const price = Math.round(Number(body.price) || 0);
+    const category = await this.prisma.category.findFirst({ where: { id: String(body.categoryId || ''), storeId: store.id } });
+    if (!name || price <= 0) throw new BadRequestException('الاسم والسعر مطلوبان');
+    if (!category) throw new NotFoundException('الصنف غير موجود في متجرك');
+
+    // 🖼️ تنزيل الصورة المولّدة وحفظها في المتجر (فشل التنزيل لا يوقف الإضافة)
+    const images: string[] = [];
+    const imageUrl = String(body.imageUrl || '');
+    if (/^https?:\/\//.test(imageUrl)) {
+      try {
+        const res = await fetch(imageUrl, { signal: AbortSignal.timeout(30000) });
+        if (res.ok) {
+          const buf = Buffer.from(await res.arrayBuffer());
+          if (buf.length > 2000) {
+            const dir = path.join(UPLOADS_DIR, 'products');
+            fs.mkdirSync(dir, { recursive: true });
+            const fname = `smart-${crypto.randomBytes(8).toString('hex')}.webp`;
+            await sharp(buf).resize(900, 900, { fit: 'inside', withoutEnlargement: true }).webp({ quality: 82 }).toFile(path.join(dir, fname));
+            images.push(`/uploads/products/${fname}`);
+          }
+        }
+      } catch { /* بلا صورة — يضيفها التاجر لاحقاً */ }
+    }
+
+    const features = Array.isArray(body.features)
+      ? body.features.filter((f: any) => f && String(f).trim()).slice(0, 8).map((f: any) => ({ key: 'ميزة', value: sanitizeText(f, 100) }))
+      : [];
+    const product = await this.prisma.product.create({
+      data: {
+        storeId: store.id, categoryId: category.id, name,
+        description: sanitizeText(body.description, 2000),
+        shortDesc: sanitizeText(body.description, 160).split('\n')[0],
+        price, salePrice: body.salePrice ? Math.max(Math.round(Number(body.salePrice)), 1) : null,
+        currency: 'YER', stock: Math.max(Math.round(Number(body.stock) || 10), 0),
+        images, features, isActive: true,
+      },
+    });
+    return { ok: true, product: { id: product.id, name: product.name, hasImage: images.length > 0 } };
   }
 }

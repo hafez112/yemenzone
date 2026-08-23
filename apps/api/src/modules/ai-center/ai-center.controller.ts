@@ -7,6 +7,7 @@ import { AiCenterService } from './ai-center.service';
 import { AuthGuard, RolesGuard } from '../../common/guards/auth.guard';
 import { PermsGuard } from '../../common/guards/admin-perms.guard';
 import { RateLimit } from '../../common/guards/rate-limit.guard';
+import { CurrentUser } from '../../common/decorators';
 
 // ═══ إدارة الذكاء الاصطناعي — المدير الخارق أو من يملك صلاحية ai ═══
 @Controller('admin/ai')
@@ -64,6 +65,22 @@ export class SellerAiController {
     },
   }))
   whiteBg(@UploadedFile() file: Express.Multer.File) { return this.ai.whiteBackground(file); }
+
+  // ═══ 🤖 الإضافة الذكية للمنتجات — خدمة مدفوعة مرتبطة بالمتجر ═══
+
+  @Get('smart-add/settings')
+  smartAddSettings(@CurrentUser() u: any) { return this.ai.smartAddSettings(u.sub); }
+
+  @Post('smart-add/settings')
+  saveSmartAddSettings(@CurrentUser() u: any, @Body() body: any) { return this.ai.saveSmartAddSettings(u.sub, body); }
+
+  @UseGuards(RateLimit(10, 60_000, 'smart-add-suggest'))
+  @Post('smart-add/suggest')
+  smartAddSuggest(@CurrentUser() u: any, @Body() body: any) { return this.ai.suggestProducts(u.sub, body); }
+
+  @UseGuards(RateLimit(20, 60_000, 'smart-add-add'))
+  @Post('smart-add/add')
+  smartAddAdd(@CurrentUser() u: any, @Body() body: any) { return this.ai.quickAddProduct(u.sub, body); }
 }
 
 // ═══ عام — إعداد المساعد ومحادثته (بحد معدل صارم) ═══

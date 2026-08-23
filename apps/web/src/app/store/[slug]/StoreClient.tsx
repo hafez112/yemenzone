@@ -2,6 +2,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import CartDrawer from '@/components/CartDrawer';
+import StorePwaInstall from '@/components/StorePwaInstall';
 import MallClient from './MallClient';
 import BookingSection from '@/components/BookingSection';
 import ReviewsSection from '@/components/ReviewsSection';
@@ -497,6 +498,9 @@ export default function StoreClient({ store }: { store: any }) {
           💬
         </a>
       )}
+
+      {/* زر تثبيت تطبيق المتجر (PWA) — خدمة مدفوعة تُفعّل من الاشتراك */}
+      <StorePwaInstall store={store} />
     </main>
   );
 }

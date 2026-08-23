@@ -12,6 +12,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: store.metaTitle || `${store.name} — يمن زون`,
     description: store.metaDesc || store.description,
+    // 📱 مانيفست تطبيق المتجر — يحوّل المتجر لتطبيق باسمه وشعاره (يُفعَّل للزائر من البانر)
+    manifest: `/store-manifest/${slug}`,
     openGraph: {
       title: store.metaTitle || store.name,
       description: store.metaDesc || store.description,
