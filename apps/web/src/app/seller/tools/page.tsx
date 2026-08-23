@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getUser } from '@/lib/api';
+import { api, getUser } from '@/lib/api';
 import { TOOLS } from '@/lib/tools';
 import { myTools, sessionType, type MyToolRow } from '@/lib/tool-db';
 
@@ -11,11 +11,13 @@ import { myTools, sessionType, type MyToolRow } from '@/lib/tool-db';
 export default function SellerToolsPage() {
   const router = useRouter();
   const [mine, setMine] = useState<MyToolRow[]>([]);
+  const [store, setStore] = useState<any>(null);
   const merchantTools = TOOLS.filter((t) => t.cat === 'merchant');
 
   useEffect(() => {
     if (!getUser() || sessionType() !== 'seller') { router.push('/auth/login'); return; }
     myTools().then(setMine).catch(() => {});
+    api('/stores/my').then(setStore).catch(() => {});
   }, []);
 
   const rowOf = (slug: string) => mine.find((r) => r.slug === slug);
@@ -28,6 +30,12 @@ export default function SellerToolsPage() {
           <p className="text-gray-500 text-xs mt-1">
             {merchantTools.length} أداة احترافية خاصة بك — بيانات كل أداة تُحفظ في قاعدتها الخاصة بحسابك
           </p>
+          {store && (
+            <p className="text-[11px] font-extrabold text-cyan-700 bg-cyan-50 border border-cyan-200 rounded-full px-3 py-1.5 mt-2 inline-flex items-center gap-1">
+              🔗 مرتبطة بمتجرك مباشرة: {store.name}
+              <span className="font-normal text-cyan-500">— النسخ الاحتياطي والكتالوج وسجل العملاء والفواتير والمنشورات تقرأ بياناته تلقائياً</span>
+            </p>
+          )}
         </div>
       </div>
 

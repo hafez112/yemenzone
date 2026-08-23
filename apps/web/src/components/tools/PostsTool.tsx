@@ -138,6 +138,19 @@ export default function PostsTool() {
   const [sz, setSz] = useState(POST_SIZES[0]);
   const [data, setData] = useState<PostData>({ store: '', offer: '', sub: '', contact: '', img: null });
   const [busy, setBusy] = useState(false);
+
+  // 🏬 ربط مباشر بمتجر البائع — اسم المتجر وجواله يُعبّآن تلقائياً
+  useEffect(() => {
+    if (typeof window === 'undefined' || localStorage.getItem('yz_type') !== 'seller') return;
+    import('@/lib/store-link').then(({ myStoreInfo }) => myStoreInfo()).then((st: any) => {
+      if (!st) return;
+      setData((d) => ({
+        ...d,
+        store: d.store || st.name || '',
+        contact: d.contact || st.phone || st.whatsapp || '',
+      }));
+    }).catch(() => {});
+  }, []);
   const cvRef = useRef<HTMLCanvasElement>(null);
 
   const redraw = useCallback(() => {

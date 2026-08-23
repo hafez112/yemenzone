@@ -1,8 +1,9 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from '@/components/Toast';
 import { fmtN } from './pdfHelper';
 import { useToolDB } from './shared/db';
+import { isSeller, storeExport } from '@/lib/store-link';
 import { btnD, btnP, btnS, card, Empty, Field, fmtDate, inp, Stat, uid, waLink } from './shared/ui';
 
 // 👥 سجل العملاء — ملف لكل زبون: جواله وملاحظاته وتعاملاته ومراسلته بضغطة
@@ -17,6 +18,28 @@ export default function CrmTool() {
   const [q, setQ] = useState('');
   const [editId, setEditId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [linked, setLinked] = useState<any>(null);
+
+  // 🏬 ربط مباشر بمتجر البائع — زبائنه الحقيقيون من الطلبات
+  useEffect(() => {
+    if (!isSeller()) return;
+    storeExport().then(setLinked).catch(() => {});
+  }, []);
+
+  // 📥 استيراد زبائن المتجر — يدمج الجدد فقط (بدون تكرار بالجوال)
+  const importStoreCustomers = () => {
+    if (!linked?.customers?.length) { toast('لا زبائن في طلبات متجرك بعد', 'error'); return; }
+    const existing = new Set(customers.map((c) => c.phone));
+    const fresh = linked.customers.filter((c: any) => c.phone && !existing.has(c.phone))
+      .map((c: any) => ({
+        id: uid(), name: c.name, phone: c.phone,
+        note: `زبون متجر — ${c.orders} طلب`, total: Math.round(c.total),
+        lastAt: typeof c.lastAt === 'string' ? c.lastAt : new Date(c.lastAt).toISOString(),
+      }));
+    if (!fresh.length) { toast('✅ كل زبائن متجرك موجودون في السجل مسبقاً'); return; }
+    setCustomers([...fresh, ...customers]);
+    toast(`🏬 استُورد ${fresh.length} زبوناً من متجرك «${linked.store.name}»`);
+  };
 
   const reset = () => { setName(''); setPhone(''); setNote(''); setTotal(''); setEditId(null); setShowForm(false); };
 
@@ -56,6 +79,12 @@ export default function CrmTool() {
 
       <div className="flex gap-2">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 ابحث بالاسم أو الجوال..." className={inp} />
+        {linked?.customers?.length > 0 && (
+          <button onClick={importStoreCustomers}
+            className="shrink-0 px-3 py-2 rounded-xl text-[11px] font-extrabold bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 hover:bg-cyan-500/25">
+            🏬 زبائن متجري ({linked.customers.length})
+          </button>
+        )}
         <button onClick={() => { reset(); setShowForm(!showForm); }} className={btnP + ' shrink-0'}>{showForm ? '✕' : '➕ عميل'}</button>
       </div>
 

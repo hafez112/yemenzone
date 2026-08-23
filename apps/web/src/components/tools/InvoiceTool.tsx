@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from '@/components/Toast';
 import { elementToPdf, fileToDataUrl, fmtN } from './pdfHelper';
 
@@ -17,6 +17,18 @@ export default function InvoiceTool() {
   const [currency, setCurrency] = useState('ريال يمني');
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
+
+  // 🏬 ربط مباشر بمتجر البائع — تعبئة بيانات المصدر تلقائياً (لا تكتب فوق إدخاله)
+  useEffect(() => {
+    if (typeof window === 'undefined' || localStorage.getItem('yz_type') !== 'seller') return;
+    import('@/lib/store-link').then(({ myStoreInfo }) => myStoreInfo()).then((st: any) => {
+      if (!st) return;
+      if (st.name) setSeller((v) => v || st.name);
+      const ph = st.phone || st.whatsapp || '';
+      if (ph) setPhone((v) => v || ph);
+      if (st.logo) setLogo((v) => v || st.logo);
+    }).catch(() => {});
+  }, []);
   const ref = useRef<HTMLDivElement>(null);
 
   const invNo = useMemo(() => `YZ-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(Math.floor(100 + Math.random() * 900))}`, []);

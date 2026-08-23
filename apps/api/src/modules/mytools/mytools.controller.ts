@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { CurrentUser } from '../../common/decorators';
 import { MyToolsService } from './mytools.service';
@@ -12,6 +12,13 @@ export class MyToolsController {
 
   @Get()
   list(@CurrentUser() u: any) { return this.svc.list(u.typ, u.sub); }
+
+  // 🏬 تصدير بيانات متجر البائع — تربط خدمات التاجر ببيانات متجره مباشرة
+  @Get('store-export')
+  storeExport(@CurrentUser() u: any) {
+    if (u.typ !== 'seller') throw new BadRequestException('هذه الخدمة للبائعين فقط');
+    return this.svc.storeExport(u.sub);
+  }
 
   @Post(':slug')
   add(@CurrentUser() u: any, @Param('slug') slug: string) { return this.svc.add(u.typ, u.sub, slug); }

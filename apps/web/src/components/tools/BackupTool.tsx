@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from '@/components/Toast';
 import { loadToolData, myTools, saveToolData, type MyToolRow } from '@/lib/tool-db';
 import { toolBySlug } from '@/lib/tools';
+import { isSeller, storeExport } from '@/lib/store-link';
 import { btnP, btnS, card, Empty, Stat } from './shared/ui';
 
 // 💾 النسخ الاحتياطي السحابي — نزّل كل بيانات خدماتك في ملف واحد واستعدها في أي جهاز
@@ -11,20 +12,28 @@ export default function BackupTool() {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState('');
   const [lastBackup, setLastBackup] = useState('');
+  const [storeData, setStoreData] = useState<any>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     myTools().then(setTools).catch(() => {});
     setLastBackup(localStorage.getItem('yz-backup-last') || '');
+    // 🏬 جلب بيانات المتجر مباشرة — تُشمل في النسخة تلقائياً
+    if (isSeller()) storeExport().then(setStoreData).catch(() => {});
   }, []);
 
   const withData = tools.filter((t) => t.hasData);
 
   // 📤 تصدير كل قواعد البيانات إلى ملف JSON واحد
   const exportAll = async () => {
-    if (!withData.length) { toast('لا توجد بيانات محفوظة بعد لتصديرها', 'error'); return; }
+    if (!withData.length && !storeData) { toast('لا توجد بيانات محفوظة بعد لتصديرها', 'error'); return; }
     setBusy(true);
-    const bundle: Record<string, any> = { _app: 'yemen-zone-backup', _version: 1, _date: new Date().toISOString() };
+    const bundle: Record<string, any> = { _app: 'yemen-zone-backup', _version: 2, _date: new Date().toISOString() };
+    // 🏬 بيانات المتجر الفعلية أولاً — مرتبطة مباشرة بالنسخة
+    if (storeData) {
+      setProgress('🏬 بيانات متجرك (منتجات، طلبات، زبائن)...');
+      bundle._store = storeData;
+    }
     let done = 0;
     for (const t of withData) {
       setProgress(`📥 ${toolBySlug(t.slug)?.title || t.slug} (${++done}/${withData.length})`);
@@ -41,7 +50,7 @@ export default function BackupTool() {
     setLastBackup(now);
     setProgress('');
     setBusy(false);
-    toast(`💾 نُزّلت النسخة الاحتياطية (${withData.length} خدمة) — احفظها في مكان آمن`);
+    toast(`💾 نُزّلت النسخة الاحتياطية (${withData.length} خدمة${storeData ? ' + بيانات متجرك' : ''}) — احفظها في مكان آمن`);
   };
 
   // 📥 استعادة من ملف — ترفع كل قاعدة بيانات إلى حسابك
@@ -89,6 +98,16 @@ export default function BackupTool() {
       </div>
 
       {withData.length === 0 && <Empty icon="🗄️" text="لا بيانات بعد — استخدم خدماتك وستظهر قواعد بياناتها هنا" />}
+
+      {storeData && (
+        <div className="rounded-2xl border border-cyan-400/25 bg-cyan-400/5 p-3.5">
+          <p className="text-[11px] text-cyan-200/90 leading-relaxed">
+            🏬 <b>مرتبطة بمتجرك «{storeData.store.name}»:</b> كل نسخة تشمل تلقائياً
+            {` ${storeData.products.length} منتجاً و${storeData.orders.length} طلباً و${storeData.customers.length} زبوناً و${storeData.categories.length} صنفاً`}
+            — محفوظة في الملف تحت مفتاح _store للأرشفة والاطلاع.
+          </p>
+        </div>
+      )}
 
       {withData.length > 0 && (
         <div className="space-y-2">

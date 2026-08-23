@@ -1,7 +1,8 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from '@/components/Toast';
 import { elementToPdf, fmtN } from './pdfHelper';
+import { isSeller, storeExport } from '@/lib/store-link';
 
 interface P { name: string; price: string; unit: string }
 
@@ -13,7 +14,29 @@ export default function CatalogTool() {
   const [currency, setCurrency] = useState('ريال يمني');
   const [items, setItems] = useState<P[]>([{ name: '', price: '', unit: '' }]);
   const [busy, setBusy] = useState(false);
+  const [linked, setLinked] = useState<any>(null);
   const ref = useRef<HTMLDivElement>(null);
+
+  // 🏬 ربط مباشر ببيانات المتجر — تعبئة الاسم والجوال تلقائياً
+  useEffect(() => {
+    if (!isSeller()) return;
+    storeExport().then((d) => {
+      setLinked(d);
+      if (d.store?.name) setStore((v) => v || d.store.name);
+      const ph = d.store?.phone || d.store?.whatsapp || '';
+      if (ph) setPhone((v) => v || ph);
+    }).catch(() => {});
+  }, []);
+
+  // 📥 استيراد منتجات المتجر الفعلية إلى القائمة
+  const importStoreProducts = () => {
+    if (!linked?.products?.length) { toast('لا منتجات في متجرك بعد', 'error'); return; }
+    const rows = linked.products.filter((x: any) => x.isActive !== false)
+      .map((x: any) => ({ name: x.name, price: String(x.salePrice || x.price), unit: '' }));
+    setItems(rows.length ? rows : [{ name: '', price: '', unit: '' }]);
+    if (linked.products[0]?.currency === 'YER') setCurrency('ريال يمني');
+    toast(`🏬 استُوردت ${rows.length} منتجات من متجرك «${linked.store.name}»`);
+  };
 
   const inp = 'w-full bg-white/10 border border-white/15 rounded-xl py-2.5 px-3 text-sm outline-none focus:border-sky-400 placeholder:text-white/30';
   const valid = items.filter((i) => i.name.trim() && i.price);
@@ -43,7 +66,15 @@ export default function CatalogTool() {
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/5 p-4 space-y-2">
-          <h3 className="font-extrabold text-sm mb-1">📦 المنتجات والأسعار</h3>
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <h3 className="font-extrabold text-sm">📦 المنتجات والأسعار</h3>
+            {linked && (
+              <button onClick={importStoreProducts}
+                className="text-[11px] font-extrabold px-3 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 hover:bg-cyan-500/25">
+                🏬 استيراد منتجات متجري ({linked.products.length})
+              </button>
+            )}
+          </div>
           {items.map((it, i) => (
             <div key={i} className="grid grid-cols-[1fr_90px_90px_auto] gap-2">
               <input value={it.name} onChange={(e) => setItems(items.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder={`المنتج ${i + 1}`} className={inp} />
