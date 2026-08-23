@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { smartMatch, searchBlob } from '@/lib/smart-search';
 import SellerSidebar from '@/components/SellerSidebar';
 import BulkTools from '@/components/seller/BulkTools';
 import RichTextEditor from '@/components/RichTextEditor';
@@ -235,8 +236,11 @@ export default function ProductsPage() {
     if (filter === 'none' && p.categoryId) return false;
     if (filter !== 'all' && filter !== 'none' && filter !== 'featured' && p.categoryId !== filter) return false;
     if (!q) return true;
-    const catN = p.category?.name || '';
-    return `${p.name} ${p.shortDesc || ''} ${p.keywords || ''} ${p.sku || ''} ${p.barcode || ''} ${catN}`.includes(q);
+    // 🤖 بحث ذكي: تطبيع عربي (أ/ا، ة/ه، أرقام عربية) + تعدد كلمات بأي ترتيب
+    return smartMatch(searchBlob([
+      p.name, p.shortDesc, p.keywords, p.sku, p.barcode,
+      p.category?.name, p.price, p.salePrice, p.stock,
+    ]), q);
   });
 
   return (
@@ -565,11 +569,10 @@ export default function ProductsPage() {
             </div>
           )}
 
-          {/* 🔍 البحث الذكي في لوحة المول — الاسم والكلمات المفتاحية والـ SKU والصنف */}
-          {isMall && (
-            <div className="relative mb-3">
+          {/* 🔍 البحث الذكي — لكل المتاجر: اسم، كلمة مفتاحية، SKU، صنف، سعر، مخزون */}
+          <div className="relative mb-3">
               <input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="🔍 بحث ذكي في منتجات المول: اسم، كلمة مفتاحية، SKU، صنف..."
+                placeholder="🔍 بحث ذكي في منتجاتي: اسم، كلمة مفتاحية، SKU، صنف، سعر..."
                 className="w-full px-4 py-3 rounded-2xl border border-purple-200 outline-none bg-white text-sm font-bold focus:border-purple-400 shadow-sm" />
               {search && (
                 <button onClick={() => setSearch('')}
@@ -581,7 +584,6 @@ export default function ProductsPage() {
                 </p>
               )}
             </div>
-          )}
 
           {/* فلترة بالأصناف */}
           <div className="flex gap-2 overflow-x-auto pb-2 mb-3">

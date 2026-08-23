@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import SellerSidebar from '@/components/SellerSidebar';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { smartMatch, searchBlob } from '@/lib/smart-search';
 import { useCurrency } from '@/lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
@@ -56,6 +57,7 @@ export default function SellerOrdersPage() {
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState('');
   const [selected, setSelected] = useState<string[]>([]); // 🖨️ تحديد جماعي للبوالص
+  const [search, setSearch] = useState(''); // 🔍 البحث الذكي
 
   const toggleSelect = (id: string) =>
     setSelected((s) => s.includes(id) ? s.filter((x) => x !== id) : s.length >= 20 ? s : [...s, id]);
@@ -104,6 +106,17 @@ export default function SellerOrdersPage() {
     setBusy('');
   };
 
+  // 🔍 البحث الذكي — يفتّش كل الطلبات (كل الحالات) برقم الطلب/العميل/هاتفه/العنوان/الأصناف/السائق
+  const q = search.trim();
+  const shownOrders = q
+    ? allOrders.filter((o) => smartMatch(searchBlob([
+        o.number, o.customerName, o.customerPhone, o.address, o.notes,
+        o.driver?.name, o.driver?.phone,
+        STATUS_META[o.status]?.label,
+        ...(o.items || []).map((it: any) => it.name),
+      ]), q))
+    : orders;
+
   if (!store) return null;
 
   return (
@@ -130,15 +143,31 @@ export default function SellerOrdersPage() {
             ))}
           </div>
 
+          {/* 🔍 البحث الذكي في الطلبات */}
+          <div className="relative">
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="🔍 بحث ذكي: رقم طلب، اسم عميل، هاتف، منتج، عنوان، سائق..."
+              className="w-full px-4 py-3 rounded-2xl border border-purple-200 outline-none bg-white text-sm font-bold focus:border-purple-400 shadow-sm" />
+            {search && (
+              <button onClick={() => setSearch('')}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-gray-100 text-xs font-black">✕</button>
+            )}
+            {q && (
+              <p className="text-[11px] font-bold text-purple-500 mt-1.5">
+                🤖 {shownOrders.length === 0 ? 'لا نتائج' : shownOrders.length === 1 ? 'طلب واحد' : shownOrders.length === 2 ? 'طلبان' : shownOrders.length <= 10 ? `${shownOrders.length} طلبات` : `${shownOrders.length} طلباً`} مطابقة لـ «{search}» — البحث يشمل كل الحالات
+              </p>
+            )}
+          </div>
+
           {/* الطلبات */}
-          {orders.length === 0 ? (
+          {shownOrders.length === 0 ? (
             <div className="glass rounded-3xl p-12 text-center text-gray-400">
-              <div className="text-5xl mb-3">📭</div>
-              لا طلبات في هذه الحالة حالياً
+              <div className="text-5xl mb-3">{q ? '🔍' : '📭'}</div>
+              {q ? `لا طلبات تطابق «${search}»` : 'لا طلبات في هذه الحالة حالياً'}
             </div>
           ) : (
             <div className="space-y-3 stagger">
-              {orders.map((o: any) => {
+              {shownOrders.map((o: any) => {
                 const stepIdx = PIPELINE.findIndex(p => p.key === o.status);
                 const meta = STATUS_META[o.status] || { label: o.status, cls: 'bg-gray-100 text-gray-500' };
                 const isBusy = busy.startsWith(o.id);
