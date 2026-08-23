@@ -44,7 +44,7 @@ export default function ToolsHub({ visible }: { visible: string[] }) {
         <div className="absolute -top-20 right-1/4 w-80 h-80 anim-blob opacity-25" style={{ background: 'linear-gradient(135deg,#7C3AED,#F59E0B)' }} />
         <div className="absolute -bottom-24 left-1/4 w-96 h-96 anim-blob opacity-20" style={{ background: 'linear-gradient(135deg,#06B6D4,#7C3AED)', animationDelay: '-5s' }} />
         <div className="relative max-w-3xl mx-auto">
-          <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-white/70 hover:text-white border border-white/15 rounded-full px-4 py-1.5 mb-6 transition-colors">🇾🇪 يمن زون — الرئيسية</Link>
+          <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-white/70 hover:text-white border border-white/15 rounded-full px-4 py-1.5 mb-6 transition-colors">يمن زون — الرئيسية</Link>
           <div className="text-6xl mb-4">🧰</div>
           <h1 className="text-3xl sm:text-5xl font-black leading-tight mb-3">
             تكنولوجيا <span className="text-transparent bg-clip-text bg-gradient-to-l from-purple-400 via-fuchsia-400 to-amber-300">المنصة</span>

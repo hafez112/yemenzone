@@ -85,7 +85,7 @@ export default function TopBar() {
         { href: '/services', icon: '🛠️', label: t('ourServices') },
         { href: '/tools', icon: '🧰', label: 'تكنولوجيا المنصة' },
         { href: '/blog', icon: '📝', label: t('blog') },
-        { href: '/about', icon: '🇾🇪', label: 'من نحن' },
+        { href: '/about', icon: 'ℹ️', label: 'من نحن' },
       ],
     },
     {

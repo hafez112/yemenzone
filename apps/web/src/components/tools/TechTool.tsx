@@ -76,7 +76,7 @@ export default function TechTool() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead><tr className="text-white/50 text-xs border-b border-white/10">
-              <th className="py-2 text-right">الميزة</th><th className="py-2">يمن زون 🇾🇪</th><th className="py-2">المنصات الأجنبية</th>
+              <th className="py-2 text-right">الميزة</th><th className="py-2">يمن زون</th><th className="py-2">المنصات الأجنبية</th>
             </tr></thead>
             <tbody className="text-center">
               {[

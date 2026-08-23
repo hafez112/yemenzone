@@ -17,7 +17,7 @@ async function getStats() {
   } catch { return null; }
 }
 
-// 🇾🇪 من نحن — قصة المنصة ورؤيتها بأرقام حقيقية
+// من نحن — قصة المنصة ورؤيتها بأرقام حقيقية
 export default async function AboutPage() {
   const stats = await getStats();
 

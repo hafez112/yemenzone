@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-// 🇾🇪 الفوتر الموحد — تصميم مبتكر بأعمدة منظمة + شريط دعوة للإنشاء
+// الفوتر الموحد — تصميم مبتكر بأعمدة منظمة + شريط دعوة للإنشاء
 export default function Footer({ platform, pages = [] }: { platform: any; pages?: { slug: string; title: string }[] }) {
   const year = new Date().getFullYear();
 
@@ -117,7 +117,7 @@ export default function Footer({ platform, pages = [] }: { platform: any; pages?
                 )}
                 <div className="flex items-center gap-2 text-gray-400">
                   <span className="w-8 h-8 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center">📍</span>
-                  الجمهورية اليمنية
+                  اليمن
                 </div>
               </div>
             </div>

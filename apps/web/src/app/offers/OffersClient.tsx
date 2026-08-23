@@ -82,10 +82,10 @@ export default function OffersClient({ data }: { data: { items: any[]; stats: an
           <div className="flex gap-2 flex-wrap mb-4 items-center">
             <button onClick={() => setGov('')}
               className={`px-3.5 py-2 rounded-full text-xs font-extrabold transition-all ${!gov ? 'bg-red-600 text-white shadow' : 'bg-white border border-red-100 text-gray-600'}`}>
-              🇾🇪 كل المحافظات
+              كل المحافظات
             </button>
             {govs.map((g) => (
-              <button key={g} onClick={() => { setGov(gov === g ? '' : g); toast(gov === g ? '🇾🇪 كل المحافظات' : `📍 عروض ${g}`); }}
+              <button key={g} onClick={() => { setGov(gov === g ? '' : g); toast(gov === g ? 'كل المحافظات' : `📍 عروض ${g}`); }}
                 className={`px-3.5 py-2 rounded-full text-xs font-extrabold transition-all ${gov === g ? 'bg-red-600 text-white shadow' : 'bg-white border border-red-100 text-gray-600'}`}>
                 {g}
               </button>

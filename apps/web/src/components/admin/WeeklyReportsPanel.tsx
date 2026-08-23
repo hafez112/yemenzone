@@ -60,7 +60,7 @@ export default function WeeklyReportsPanel() {
           className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-white">
           {Array.from({ length: 24 }, (_, h) => <option key={h} value={h} className="text-black">{h}:00</option>)}
         </select>
-        <span className="text-[10px] text-gray-500">بتوقيت عدن 🇾🇪</span>
+        <span className="text-[10px] text-gray-500">بتوقيت عدن</span>
         <div className="mr-auto flex gap-2">
           <button onClick={save} disabled={saving}
             className="px-4 py-2 rounded-xl text-xs font-black text-white disabled:opacity-50" style={{ background: 'var(--primary)' }}>

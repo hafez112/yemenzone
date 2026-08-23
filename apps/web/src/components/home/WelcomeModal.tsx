@@ -40,7 +40,7 @@ export default function WelcomeModal() {
         {/* جسم الرسالة */}
         <div className="bg-white px-6 pt-6 pb-6 -mt-4 rounded-t-3xl relative">
           <p className="text-gray-700 text-sm leading-7 font-semibold text-center">
-            تسوّق من متاجر ومطاعم وفنادق وخدمات كل اليمن 🇾🇪
+            تسوّق من متاجر ومطاعم وفنادق وخدمات كل اليمن
             <br />وادفع ببطاقتك بأي عملة — التحويل يتم تلقائياً بأسعار الصرف المعتمدة.
           </p>
           <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px] font-extrabold text-gray-600">

@@ -9,7 +9,7 @@ const SITE = 'https://yemenzone1.com';
 
 const slides = [
   {
-    title: 'أهلاً وسهلاً بك في يمن زون 🇾🇪',
+    title: 'أهلاً وسهلاً بك في يمن زون',
     subtitle: 'منصة اليمن الأولى للتجارة الإلكترونية — انطلقنا رسمياً بفضل الله',
     image: `${SITE}/ads/welcome-1.jpg`, link: '/explore', sort: 1,
   },

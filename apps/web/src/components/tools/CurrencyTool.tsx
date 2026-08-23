@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
 const CURR: Record<string, { name: string; icon: string }> = {
-  YER: { name: 'ريال يمني', icon: '🇾🇪' },
+  YER: { name: 'ريال يمني', icon: '💵' },
   USD: { name: 'دولار أمريكي', icon: '🇺🇸' },
   SAR: { name: 'ريال سعودي', icon: '🇸🇦' },
   AED: { name: 'درهم إماراتي', icon: '🇦🇪' },

@@ -44,7 +44,7 @@ export default async function CertificatePage({ params }: { params: Promise<{ sl
               {store.name}
             </h2>
             <p className="text-gray-500 mb-6">
-              {store.type?.nameAr} — {store.governorate || 'الجمهورية اليمنية'}
+              {store.type?.nameAr} — {store.governorate || 'اليمن'}
             </p>
 
             <p className="text-gray-600 leading-relaxed max-w-lg mx-auto mb-8">

@@ -73,7 +73,7 @@ export default function ToolShell({ slug, children }: { slug: string; children: 
               </button>
             )
           )}
-          <Link href="/" className="text-xs font-bold text-white/70 hover:text-white border border-white/15 rounded-full px-3 py-1.5 transition-colors">يمن زون 🇾🇪</Link>
+          <Link href="/" className="text-xs font-bold text-white/70 hover:text-white border border-white/15 rounded-full px-3 py-1.5 transition-colors">يمن زون</Link>
         </div>
       </header>
 
@@ -98,7 +98,7 @@ export default function ToolShell({ slug, children }: { slug: string; children: 
             <Link href="/tools" className="px-6 py-2.5 rounded-full font-bold text-sm bg-white/10 hover:bg-white/20 transition-colors">🧰 كل الخدمات</Link>
           </div>
         </div>
-        <p className="text-center text-[11px] text-white/40 mt-4">خدمة مجانية من منصة يمن زون 🇾🇪 — تعمل داخل متصفحك وبياناتك لا تغادر جهازك</p>
+        <p className="text-center text-[11px] text-white/40 mt-4">خدمة مجانية من منصة يمن زون — تعمل داخل متصفحك وبياناتك لا تغادر جهازك</p>
       </footer>
     </div>
   );
