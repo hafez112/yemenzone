@@ -1843,3 +1843,18 @@ model SupportTicket {
   @@index([category])
   @@map("support_tickets")
 }
+
+// ─── 📊 تتبع زوار المنصة — صفحة «الزوار والتنبيهات» في لوحة التحكم ───
+model PageView {
+  id        String   @id @default(cuid())
+  path      String   // المسار الذي زاره
+  storeSlug String?  // إن كانت الزيارة لصفحة متجر
+  ipHash    String?  // بصمة IP مُجزّأة (خصوصية — لا يُخزّن العنوان نفسه)
+  device    String?  // mobile | tablet | desktop
+  ref       String?  // مصدر الزيارة (google | direct | ...)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path, createdAt])
+  @@map("page_views")
+}

@@ -11,6 +11,7 @@ const SECTIONS: { id: string; title: string; icon: string; items: { href: string
     items: [
       { href: '/admin', icon: '📊', label: 'الرئيسية' },
       { href: '/admin/ops', icon: '🧠', label: 'غرفة العمليات' },
+      { href: '/admin/visitors', icon: '👁️', label: 'الزوار والتنبيهات' },
       { href: '/admin/ai', icon: '🤖', label: 'الذكاء الاصطناعي' },
     ],
   },

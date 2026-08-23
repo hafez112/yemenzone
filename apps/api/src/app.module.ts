@@ -38,6 +38,7 @@ import { MyToolsModule } from './modules/mytools/mytools.module';
 import { QaModule } from './modules/qa/qa.module';
 import { CartModule } from './modules/cart/cart.module';
 import { RecoModule } from './modules/reco/reco.module';
+import { VisitorsModule } from './modules/visitors/visitors.module';
 import { ShieldModule } from './modules/shield/shield.module';
 import { ShieldMiddleware } from './modules/shield/shield.middleware';
 import { AiCenterModule } from './modules/ai-center/ai-center.module';
@@ -48,7 +49,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { MiddlewareConsumer, NestModule } from '@nestjs/common';
 
 @Module({
-  imports: [PrismaModule, SecurityModule, ShieldModule, AuthModule, PublicModule, ThemeModule, StoresModule, ProductsModule, OrdersModule, BookingsModule, ReviewsModule, AdminModule, PlansModule, DeliveryModule, MessagingModule, PaymentsModule, CardsModule, FinanceModule, SecurityCenterModule, PublicApiModule, PlatformModule, NearbyModule, ComplaintsModule, BackupModule, CouponsModule, AdsModule, NotificationsModule, ReferralsModule, PwaModule, AccountingModule, ChatModule, ReturnsModule, FilesModule, WishlistModule, QaModule, CartModule, RecoModule, AiCenterModule, StoreTypesModule, ToolsModule, MyToolsModule, SupportModule, ReportsModule],
+  imports: [PrismaModule, SecurityModule, ShieldModule, AuthModule, PublicModule, ThemeModule, StoresModule, ProductsModule, OrdersModule, BookingsModule, ReviewsModule, AdminModule, PlansModule, DeliveryModule, MessagingModule, PaymentsModule, CardsModule, FinanceModule, SecurityCenterModule, PublicApiModule, PlatformModule, NearbyModule, ComplaintsModule, BackupModule, CouponsModule, AdsModule, NotificationsModule, ReferralsModule, PwaModule, AccountingModule, ChatModule, ReturnsModule, FilesModule, WishlistModule, QaModule, CartModule, RecoModule, AiCenterModule, StoreTypesModule, ToolsModule, MyToolsModule, SupportModule, ReportsModule, VisitorsModule],
   providers: [{ provide: APP_INTERCEPTOR, useClass: AuditInterceptor }], // 📜 تدقيق الإجراءات الإدارية تلقائياً
 })
 export class AppModule implements NestModule {

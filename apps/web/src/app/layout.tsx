@@ -18,6 +18,7 @@ import ToastHost from '@/components/Toast';
 import PwaRegister from '@/components/PwaRegister';
 import PwaInstaller from '@/components/PwaInstaller';
 import GaTracker from '@/components/GaTracker';
+import VisitorTracker from '@/components/VisitorTracker';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 const API = process.env.NEXT_PUBLIC_API_URL || '';
@@ -123,6 +124,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {seo.gaId && <GaTracker gaId={seo.gaId} />}
         <ToastHost />
         <PwaRegister />
+        <VisitorTracker />
         <MotionFallback />
         <NativeApp />
         <WebStudio />
