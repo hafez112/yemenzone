@@ -7,6 +7,9 @@ import SellerSidebar from '@/components/SellerSidebar';
 import DashboardPwa from '@/components/DashboardPwa';
 import { DashStat, DashPanel } from '@/components/dash/DashKit';
 import { KIND_INFO, type StoreKind } from '@/lib/activity';
+import { TOOLS } from '@/lib/tools';
+import { myTools, addMyTool, removeMyTool, type MyToolRow } from '@/lib/tool-db';
+import { toast } from '@/components/Toast';
 
 // لوحة البائع — تتكيف تلقائياً مع نوع المتجر (إعداد الذكاء المحلي)
 export default function SellerDashboard() {
@@ -17,9 +20,15 @@ export default function SellerDashboard() {
   const [advice, setAdvice] = useState<any>(null);
   const [inv, setInv] = useState<any>(null);
   const [insights, setInsights] = useState<any>(null);
+  // 🧰 خدمات التاجر المثبتة على الرئيسية
+  const [toolRows, setToolRows] = useState<MyToolRow[]>([]);
+  const [showPicker, setShowPicker] = useState(false);
+
+  const loadTools = () => myTools().then(setToolRows).catch(() => {});
 
   useEffect(() => {
     if (!getUser()) { router.push('/auth/login'); return; }
+    loadTools();
     api('/stores/my')
       .then(s => {
         setStore(s);
@@ -72,6 +81,20 @@ export default function SellerDashboard() {
     : kind === 'rentals' ? (store._count?.rentalUnits || 0)
     : (store._count?.services || 0);
   const bookingsCount = store.bookingsCount || 0;
+
+  // 🧰 خدمات التاجر — المثبتة على الرئيسية + المتاحة للإضافة
+  const merchantTools = TOOLS.filter((t) => t.cat === 'merchant');
+  const addedSlugs = toolRows.map((r) => r.slug);
+  const myToolMetas = addedSlugs.map((sl) => TOOLS.find((t) => t.slug === sl)).filter(Boolean) as any[];
+
+  const pinTool = async (slug: string) => {
+    try { await addMyTool(slug); toast('✅ أُضيفت الخدمة إلى رئيسية لوحتك'); loadTools(); }
+    catch (e: any) { toast(e.message || 'تعذرت الإضافة', 'error'); }
+  };
+  const unpinTool = async (slug: string) => {
+    try { await removeMyTool(slug); toast('🗑️ أُزيلت الخدمة من الرئيسية'); loadTools(); }
+    catch (e: any) { toast(e.message || 'تعذرت الإزالة', 'error'); }
+  };
 
   // ⚡ تحويل نص الإجراء السريع إلى وجهة حقيقية — الروابط السريعة تعمل الآن
   const actionRoute = (q: string): string => {
@@ -148,6 +171,31 @@ export default function SellerDashboard() {
               )}
             </DashPanel>
           )}
+
+          {/* 🧰 خدماتي السريعة — التاجر يثبّت أي خدمة من أدواته على الرئيسية */}
+          <DashPanel icon="🧰" title="خدماتي على الرئيسية" className="mb-4" href="/seller/tools" hrefLabel="كل الأدوات ←">
+            <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+              {myToolMetas.map((t: any) => (
+                <div key={t.slug} className="relative group">
+                  <Link href={`/tools/${t.slug}`}
+                    className="bg-white/70 hover:bg-white rounded-2xl p-3 flex flex-col items-center gap-1.5 transition-all card-hover text-center min-h-[92px]">
+                    <span className={`w-10 h-10 rounded-xl bg-gradient-to-br ${t.grad} grid place-items-center text-xl shadow`}>{t.icon}</span>
+                    <span className="text-[11px] font-extrabold text-gray-700 leading-tight line-clamp-2">{t.title}</span>
+                  </Link>
+                  <button onClick={() => unpinTool(t.slug)} title="إزالة من الرئيسية"
+                    className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-black shadow opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                </div>
+              ))}
+              <button onClick={() => setShowPicker(true)}
+                className="rounded-2xl p-3 flex flex-col items-center justify-center gap-1 border-2 border-dashed border-purple-300 text-purple-500 hover:bg-purple-50 transition-all min-h-[92px]">
+                <span className="text-2xl leading-none">＋</span>
+                <span className="text-[10px] font-extrabold">أضف خدمة</span>
+              </button>
+            </div>
+            {myToolMetas.length === 0 && (
+              <p className="text-[11px] text-gray-400 font-bold mt-2 text-center">ثبّت خدماتك المفضلة هنا — تُفتح بضغطة واحدة من رئيسية لوحتك دائماً</p>
+            )}
+          </DashPanel>
 
           {/* 💡 نصيحة اليوم — قاعدة محلية تتجدد يومياً */}
           {insights?.tip && (
@@ -294,6 +342,35 @@ export default function SellerDashboard() {
           )}
         </div>
       </div>
+
+      {/* 🧰 نافذة اختيار الخدمات — أي خدمة من أدوات التاجر تُثبَّت على الرئيسية */}
+      {showPicker && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center p-3"
+          onClick={() => setShowPicker(false)}>
+          <div className="bg-white rounded-3xl p-4 w-full max-w-lg max-h-[75vh] overflow-y-auto anim-fade-up"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-black text-sm">🧰 اختر خدمة لتثبيتها على رئيسية لوحتك</h3>
+              <button onClick={() => setShowPicker(false)} className="w-8 h-8 rounded-full bg-gray-100 font-black text-sm">✕</button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {merchantTools.map((t) => {
+                const added = addedSlugs.includes(t.slug);
+                return (
+                  <button key={t.slug} disabled={added} onClick={() => pinTool(t.slug)}
+                    className={`rounded-2xl p-3 flex items-center gap-2 border text-right transition-all ${
+                      added ? 'opacity-40 border-gray-100' : 'border-purple-100 hover:border-purple-300 hover:bg-purple-50'
+                    }`}>
+                    <span className={`w-9 h-9 rounded-xl bg-gradient-to-br ${t.grad} grid place-items-center text-lg shrink-0`}>{t.icon}</span>
+                    <span className="text-[11px] font-extrabold text-gray-700 flex-1 leading-tight">{t.title}</span>
+                    {added && <span className="text-emerald-500 text-xs font-black shrink-0">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
