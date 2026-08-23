@@ -5,6 +5,8 @@ import Link from 'next/link';
 import SellerSidebar from '@/components/SellerSidebar';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
+import { buyTool, toolPrices, toolPriceCurrencies } from '@/lib/tool-db';
+import { useCurrency } from '@/lib/currency';
 
 // 🤖 الإضافة الذكية للمنتجات — خدمة مدفوعة: صنف ← اقتراحات كاملة ← مراجعة ← إضافة مباشرة
 interface Suggestion {
@@ -15,7 +17,12 @@ interface Suggestion {
 
 export default function SmartAddPage() {
   const router = useRouter();
+  const { list: currencies } = useCurrency();
   const [store, setStore] = useState<any>(null);
+  // 💎 سعر الخدمة (تسعّره الإدارة) — شراء مرة واحدة ببطاقة يمن زون وفتح دائم
+  const [price, setPrice] = useState(0);
+  const [priceCur, setPriceCur] = useState('YER');
+  const [buyBusy, setBuyBusy] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [categoryId, setCategoryId] = useState('');
   const [count, setCount] = useState(5);
@@ -39,7 +46,30 @@ export default function SmartAddPage() {
       setAiCfg(d);
       setAiForm({ baseUrl: d.baseUrl, apiKey: '', model: d.model });
     }).catch(() => {});
+    // 💰 سعر الخدمة من قائمة الخدمات العامة
+    toolPrices().then(async (p) => {
+      if (p['smart-add']) {
+        setPrice(p['smart-add']);
+        const curs = await toolPriceCurrencies();
+        setPriceCur(curs['smart-add'] || 'YER');
+      }
+    });
   }, []);
+
+  // 💳 شراء الخدمة من بطاقة يمن زون — تفتح فور نجاح الدفع
+  const buy = async () => {
+    setBuyBusy(true);
+    try {
+      const r = await buyTool('smart-add');
+      toast('🎉 ' + (r.message || 'فُتحت الخدمة'));
+      setLocked(false);
+      const d = await api('/seller/ai/smart-add/settings').catch(() => null);
+      if (d) setAiCfg(d);
+    } catch (e: any) { toast(e.message, 'error'); }
+    setBuyBusy(false);
+  };
+
+  const priceSym = currencies.find((c) => c.code === String(priceCur || 'YER').toUpperCase())?.symbol || 'ر.ي';
 
   const saveAi = async () => {
     setAiBusy(true);
@@ -94,23 +124,35 @@ export default function SmartAddPage() {
 
   if (!store) return null;
 
-  // 🔒 شاشة القفل — الخدمة مدفوعة
+  // 💎 شاشة الشراء — خدمة مدفوعة مثل خدمات التاجر: دفع مباشر من بطاقة يمن زون وفتح فوري دائم
   if (locked || (aiCfg && !aiCfg.featureOn)) return (
     <main className="min-h-screen pt-20 pb-24 px-3 bg-gradient-to-br from-purple-50 to-teal-50">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-4">
         <SellerSidebar store={store} />
         <div className="flex-1 flex items-center justify-center">
-          <div className="glass rounded-3xl p-10 text-center max-w-md anim-bounce-in">
+          <div className="glass rounded-3xl p-8 text-center max-w-md anim-bounce-in">
             <div className="text-6xl mb-4">🤖</div>
-            <h1 className="text-xl font-black mb-2">الإضافة الذكية للمنتجات — خدمة مدفوعة 💎</h1>
-            <p className="text-gray-500 text-sm mb-5 leading-relaxed">
+            <h1 className="text-xl font-black mb-2">الإضافة الذكية للمنتجات 💎</h1>
+            <p className="text-gray-500 text-sm mb-4 leading-relaxed">
               اختر الصنف ويولّد الذكاء منتجات كاملة: اسم، سعر، وصف، مميزات، وصورة احترافية —
               تراجعها وتضيفها لمتجرك بضغطة واحدة. تعمل بالذكاء المحلي أو بمفتاح ذكائك الخارجي الخاص.
             </p>
-            <Link href="/seller/subscription"
-              className="btn-primary inline-block text-white font-extrabold px-8 py-3.5 rounded-full">
-              💎 رقِّ خطتك لتفعيلها
-            </Link>
+            <div className="text-right text-xs font-bold text-gray-600 space-y-1.5 mb-5 bg-white/60 rounded-2xl p-4">
+              <div>✅ منتجات كاملة لأي صنف في ثوانٍ</div>
+              <div>✅ صورة احترافية مولّدة لكل منتج</div>
+              <div>✅ مراجعة وتعديل قبل الإضافة لمتجرك</div>
+              <div>✅ شراء مرة واحدة — تبقى لك دائماً</div>
+            </div>
+            {price > 0 && (
+              <p className="text-3xl font-black text-purple-700 mb-4">{price.toLocaleString()} <span className="text-sm">{priceSym}</span></p>
+            )}
+            <button onClick={buy} disabled={buyBusy}
+              className="btn-primary w-full py-3.5 rounded-full text-white font-extrabold disabled:opacity-50">
+              {buyBusy ? '⏳ جارٍ الدفع من بطاقتك…' : '💳 ادفع ببطاقة يمن زون وافتحها فوراً'}
+            </button>
+            <p className="text-[11px] text-gray-400 mt-3 font-bold">
+              الدفع حصرياً عبر بطاقة يمن زون — <Link href="/seller/card" className="text-purple-600 underline">اشحن بطاقتك من هنا</Link>
+            </p>
           </div>
         </div>
       </div>

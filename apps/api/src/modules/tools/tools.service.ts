@@ -16,6 +16,8 @@ export const TOOL_KEYS = [
   'quotes', 'vouchers', 'sales-report', 'backup', 'appointments',
   'menu-qr', 'rooms', 'rental-contract', 'tickets',
   'cv', 'warranties', 'vault', 'budget', 'quiz-maker', 'polls',
+  // 💎 خدمتا المتجر المدفوعتان — شراء مباشر ببطاقة يمن زون وفتح فوري (ليستا ضمن خطط الاشتراك)
+  'smart-add', 'store-app',
 ] as const;
 
 // 💰 الأسعار الافتراضية للخدمات المدفوعة (بالريال اليمني — مثل أسعار الباقات)
@@ -25,6 +27,8 @@ export const TOOL_DEFAULT_PRICES: Record<string, number> = {
   quotes: 4000, vouchers: 4000, 'sales-report': 6000, backup: 10000, appointments: 8000,
   'menu-qr': 10000, rooms: 12000, 'rental-contract': 7000, tickets: 14000,
   cv: 3000, warranties: 3000, vault: 4000, budget: 3000, 'quiz-maker': 8000, polls: 2000,
+  // 💎 خدمتا المتجر — يعدّل الإدارة أسعارهما من لوحة الخدمات
+  'smart-add': 9000, 'store-app': 15000,
 };
 
 // أسماء عربية للخدمات — تُستخدم في تسميات مواضع الإعلانات ولوحة الإدارة
@@ -47,6 +51,8 @@ export const TOOL_LABELS: Record<string, string> = {
   'rental-contract': 'عقود الإيجار الإلكترونية', tickets: 'تذاكر الفعاليات بـ QR',
   cv: 'صانع السيرة الذاتية', warranties: 'أرشيف الضمانات الذكي', vault: 'خزنة كلمات المرور',
   budget: 'مدير الميزانية الشخصية', 'quiz-maker': 'منشئ الاختبارات والشهادات', polls: 'صانع الاستطلاعات',
+  // 💎 خدمتا المتجر المدفوعتان
+  'smart-add': 'الإضافة الذكية للمنتجات', 'store-app': 'تطبيق المتجر الذكي',
 };
 
 const CONFIG_KEY = 'tools.config';

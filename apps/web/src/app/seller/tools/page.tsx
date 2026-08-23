@@ -53,9 +53,11 @@ export default function SellerToolsPage() {
               <span className="font-extrabold text-sm leading-snug">{t.title}</span>
               <span className="text-[11px] text-gray-500 mt-1 leading-snug line-clamp-2">{t.tagline}</span>
               <span className="mt-3 text-[10px] font-bold text-gray-400 flex items-center gap-1">
-                {row?.hasData
-                  ? <>🗄️ لها بيانات محفوظة — آخر تحديث {new Date(row.updatedAt).toLocaleDateString('ar-YE')}</>
-                  : '🗄️ قاعدة بياناتها جاهزة في حسابك'}
+                {(t.slug === 'smart-add' || t.slug === 'store-app')
+                  ? '💎 خدمة مدفوعة — تُشترى ببطاقتك وتفتح فوراً في لوحتك'
+                  : row?.hasData
+                    ? <>🗄️ لها بيانات محفوظة — آخر تحديث {new Date(row.updatedAt).toLocaleDateString('ar-YE')}</>
+                    : '🗄️ قاعدة بياناتها جاهزة في حسابك'}
               </span>
             </Link>
           );

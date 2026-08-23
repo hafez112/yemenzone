@@ -130,11 +130,17 @@ export class StorefrontController {
       };
     }
 
+    // 📱 تطبيق المتجر (PWA) — خدمة مدفوعة تُشترى ببطاقة يمن زون وتفتح فوراً (ليست ميزة خطة)
+    const appBought = await this.prisma.toolPurchase.findUnique({
+      where: { ownerType_ownerId_slug: { ownerType: 'seller', ownerId: store.sellerId, slug: 'store-app' } },
+      select: { id: true },
+    });
+
     return {
       ...store,
       subscription: undefined, // لا نرسل تفاصيل الاشتراك للزوار — الميزات فقط
       sellerLevel: level,
-      features: { pwa: !!features.pwa, storeAds: !!features.storeAds },
+      features: { pwa: !!features.pwa || !!appBought, storeAds: !!features.storeAds },
       categories,
       uncategorized: this.ai.sortProductsSmart(store.products),
       mall,

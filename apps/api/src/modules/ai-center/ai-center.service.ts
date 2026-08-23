@@ -7,7 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { encryptSecret, decryptSecret, maskSecret } from '../../common/crypto.util';
 import { UPLOADS_DIR } from '../../common/upload';
 import { sanitizeText } from '../../libs/security';
-import { requireFeature, effectiveFeatures } from '../../common/features';
+import { effectiveFeatures } from '../../common/features';
 import {
   answerAssistant, generateProductDescription,
   normalizeArabic, ASSISTANT_TOPICS,
@@ -365,6 +365,23 @@ export class AiCenterService {
     return store;
   }
 
+  // 💳 هل اشترى التاجر خدمة «الإضافة الذكية»؟ — خدمة مدفوعة ببطاقة يمن زون، ليست ميزة خطة
+  private async smartAddPurchased(sellerId: string) {
+    const bought = await this.prisma.toolPurchase.findUnique({
+      where: { ownerType_ownerId_slug: { ownerType: 'seller', ownerId: sellerId, slug: 'smart-add' } },
+    });
+    return !!bought;
+  }
+
+  private async requireSmartAddAccess(store: any) {
+    if (!(await this.smartAddPurchased(store.sellerId))) {
+      throw new ForbiddenException({
+        message: '«الإضافة الذكية للمنتجات» خدمة مدفوعة — ادفعها من بطاقة يمن زون وتفتح لك فوراً ودائماً',
+        serviceKey: 'smart-add', locked: true,
+      });
+    }
+  }
+
   // 🔑 إعدادات الذكاء الخارجي الخاصة بالتاجر — يضيف مفتاحه بنفسه (تُحفظ مشفّرة في متجره)
   async smartAddSettings(sellerId: string) {
     const store = await this.sellerStore(sellerId);
@@ -374,7 +391,7 @@ export class AiCenterService {
       baseUrl: ext.baseUrl || 'https://api.openai.com/v1',
       model: ext.model || 'gpt-4o-mini',
       maskedKey: ext.apiKey ? maskSecret(ext.apiKey) : '',
-      featureOn: !!effectiveFeatures(store).smartAdd,
+      featureOn: await this.smartAddPurchased(sellerId),
     };
   }
 
@@ -398,7 +415,7 @@ export class AiCenterService {
   // 🧠 توليد اقتراحات منتجات كاملة لصنف محدد — خارجي (مفتاح التاجر) أو محلي
   async suggestProducts(sellerId: string, body: any) {
     const store = await this.sellerStore(sellerId);
-    requireFeature(store, 'smartAdd');
+    await this.requireSmartAddAccess(store);
     const categoryId = String(body.categoryId || '');
     const category = await this.prisma.category.findFirst({ where: { id: categoryId, storeId: store.id } });
     if (!category) throw new NotFoundException('الصنف غير موجود في متجرك');
@@ -496,7 +513,7 @@ export class AiCenterService {
   // ➕ إضافة المنتج المُراجع مباشرة إلى متجر التاجر (مع تنزيل الصورة الذكية وتحويلها WebP)
   async quickAddProduct(sellerId: string, body: any) {
     const store = await this.sellerStore(sellerId);
-    requireFeature(store, 'smartAdd');
+    await this.requireSmartAddAccess(store);
     const feats = effectiveFeatures(store);
     const max = Number(feats.maxProducts ?? 20);
     const countNow = await this.prisma.product.count({ where: { storeId: store.id } });

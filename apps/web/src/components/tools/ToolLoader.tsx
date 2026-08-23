@@ -63,11 +63,19 @@ const MAP: Record<string, any> = {
   budget: dynamic(() => import('./BudgetTool'), { loading: () => loading, ssr: false }),
   'quiz-maker': dynamic(() => import('./QuizMakerTool'), { loading: () => loading, ssr: false }),
   polls: dynamic(() => import('./PollsTool'), { loading: () => loading, ssr: false }),
+  // 💎 خدمتا المتجر المدفوعتان — بطاقة تحويل إلى لوحة البائع
+  'smart-add': dynamic(() => import('./StoreServiceRedirect'), { loading: () => loading, ssr: false }),
+  'store-app': dynamic(() => import('./StoreServiceRedirect'), { loading: () => loading, ssr: false }),
 };
+
+// الخدمتان المرتبطتان بلوحة البائع — يمرّر إليهما slug ليعرف وجهته
+const STORE_SERVICES = ['smart-add', 'store-app'];
 
 export default function ToolLoader({ slug }: { slug: string }) {
   const Cmp = MAP[slug];
   if (!Cmp || !toolBySlug(slug)) return null;
   // 🛡️ الحارس يقرر: خدمات التاجر للبائعين فقط، والبقية تتطلب دخول العميل
-  return <ToolShell slug={slug}><ToolGate slug={slug}><Cmp /></ToolGate></ToolShell>;
+  return <ToolShell slug={slug}><ToolGate slug={slug}>{
+    STORE_SERVICES.includes(slug) ? <Cmp slug={slug} /> : <Cmp />
+  }</ToolGate></ToolShell>;
 }

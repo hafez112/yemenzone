@@ -9,7 +9,7 @@ import { offerLeftText } from '@/lib/offer';
 import { KIND_INFO, type StoreKind } from '@/lib/activity';
 
 // 💎 اشتراكي — الخطة الحالية + الميزات + الترقية بموافقة الإدارة + طلب التمييز
-const LOCKABLE = ['analytics', 'coupons', 'api', 'customDesign', 'customDomain', 'campaigns', 'storeAds', 'pwa', 'finance', 'inventory', 'crm'] as const;
+const LOCKABLE = ['analytics', 'coupons', 'api', 'customDesign', 'customDomain', 'campaigns', 'storeAds', 'finance', 'inventory', 'crm'] as const;
 
 // 🧬 حد العناصر حسب نوع المتجر — لكل نشاط مفتاحه ومصطلحه
 const LIMIT_META: Record<StoreKind, { key: string; icon: string; unlimited: string; limited: (v: number) => string }> = {
@@ -220,7 +220,6 @@ export default function SubscriptionPage() {
                     <li>{f.customDesign ? '✅' : '🔒'} تخصيص التصميم</li>
                     <li>{f.api ? '✅' : '🔒'} API للمطورين</li>
                     <li>{f.storeAds ? '✅' : '🔒'} بنرات المتجر الإعلانية</li>
-                    <li>{f.pwa ? '✅' : '🔒'} تطبيق الويب التقدمي 📱</li>
                   </ul>
                   {!isCurrent && !pendingPayment && (
                     Number(p.priceMonthly) === 0 ? (

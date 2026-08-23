@@ -6,23 +6,50 @@ import SellerSidebar from '@/components/SellerSidebar';
 import { api, getUser } from '@/lib/api';
 import { toast } from '@/components/Toast';
 import { kindInfo } from '@/lib/activity';
+import { buyTool, myAccess, toolPrices, toolPriceCurrencies } from '@/lib/tool-db';
+import { useCurrency } from '@/lib/currency';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
-// 📱 تطبيق متجري (PWA) — خدمة مدفوعة تحوّل المتجر إلى تطبيق حقيقي باسمه وشعاره
+// 📱 تطبيق متجري (PWA) — خدمة مدفوعة ببطاقة يمن زون تحوّل المتجر إلى تطبيق حقيقي باسمه وشعاره
 export default function SellerPwaPage() {
   const router = useRouter();
+  const { list: currencies } = useCurrency();
   const [data, setData] = useState<any>(null);
   const [iconOk, setIconOk] = useState(true);
+  const [bought, setBought] = useState(false);
+  const [price, setPrice] = useState(0);
+  const [priceCur, setPriceCur] = useState('YER');
+  const [buyBusy, setBuyBusy] = useState(false);
 
   useEffect(() => {
     if (!getUser()) { router.push('/auth/login'); return; }
     api('/seller/subscription').then(setData).catch(() => router.push('/seller/setup'));
+    myAccess().then((a) => setBought(a.purchased.includes('store-app'))).catch(() => {});
+    toolPrices().then(async (p) => {
+      if (p['store-app']) {
+        setPrice(p['store-app']);
+        const curs = await toolPriceCurrencies();
+        setPriceCur(curs['store-app'] || 'YER');
+      }
+    });
   }, []);
+
+  // 💳 شراء الخدمة من بطاقة يمن زون — تفتح فور نجاح الدفع
+  const buy = async () => {
+    setBuyBusy(true);
+    try {
+      const r = await buyTool('store-app');
+      toast('🎉 ' + (r.message || 'فُتحت الخدمة'));
+      setBought(true);
+    } catch (e: any) { toast(e.message, 'error'); }
+    setBuyBusy(false);
+  };
 
   if (!data) return null;
   const { store, features } = data;
-  const on = !!features?.pwa;
+  const on = bought || !!features?.pwa;
+  const priceSym = currencies.find((c) => c.code === String(priceCur || 'YER').toUpperCase())?.symbol || 'ر.ي';
   const kn = kindInfo(store);
   const primary = store?.themeJson?.primary || '#6C3DF5';
   const iconUrl = `${API}/api/v1/pwa/store-icon/${store.slug}/192`;
@@ -45,8 +72,8 @@ export default function SellerPwaPage() {
           </div>
 
           {!on ? (
-            /* 🔒 شاشة القفل — الخدمة مدفوعة */
-            <div className="glass rounded-3xl p-10 text-center max-w-md mx-auto anim-bounce-in">
+            /* 💎 شاشة الشراء — دفع مباشر من بطاقة يمن زون وفتح فوري دائم */
+            <div className="glass rounded-3xl p-8 text-center max-w-md mx-auto anim-bounce-in">
               <div className="text-6xl mb-4">📱</div>
               <h2 className="text-xl font-black mb-2">حوّل {kn.yours} إلى تطبيق حقيقي 💎</h2>
               <p className="text-gray-500 text-sm mb-4 leading-relaxed">
@@ -58,11 +85,18 @@ export default function SellerPwaPage() {
                 <div>✅ يفتح بملء الشاشة كتطبيق مستقل</div>
                 <div>✅ بانر تحميل ذكي يظهر للزوار تلقائياً</div>
                 <div>✅ يعمل على أندرويد وآيفون</div>
+                <div>✅ شراء مرة واحدة — تبقى لك دائماً</div>
               </div>
-              <Link href="/seller/subscription"
-                className="btn-primary inline-block text-white font-extrabold px-8 py-3.5 rounded-full">
-                💎 رقِّ خطتك لتفعيلها
-              </Link>
+              {price > 0 && (
+                <p className="text-3xl font-black text-purple-700 mb-4">{price.toLocaleString()} <span className="text-sm">{priceSym}</span></p>
+              )}
+              <button onClick={buy} disabled={buyBusy}
+                className="btn-primary w-full py-3.5 rounded-full text-white font-extrabold disabled:opacity-50">
+                {buyBusy ? '⏳ جارٍ الدفع من بطاقتك…' : '💳 ادفع ببطاقة يمن زون وافتحها فوراً'}
+              </button>
+              <p className="text-[11px] text-gray-400 mt-3 font-bold">
+                الدفع حصرياً عبر بطاقة يمن زون — <Link href="/seller/card" className="text-purple-600 underline">اشحن بطاقتك من هنا</Link>
+              </p>
             </div>
           ) : (
             <>

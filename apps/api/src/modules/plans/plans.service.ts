@@ -37,10 +37,19 @@ export class PlansService {
       where: { payerId: sellerId, purpose: 'subscription', status: 'pending' },
       orderBy: { createdAt: 'desc' },
     });
+    // 💎 الخدمات المدفوعة المشتراة ببطاقة يمن زون — تُدمج في خريطة الميزات لتنفتح أقفال الواجهة فوراً
+    const bought = await this.prisma.toolPurchase.findMany({
+      where: { ownerType: 'seller', ownerId: sellerId, slug: { in: ['smart-add', 'store-app'] } },
+      select: { slug: true },
+    });
+    const owned = new Set(bought.map((b) => b.slug));
+    const feats: Record<string, any> = effectiveFeatures(store);
+    feats.smartAdd = owned.has('smart-add');            // الإضافة الذكية — شراء مباشر لا خطة
+    feats.pwa = !!feats.pwa || owned.has('store-app');  // تطبيق المتجر — شراء مباشر (أو خطة قديمة)
     return {
       store, plans, current: store.subscription, pendingPayment,
       // الميزات الفعالة + أسماؤها — الواجهة تبني منها شاشة الاشتراك والأقفال
-      features: effectiveFeatures(store),
+      features: feats,
       featureLabels: FEATURE_AR,
       subscriptionActive: subscriptionActive(store.subscription),
       grants: (store.grants as any) || {},

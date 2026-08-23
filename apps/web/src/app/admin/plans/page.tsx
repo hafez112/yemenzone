@@ -14,7 +14,6 @@ const FEATURE_KEYS: Record<string, string> = {
   customDomain: "🌐 النطاق الخاص",
   campaigns: "📣 حملات الزبائن",
   storeAds: "🖼️ بنرات المتجر الإعلانية",
-  pwa: "📱 تطبيق الويب التقدمي",
   finance: "💹 التقرير المالي المتقدم",
   inventory: "📦 إدارة المخزون الذكية",
   crm: "👥 إدارة العملاء",
@@ -28,7 +27,7 @@ const KIND_KEYS: Record<string, string> = {
   restaurants: "🍽️ المطاعم",
   malls: "🏬 المولات التجارية",
 };
-const emptyFeats = { maxProducts: 100, maxImages: 6, maxUnits: "", maxRooms: "", maxServices: "", analytics: false, coupons: false, api: false, customDesign: false, customDomain: false, campaigns: false, storeAds: false, pwa: false, finance: false, inventory: false, crm: false };
+const emptyFeats = { maxProducts: 100, maxImages: 6, maxUnits: "", maxRooms: "", maxServices: "", analytics: false, coupons: false, api: false, customDesign: false, customDomain: false, campaigns: false, storeAds: false, finance: false, inventory: false, crm: false };
 const empty = { id: "", name: "", slug: "", kind: "", priceMonthly: 0, priceYearly: "", currency: "", priceBefore: "", offerEndsAt: "", offerBadge: "", sort: 0, isActive: true, feats: { ...emptyFeats } };
 
 export default function AdminPlansPage() {
@@ -73,7 +72,6 @@ export default function AdminPlansPage() {
           customDomain: !!form.feats.customDomain,
           campaigns: !!form.feats.campaigns,
           storeAds: !!form.feats.storeAds,
-          pwa: !!form.feats.pwa,
           finance: !!form.feats.finance,
           inventory: !!form.feats.inventory,
           crm: !!form.feats.crm,
