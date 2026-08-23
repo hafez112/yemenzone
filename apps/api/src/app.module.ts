@@ -46,10 +46,11 @@ import { StoreTypesModule } from './modules/store-types/store-types.module';
 import { ToolsModule } from './modules/tools/tools.module';
 import { SupportModule } from './modules/support/support.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { SharesModule } from './modules/shares/shares.module';
 import { MiddlewareConsumer, NestModule } from '@nestjs/common';
 
 @Module({
-  imports: [PrismaModule, SecurityModule, ShieldModule, AuthModule, PublicModule, ThemeModule, StoresModule, ProductsModule, OrdersModule, BookingsModule, ReviewsModule, AdminModule, PlansModule, DeliveryModule, MessagingModule, PaymentsModule, CardsModule, FinanceModule, SecurityCenterModule, PublicApiModule, PlatformModule, NearbyModule, ComplaintsModule, BackupModule, CouponsModule, AdsModule, NotificationsModule, ReferralsModule, PwaModule, AccountingModule, ChatModule, ReturnsModule, FilesModule, WishlistModule, QaModule, CartModule, RecoModule, AiCenterModule, StoreTypesModule, ToolsModule, MyToolsModule, SupportModule, ReportsModule, VisitorsModule],
+  imports: [PrismaModule, SecurityModule, ShieldModule, AuthModule, PublicModule, ThemeModule, StoresModule, ProductsModule, OrdersModule, BookingsModule, ReviewsModule, AdminModule, PlansModule, DeliveryModule, MessagingModule, PaymentsModule, CardsModule, FinanceModule, SecurityCenterModule, PublicApiModule, PlatformModule, NearbyModule, ComplaintsModule, BackupModule, CouponsModule, AdsModule, NotificationsModule, ReferralsModule, PwaModule, AccountingModule, ChatModule, ReturnsModule, FilesModule, WishlistModule, QaModule, CartModule, RecoModule, AiCenterModule, StoreTypesModule, ToolsModule, MyToolsModule, SupportModule, ReportsModule, VisitorsModule, SharesModule],
   providers: [{ provide: APP_INTERCEPTOR, useClass: AuditInterceptor }], // 📜 تدقيق الإجراءات الإدارية تلقائياً
 })
 export class AppModule implements NestModule {

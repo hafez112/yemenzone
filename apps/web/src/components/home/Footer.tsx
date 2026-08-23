@@ -38,6 +38,7 @@ export default function Footer({ platform, pages = [] }: { platform: any; pages?
         { href: '/directory', label: '📖 دليل الأعمال اليمني' },
         { href: '/nearby', label: 'المتاجر القريبة' },
         { href: '/tools', label: '🧰 تكنولوجيا المنصة — خدمات مجانية' },
+        { href: '/invest', label: '📈 استثمر في المنصة — امتلك أسهماً' },
         { href: '/track', label: 'تتبع طلبك' },
         { href: '/auth/customer-login', label: 'حسابي' },
       ],

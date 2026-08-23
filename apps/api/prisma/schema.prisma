@@ -1906,3 +1906,47 @@ model DriverWithdrawal {
   @@index([status, createdAt])
   @@map("driver_withdrawals")
 }
+
+// ═══ 📈 أسهم المنصة — جولات بيع الإسهام وصكوك الملكية ═══
+
+// جولة بيع أسهم من إسهام المنصة — تضيفها الإدارة بسعر بيع محدد
+model ShareOffering {
+  id            String            @id @default(cuid())
+  title         String // اسم الجولة: «الجولة الأولى»
+  description   String?
+  totalShares   Int // عدد الأسهم المطروحة في الجولة
+  pricePerShare Decimal           @db.Decimal(12, 2) // سعر بيع السهم
+  currency      String            @default("YER")
+  isActive      Boolean           @default(true)
+  startsAt      DateTime          @default(now())
+  endsAt        DateTime?
+  certificates  ShareCertificate[]
+  createdAt     DateTime          @default(now())
+
+  @@map("share_offerings")
+}
+
+// 📜 صك ملكية الأسهم — يُصدر فور الدفع بالبطاقة أو بموافقة الإدارة على التحويل
+model ShareCertificate {
+  id            String        @id @default(cuid())
+  number        String        @unique // YZS-000001 — رقم الصك الموثق
+  offeringId    String
+  offering      ShareOffering @relation(fields: [offeringId], references: [id])
+  ownerType     String // customer | seller
+  ownerId       String
+  ownerName     String
+  ownerPhone    String
+  shares        Int
+  pricePerShare Decimal       @db.Decimal(12, 2)
+  totalAmount   Decimal       @db.Decimal(12, 2)
+  currency      String        @default("YER")
+  method        String // yz-card | transfer
+  proofImage    String? // إثبات التحويل
+  status        String        @default("pending") // pending | active | cancelled | rejected
+  reviewedAt    DateTime?
+  createdAt     DateTime      @default(now())
+
+  @@index([ownerType, ownerId])
+  @@index([status, createdAt])
+  @@map("share_certificates")
+}

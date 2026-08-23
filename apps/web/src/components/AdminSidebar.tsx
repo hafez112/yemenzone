@@ -51,6 +51,7 @@ const SECTIONS: { id: string; title: string; icon: string; items: { href: string
       { href: '/admin/coupons', icon: '🎟️', label: 'كوبونات المنصة' },
       { href: '/admin/payments', icon: '💳', label: 'المدفوعات' },
       { href: '/admin/cards', icon: '🎫', label: 'البطاقات والمحافظ' },
+      { href: '/admin/shares', icon: '📈', label: 'أسهم المنصة' },
       { href: '/admin/finance', icon: '💹', label: 'المركز المالي' },
       { href: '/admin/accounting', icon: '💼', label: 'المكتب المحاسبي' },
       { href: '/admin/analytics', icon: '📈', label: 'تحليلات المنصة' },
