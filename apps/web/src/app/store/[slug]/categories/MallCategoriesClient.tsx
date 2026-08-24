@@ -14,9 +14,9 @@ export default function MallCategoriesClient({ store, primary }: { store: any; p
         <div className="relative overflow-hidden rounded-3xl p-5 text-white shadow-xl"
           style={{ background: `linear-gradient(135deg, ${primary}, #F59E0B)` }}>
           <div className="anim-blob absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/15 blur-2xl pointer-events-none" />
-          <div className="relative flex items-center gap-3">
+          <div className="relative flex items-center gap-3 min-w-0">
             <span className="text-4xl">🗂️</span>
-            <div>
+            <div className="min-w-0">
               <h1 className="f-2xl font-black">أصناف {store.name}</h1>
               <p className="f-xs text-white/85 font-bold">{isMall ? 'تصفح المول صنفاً صنفاً — رئيسية وفرعية' : 'تصفح أصناف المتجر — رئيسية وفرعية'}</p>
             </div>
@@ -33,7 +33,7 @@ export default function MallCategoriesClient({ store, primary }: { store: any; p
             </Link>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-3 mt-4 stagger">
+          <div className="grid sm:grid-cols-2 gap-2.5 sm:gap-3 mt-4 stagger">
             {tree.map((t: any) => (
               <div key={t.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden card-hover">
                 <Link href={`/store/${store.slug}/category/${t.id}`}

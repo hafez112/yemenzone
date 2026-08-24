@@ -21,7 +21,7 @@ export default function Loading() {
         ))}
       </div>
       {/* شبكة العناصر */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-4 mt-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3 px-4 mt-5">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
             <div className="skeleton h-36 w-full" />

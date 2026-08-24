@@ -29,7 +29,7 @@ export default function Loading() {
       </div>
       {/* عناصر مشابهة */}
       <div className="skeleton h-6 w-40 rounded-xl mt-10 mb-4" />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="rounded-2xl border border-gray-100 bg-white overflow-hidden">
             <div className="skeleton h-32 w-full" />

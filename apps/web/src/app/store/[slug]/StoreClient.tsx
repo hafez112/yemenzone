@@ -113,8 +113,8 @@ export default function StoreClient({ store }: { store: any }) {
     if (!items?.length) return null;
     return (
       <section className="mt-7">
-        <div className="flex items-end justify-between mb-3">
-          <div>
+        <div className="flex items-end justify-between gap-2 mb-3">
+          <div className="min-w-0">
             <h2 className={`font-black text-lg flex items-center gap-2 ${isDark ? 'text-white' : ''}`}>
               <span className="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white shadow-lg"
                 style={{ background: `linear-gradient(135deg, ${accent || primary}, ${secondary})` }}>{icon}</span>
@@ -125,9 +125,9 @@ export default function StoreClient({ store }: { store: any }) {
           <Link href={href} className="f-xs font-extrabold px-3 py-1.5 rounded-full transition-all hover:scale-105 shrink-0"
             style={{ background: `${primary}12`, color: primary }}>عرض الكل ←</Link>
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-2 edge-fade snap-x">
+        <div className="store-rail flex gap-2.5 sm:gap-3 overflow-x-auto pb-2 edge-fade snap-x">
           {items.map((p: any) => (
-            <div key={p.id} className="w-44 md:w-52 shrink-0 snap-start">
+            <div key={p.id} className="store-rail-item shrink-0 snap-start">
               <MallProductCard p={p} store={store} primary={primary} />
             </div>
           ))}
@@ -187,8 +187,8 @@ export default function StoreClient({ store }: { store: any }) {
                        boxShadow: `0 10px 30px -8px rgba(0,0,0,.45), 0 0 0 4px ${primary}55` }}>
               {!store.logo && (store.type?.icon || '🏪')}
             </div>
-            <div className={template === 'minimal' && !store.cover ? 'text-gray-800' : 'text-white'}>
-              <h1 className="f-2xl font-black flex items-center gap-1.5" style={{ textShadow: template === 'minimal' && !store.cover ? 'none' : '0 2px 12px rgba(0,0,0,.45)' }}>
+            <div className={`min-w-0 ${template === 'minimal' && !store.cover ? 'text-gray-800' : 'text-white'}`}>
+              <h1 className="f-2xl font-black flex items-center gap-1.5 leading-tight" style={{ textShadow: template === 'minimal' && !store.cover ? 'none' : '0 2px 12px rgba(0,0,0,.45)' }}>
                 {store.name} {store.isVerified && <span className="verified-badge">✓</span>}
               </h1>
               <div className="text-xs opacity-90 flex items-center gap-1.5 flex-wrap">
@@ -313,7 +313,7 @@ export default function StoreClient({ store }: { store: any }) {
           }));
           return (
             <section className="mt-6">
-              <div className="flex items-end justify-between mb-3">
+              <div className="flex items-end justify-between gap-2 mb-3">
                 <h2 className={`font-black text-lg flex items-center gap-2 ${isDark ? 'text-white' : ''}`}>
                   <span className="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white shadow-lg"
                     style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>🗂️</span>
@@ -322,7 +322,7 @@ export default function StoreClient({ store }: { store: any }) {
                 <Link href={`/store/${store.slug}/categories`} className="f-xs font-extrabold px-3 py-1.5 rounded-full transition-all hover:scale-105"
                   style={{ background: `${primary}12`, color: primary }}>كل الأصناف ←</Link>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 stagger">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3 stagger">
                 {tree.map((t: any) => (
                   <Link key={t.id} href={`/store/${store.slug}/category/${t.id}`}
                     className={`group relative overflow-hidden rounded-3xl shadow-sm card-hover p-4 ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-gray-100'}`}>
@@ -374,7 +374,7 @@ export default function StoreClient({ store }: { store: any }) {
                   </h2>
                 ) : (
                   /* 🗂️ ترويسة صنف فاخرة: أيقونة متدرجة + الاسم + العدد + سهم عرض الكل */
-                  <div className="flex items-end justify-between mb-3">
+                  <div className="flex items-end justify-between gap-2 mb-3">
                     <h2 className={`font-black text-lg flex items-center gap-2 ${isDark ? 'text-white' : ''}`}>
                       <span className="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white shadow-lg overflow-hidden"
                         style={c.image
@@ -394,7 +394,7 @@ export default function StoreClient({ store }: { store: any }) {
                     )}
                   </div>
                 )}
-                <div className={isRestaurant ? 'grid md:grid-cols-2 gap-3' : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 stagger'}>
+                <div className={isRestaurant ? 'grid md:grid-cols-2 gap-3' : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 stagger'}>
                   {(isRestaurant ? c.products : c.products.slice(0, 6)).map((p: any) => isRestaurant
                     ? <MenuCard key={p.id} p={p} st={st} primary={primary} isDark={isDark} store={store} />
                     : <MallProductCard key={p.id} p={p} store={store} primary={primary} />)}
@@ -409,7 +409,7 @@ export default function StoreClient({ store }: { store: any }) {
                     أصناف أخرى
                   </h2>
                 ) : (
-                  <div className="flex items-end justify-between mb-3">
+                  <div className="flex items-end justify-between gap-2 mb-3">
                     <h2 className={`font-black text-lg flex items-center gap-2 ${isDark ? 'text-white' : ''}`}>
                       <span className="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white shadow-lg"
                         style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>📦</span>
@@ -425,7 +425,7 @@ export default function StoreClient({ store }: { store: any }) {
                     )}
                   </div>
                 )}
-                <div className={isRestaurant ? 'grid md:grid-cols-2 gap-3' : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 stagger'}>
+                <div className={isRestaurant ? 'grid md:grid-cols-2 gap-3' : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 stagger'}>
                   {(isRestaurant ? store.uncategorized : store.uncategorized.slice(0, 6)).map((p: any) => isRestaurant
                     ? <MenuCard key={p.id} p={p} st={st} primary={primary} isDark={isDark} store={store} />
                     : <MallProductCard key={p.id} p={p} store={store} primary={primary} />)}
@@ -435,7 +435,7 @@ export default function StoreClient({ store }: { store: any }) {
           </>
         ) : (
           // عرض مفلتر
-          <div className={`${isRestaurant ? 'grid md:grid-cols-2 gap-3' : 'grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 stagger'} mt-4`}>
+          <div className={`${isRestaurant ? 'grid md:grid-cols-2 gap-3' : 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 stagger'} mt-4`}>
             {shown.map((p: any) => isRestaurant
               ? <MenuCard key={p.id} p={p} st={st} primary={primary} isDark={isDark} store={store} />
               : <MallProductCard key={p.id} p={p} store={store} primary={primary} />)}
@@ -519,7 +519,7 @@ export default function StoreClient({ store }: { store: any }) {
                 loading="lazy"
               />
             </div>
-            <div className="p-3 flex gap-2">
+            <div className="p-3 flex flex-wrap gap-2">
               <a href={`https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`} target="_blank"
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-white font-extrabold text-sm transition-all hover:opacity-90"
                 style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>
@@ -549,7 +549,7 @@ export default function StoreClient({ store }: { store: any }) {
             </div>
           </div>
           {/* بطاقات الروابط — لكل نشاط روابطه الخاصة */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 md:p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5 p-3 md:p-4">
             {[
               ...(isProducts ? [
                 isRestaurant

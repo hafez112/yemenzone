@@ -46,9 +46,9 @@ export default function MallSectionClient({ store, primary, section, meta }: any
         <div className="relative overflow-hidden rounded-3xl p-5 text-white shadow-xl"
           style={{ background: `linear-gradient(135deg, ${primary}, #F59E0B)` }}>
           <div className="anim-blob absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/15 blur-2xl pointer-events-none" />
-          <div className="relative flex items-center gap-3">
+          <div className="relative flex items-center gap-3 min-w-0">
             <span className="text-4xl">{meta.icon}</span>
-            <div>
+            <div className="min-w-0">
               <h1 className="f-2xl font-black">{meta.title}</h1>
               <p className="f-xs text-white/85 font-bold">{meta.sub} — {store.name}</p>
             </div>
@@ -88,9 +88,9 @@ export default function MallSectionClient({ store, primary, section, meta }: any
 
         {/* المنتجات */}
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 mt-4">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="skeleton rounded-3xl h-64" />
+              <div key={i} className="skeleton rounded-3xl h-56 sm:h-64" />
             ))}
           </div>
         ) : !data?.items?.length ? (
@@ -104,7 +104,7 @@ export default function MallSectionClient({ store, primary, section, meta }: any
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mt-4 stagger">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3 mt-4 stagger">
               {data.items.map((p: any) => (
                 <MallProductCard key={p.id} p={p} store={store} primary={primary} />
               ))}

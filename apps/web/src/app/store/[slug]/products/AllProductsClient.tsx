@@ -56,8 +56,8 @@ export default function AllProductsClient({ store }: { store: any }) {
       style={{ '--tp': primary, '--ts': secondary,
                ...(isDark ? { background: 'linear-gradient(180deg, #0A0A14, #141428)' } : {}) } as any}>
       <div className="max-w-5xl mx-auto px-3 pt-20">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="f-2xl font-black flex items-center gap-2.5">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h1 className="f-2xl font-black flex items-center gap-2.5 min-w-0">
             <span className="section-chip" style={{ width: '2.3rem', height: '2.3rem', fontSize: '1.1rem' }}>{T.icon}</span>
             {T.title}
           </h1>
@@ -76,7 +76,7 @@ export default function AllProductsClient({ store }: { store: any }) {
         {/* الفلاتر */}
         <div className={`rounded-2xl p-3 mb-4 space-y-3 ${isDark ? 'bg-white/5' : 'bg-white shadow-sm'}`}>
           {/* الأصناف */}
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="store-rail flex gap-2 overflow-x-auto pb-1 edge-fade">
             <FilterBtn active={cat === 'all'} onClick={() => setCat('all')} primary={primary} isDark={isDark}>الكل</FilterBtn>
             {(store.categories || []).map((c: any) => (
               <FilterBtn key={c.id} active={cat === c.id} onClick={() => setCat(c.id)} primary={primary} isDark={isDark}>
@@ -108,13 +108,13 @@ export default function AllProductsClient({ store }: { store: any }) {
         </div>
 
         {/* الشبكة */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 stagger">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3 stagger">
           {shown.map((p: any) => (
             <div key={p.id} className={`rounded-3xl overflow-hidden card-hover card-glow ${
               isDark ? 'bg-white/5 border border-white/10' : 'bg-white shadow-sm'
             }`}>
               <Link href={`/store/${store.slug}/product/${p.id}`}>
-                <div className="h-32 relative overflow-hidden">
+                <div className="h-28 sm:h-32 relative overflow-hidden">
                   <div className="zoom-bg absolute inset-0" style={p.images?.[0]
                     ? { background: `url(${API}${p.images[0]}) center/cover` }
                     : { background: `${primary}15` }} />

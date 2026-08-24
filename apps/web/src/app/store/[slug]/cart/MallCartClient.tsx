@@ -32,9 +32,9 @@ export default function MallCartClient({ store, primary }: { store: any; primary
         <div className="relative overflow-hidden rounded-3xl p-5 text-white shadow-xl"
           style={{ background: `linear-gradient(135deg, ${primary}, #F59E0B)` }}>
           <div className="anim-blob absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/15 blur-2xl pointer-events-none" />
-          <div className="relative flex items-center gap-3">
+          <div className="relative flex items-center gap-3 min-w-0">
             <span className="text-4xl">🛒</span>
-            <div>
+            <div className="min-w-0">
               <h1 className="f-2xl font-black">سلة التسوق</h1>
               <p className="f-xs text-white/85 font-bold">
                 {count === 0 ? 'سلتك فارغة' : count === 1 ? 'منتج واحد في سلتك' : count === 2 ? 'منتجان في سلتك' : count <= 10 ? `${count} منتجات في سلتك` : `${count} منتجاً في سلتك`} — {store.name}
@@ -57,24 +57,24 @@ export default function MallCartClient({ store, primary }: { store: any; primary
           <>
             <div className="space-y-3 mt-4">
               {cart.map(i => (
-                <div key={i.productId + (i.variantId || '')} className="flex gap-3 items-center bg-white rounded-3xl p-3 border border-gray-100 shadow-sm">
+                <div key={i.productId + (i.variantId || '')} className="flex flex-wrap gap-3 items-center bg-white rounded-3xl p-3 border border-gray-100 shadow-sm">
                   <Link href={`/store/${store.slug}/product/${i.productId}`}
-                    className="w-16 h-16 rounded-2xl shrink-0 flex items-center justify-center text-2xl overflow-hidden"
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl shrink-0 flex items-center justify-center text-2xl overflow-hidden"
                     style={i.image ? { background: `url(${API}${i.image}) center/cover` } : { background: `linear-gradient(135deg, ${primary}15, ${primary}30)` }}>
                     {!i.image && '📦'}
                   </Link>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-[9rem]">
                     <div className="font-bold text-sm truncate">{i.name}</div>
                     {i.variant && <div className="text-[11px] font-bold" style={{ color: primary }}>🎨 {i.variant}</div>}
                     <div className="text-[11px] text-gray-400 font-bold mt-0.5">{fmt(i.price, i.currency)} × {i.qty}</div>
                     <div className="text-sm font-black price-grad mt-0.5">{fmt(i.price * i.qty, i.currency)}</div>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 max-sm:w-full max-sm:justify-end">
                     <button onClick={() => setCart(updateQty(store.slug, i.productId, i.qty - 1, i.variantId))}
-                      className="w-8 h-8 rounded-full bg-gray-100 shadow-sm font-black transition-all active:scale-90">−</button>
-                    <span className="w-8 text-center font-black text-sm">{i.qty}</span>
+                      className="w-9 h-9 sm:w-8 sm:h-8 rounded-full bg-gray-100 shadow-sm font-black transition-all active:scale-90">−</button>
+                    <span className="w-9 sm:w-8 text-center font-black text-sm">{i.qty}</span>
                     <button onClick={() => setCart(updateQty(store.slug, i.productId, i.qty + 1, i.variantId))}
-                      className="w-8 h-8 rounded-full bg-gray-100 shadow-sm font-black transition-all active:scale-90">+</button>
+                      className="w-9 h-9 sm:w-8 sm:h-8 rounded-full bg-gray-100 shadow-sm font-black transition-all active:scale-90">+</button>
                   </div>
                 </div>
               ))}
@@ -107,7 +107,7 @@ export default function MallCartClient({ store, primary }: { store: any; primary
                   🗑️
                 </button>
                 <Link href={`/store/${store.slug}/checkout`}
-                  className="theme-glow flex-1 py-4 rounded-2xl text-white font-extrabold text-lg text-center shadow-xl transition-all hover:opacity-90"
+                  className="theme-glow flex-1 py-4 rounded-2xl text-white font-extrabold text-base sm:text-lg text-center shadow-xl transition-all hover:opacity-90"
                   style={{ background: `linear-gradient(135deg, ${primary}, #F59E0B)`, '--tp': primary } as any}>
                   إتمام الطلب ←
                 </Link>

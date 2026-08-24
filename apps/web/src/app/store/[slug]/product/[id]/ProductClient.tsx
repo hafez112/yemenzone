@@ -394,7 +394,7 @@ export default function ProductClient({ store, product, similar }: any) {
               <span className="w-1.5 h-6 rounded-full" style={{ background: `linear-gradient(180deg, ${primary}, ${secondary})` }} />
               🤖 قد يعجبك أيضاً
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3">
               {similar.map((p: any) => (
                 <Link key={p.id} href={`/store/${store.slug}/product/${p.id}`}
                   className={`rounded-2xl overflow-hidden card-hover card-glow ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white shadow-sm'}`}>

@@ -95,8 +95,8 @@ export default function MallClient({ store, banners, bannerIdx, setBannerIdx }: 
     if (!items?.length) return null;
     return (
       <section className="max-w-6xl mx-auto px-3 mt-8">
-        <div className="flex items-end justify-between mb-3">
-          <div>
+        <div className="flex items-end justify-between gap-2 mb-3">
+          <div className="min-w-0">
             <h2 className="f-xl font-black flex items-center gap-2">
               <span className="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white shadow-lg"
                 style={{ background: `linear-gradient(135deg, ${accent || primary}, ${secondary})` }}>{icon}</span>
@@ -109,9 +109,9 @@ export default function MallClient({ store, banners, bannerIdx, setBannerIdx }: 
             عرض الكل ←
           </Link>
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-2 edge-fade snap-x">
+        <div className="store-rail flex gap-2.5 sm:gap-3 overflow-x-auto pb-2 edge-fade snap-x">
           {items.map((p: any) => (
-            <div key={p.id} className="w-44 md:w-52 shrink-0 snap-start">
+            <div key={p.id} className="store-rail-item shrink-0 snap-start">
               <MallProductCard p={p} store={store} primary={primary} />
             </div>
           ))}
@@ -141,7 +141,7 @@ export default function MallClient({ store, banners, bannerIdx, setBannerIdx }: 
                   🏬 كل أصناف المول <span>←</span>
                 </Link>
                 {tree.length === 0 && <p className="text-center text-gray-400 text-sm font-bold py-6">الأصناف قيد التجهيز 🏬</p>}
-                <div className="grid md:grid-cols-2 gap-2">
+                <div className="grid sm:grid-cols-2 gap-2">
                   {tree.map((t: any) => (
                     <div key={t.id} className="rounded-2xl border border-gray-100 p-3">
                       <Link href={`/store/${store.slug}/category/${t.id}`} onClick={() => setMenuOpen(false)}
@@ -205,7 +205,7 @@ export default function MallClient({ store, banners, bannerIdx, setBannerIdx }: 
           <p className="f-xs text-gray-400 font-bold mb-3">
             {results.length === 0 ? 'لا نتائج — جرّب كلمة أخرى' : results.length === 1 ? 'منتج واحد مطابق' : results.length === 2 ? 'منتجان مطابقان' : results.length <= 10 ? `${results.length} منتجات مطابقة` : `${results.length} منتجاً مطابقاً`}
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3">
             {results.map((p: any) => <MallProductCard key={p.id} p={p} store={store} primary={primary} />)}
           </div>
           {results.length === 0 && (
@@ -304,7 +304,7 @@ export default function MallClient({ store, banners, bannerIdx, setBannerIdx }: 
           {/* 🗂️ تسوق حسب الأصناف */}
           {tree.length > 0 && (
             <section className="max-w-6xl mx-auto px-3 mt-8">
-              <div className="flex items-end justify-between mb-3">
+              <div className="flex items-end justify-between gap-2 mb-3">
                 <h2 className="f-xl font-black flex items-center gap-2">
                   <span className="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white shadow-lg"
                     style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>🗂️</span>
@@ -313,7 +313,7 @@ export default function MallClient({ store, banners, bannerIdx, setBannerIdx }: 
                 <Link href={`/store/${store.slug}/categories`} className="f-xs font-extrabold px-3 py-1.5 rounded-full transition-all hover:scale-105"
                   style={{ background: `${primary}12`, color: primary }}>كل الأصناف ←</Link>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 stagger">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3 stagger">
                 {tree.slice(0, 8).map((t: any) => (
                   <Link key={t.id} href={`/store/${store.slug}/category/${t.id}`}
                     className="group relative overflow-hidden rounded-3xl bg-white border border-gray-100 shadow-sm card-hover p-4">
