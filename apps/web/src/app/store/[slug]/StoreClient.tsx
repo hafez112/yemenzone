@@ -446,71 +446,89 @@ export default function StoreClient({ store }: { store: any }) {
             )}
 
             {(store.categories || []).map((c: any) => (
-              <section key={c.id} className="mt-7">
+              <section key={c.id} className={isRestaurant ? 'mt-7' : 'mt-6'}>
                 {isRestaurant ? (
-                  <h2 className={`font-black text-lg mb-3 flex items-center gap-2 ${isDark ? 'text-white' : ''}`}>
-                    <span className="w-1.5 h-6 rounded-full" style={{ background: primary }} />
-                    {c.name}
-                    <span className="f-xs font-bold text-gray-400">({c.products.length})</span>
-                  </h2>
-                ) : (
-                  /* 🗂️ ترويسة صنف فاخرة: أيقونة متدرجة + الاسم + العدد + سهم عرض الكل */
-                  <div className="flex items-end justify-between gap-2 mb-3">
-                    <h2 className={`font-black text-lg flex items-center gap-2 ${isDark ? 'text-white' : ''}`}>
-                      <span className="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white shadow-lg overflow-hidden"
-                        style={c.image
-                          ? { background: `url(${API}${c.image}) center/cover` }
-                          : { background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>
-                        {!c.image && '🗂️'}
-                      </span>
+                  <>
+                    <h2 className={`font-black text-lg mb-3 flex items-center gap-2 ${isDark ? 'text-white' : ''}`}>
+                      <span className="w-1.5 h-6 rounded-full" style={{ background: primary }} />
                       {c.name}
                       <span className="f-xs font-bold text-gray-400">({c.products.length})</span>
                     </h2>
-                    {c.products.length > 6 && (
-                      <Link href={`/store/${store.slug}/category/${c.id}`}
-                        className="f-xs font-extrabold px-3 py-1.5 rounded-full transition-all hover:scale-105 shrink-0"
-                        style={{ background: `${primary}12`, color: primary }}>
-                        عرض الكل ({c.products.length}) ←
-                      </Link>
-                    )}
+                    <div className="grid md:grid-cols-2 gap-3">
+                      {c.products.map((p: any) => <MenuCard key={p.id} p={p} st={st} primary={primary} isDark={isDark} store={store} />)}
+                    </div>
+                  </>
+                ) : (
+                  /* 🗂️ كل صنف في لوح أنيق بسكة أفقية مرتبة — سحب جانبي سلس بمنتجين ولمحة من الثالث */
+                  <div className={`rounded-[1.75rem] border p-3 sm:p-4 shadow-sm overflow-hidden ${isDark ? 'bg-white/5 border-white/10' : 'bg-white/85 border-gray-100 backdrop-blur'}`}>
+                    <div className="flex items-end justify-between gap-2 mb-3">
+                      <h2 className={`font-black text-lg flex items-center gap-2 min-w-0 ${isDark ? 'text-white' : ''}`}>
+                        <span className="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white shadow-lg overflow-hidden shrink-0"
+                          style={c.image
+                            ? { background: `url(${API}${c.image}) center/cover` }
+                            : { background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>
+                          {!c.image && '🗂️'}
+                        </span>
+                        <span className="truncate">{c.name}</span>
+                        <span className="f-xs font-bold text-gray-400 shrink-0">({c.products.length})</span>
+                      </h2>
+                      {c.products.length > 10 && (
+                        <Link href={`/store/${store.slug}/category/${c.id}`}
+                          className="f-xs font-extrabold px-3 py-1.5 rounded-full transition-all hover:scale-105 shrink-0"
+                          style={{ background: `${primary}12`, color: primary }}>
+                          عرض الكل ({c.products.length}) ←
+                        </Link>
+                      )}
+                    </div>
+                    <div className="store-rail flex gap-3 overflow-x-auto pb-1 -mx-3 sm:-mx-4 px-3 sm:px-4 edge-fade">
+                      {c.products.slice(0, 10).map((p: any) => (
+                        <div key={p.id} className="store-rail-item shrink-0">
+                          <MallProductCard p={p} store={store} primary={primary} />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
-                <div className={isRestaurant ? 'grid md:grid-cols-2 gap-3' : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2.5 sm:gap-3 stagger'}>
-                  {(isRestaurant ? c.products : c.products.slice(0, 6)).map((p: any) => isRestaurant
-                    ? <MenuCard key={p.id} p={p} st={st} primary={primary} isDark={isDark} store={store} />
-                    : <MallProductCard key={p.id} p={p} store={store} primary={primary} />)}
-                </div>
               </section>
             ))}
             {store.uncategorized?.length > 0 && (
-              <section className="mt-7">
+              <section className={isRestaurant ? 'mt-7' : 'mt-6'}>
                 {isRestaurant ? (
-                  <h2 className={`font-black text-lg mb-3 flex items-center gap-2 ${isDark ? 'text-white' : ''}`}>
-                    <span className="w-1.5 h-6 rounded-full" style={{ background: primary }} />
-                    أصناف أخرى
-                  </h2>
-                ) : (
-                  <div className="flex items-end justify-between gap-2 mb-3">
-                    <h2 className={`font-black text-lg flex items-center gap-2 ${isDark ? 'text-white' : ''}`}>
-                      <span className="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white shadow-lg"
-                        style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>📦</span>
-                      منتجات أخرى
-                      <span className="f-xs font-bold text-gray-400">({store.uncategorized.length})</span>
+                  <>
+                    <h2 className={`font-black text-lg mb-3 flex items-center gap-2 ${isDark ? 'text-white' : ''}`}>
+                      <span className="w-1.5 h-6 rounded-full" style={{ background: primary }} />
+                      أصناف أخرى
                     </h2>
-                    {store.uncategorized.length > 6 && (
-                      <Link href={`/store/${store.slug}/products`}
-                        className="f-xs font-extrabold px-3 py-1.5 rounded-full transition-all hover:scale-105 shrink-0"
-                        style={{ background: `${primary}12`, color: primary }}>
-                        عرض الكل ({store.uncategorized.length}) ←
-                      </Link>
-                    )}
+                    <div className="grid md:grid-cols-2 gap-3">
+                      {store.uncategorized.map((p: any) => <MenuCard key={p.id} p={p} st={st} primary={primary} isDark={isDark} store={store} />)}
+                    </div>
+                  </>
+                ) : (
+                  <div className={`rounded-[1.75rem] border p-3 sm:p-4 shadow-sm overflow-hidden ${isDark ? 'bg-white/5 border-white/10' : 'bg-white/85 border-gray-100 backdrop-blur'}`}>
+                    <div className="flex items-end justify-between gap-2 mb-3">
+                      <h2 className={`font-black text-lg flex items-center gap-2 min-w-0 ${isDark ? 'text-white' : ''}`}>
+                        <span className="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white shadow-lg shrink-0"
+                          style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>📦</span>
+                        <span className="truncate">منتجات أخرى</span>
+                        <span className="f-xs font-bold text-gray-400 shrink-0">({store.uncategorized.length})</span>
+                      </h2>
+                      {store.uncategorized.length > 10 && (
+                        <Link href={`/store/${store.slug}/products`}
+                          className="f-xs font-extrabold px-3 py-1.5 rounded-full transition-all hover:scale-105 shrink-0"
+                          style={{ background: `${primary}12`, color: primary }}>
+                          عرض الكل ({store.uncategorized.length}) ←
+                        </Link>
+                      )}
+                    </div>
+                    <div className="store-rail flex gap-3 overflow-x-auto pb-1 -mx-3 sm:-mx-4 px-3 sm:px-4 edge-fade">
+                      {store.uncategorized.slice(0, 10).map((p: any) => (
+                        <div key={p.id} className="store-rail-item shrink-0">
+                          <MallProductCard p={p} store={store} primary={primary} />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
-                <div className={isRestaurant ? 'grid md:grid-cols-2 gap-3' : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2.5 sm:gap-3 stagger'}>
-                  {(isRestaurant ? store.uncategorized : store.uncategorized.slice(0, 6)).map((p: any) => isRestaurant
-                    ? <MenuCard key={p.id} p={p} st={st} primary={primary} isDark={isDark} store={store} />
-                    : <MallProductCard key={p.id} p={p} store={store} primary={primary} />)}
-                </div>
               </section>
             )}
           </>
