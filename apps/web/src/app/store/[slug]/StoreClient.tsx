@@ -291,6 +291,55 @@ export default function StoreClient({ store }: { store: any }) {
           )}
         </div>
 
+        {/* 🗂️ تسوق حسب الأصناف — نفس عرض صفحة المول التجاري: بطاقات بعدد المنتجات والأصناف الفرعية */}
+        {activeCat === 'all' && !search && (store.categories || []).length > 0 && (() => {
+          const cats: any[] = store.categories || [];
+          const tops = cats.filter((c) => !c.parentId);
+          const kidsOf = (pid: string) => cats.filter((c) => c.parentId === pid);
+          const tree = (tops.length ? tops : cats).map((t) => ({
+            ...t,
+            productsCount: (t.products?.length || 0) + kidsOf(t.id).reduce((s: number, k: any) => s + (k.products?.length || 0), 0),
+            children: kidsOf(t.id),
+          }));
+          return (
+            <section className="mt-6">
+              <div className="flex items-end justify-between mb-3">
+                <h2 className={`font-black text-lg flex items-center gap-2 ${isDark ? 'text-white' : ''}`}>
+                  <span className="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white shadow-lg"
+                    style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>🗂️</span>
+                  {isRestaurant ? 'تصفح أقسام المنيو' : 'تسوق حسب الأصناف'}
+                </h2>
+                <Link href={`/store/${store.slug}/categories`} className="f-xs font-extrabold px-3 py-1.5 rounded-full transition-all hover:scale-105"
+                  style={{ background: `${primary}12`, color: primary }}>كل الأصناف ←</Link>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 stagger">
+                {tree.map((t: any) => (
+                  <Link key={t.id} href={`/store/${store.slug}/category/${t.id}`}
+                    className={`group relative overflow-hidden rounded-3xl shadow-sm card-hover p-4 ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-gray-100'}`}>
+                    <div className="absolute -top-6 -left-6 w-20 h-20 rounded-full opacity-20 transition-transform group-hover:scale-125"
+                      style={{ background: `radial-gradient(circle, ${primary}, transparent)` }} />
+                    <div className="relative">
+                      <div className={`font-extrabold text-sm ${isDark ? 'text-white' : ''}`}>{t.name}</div>
+                      <div className="f-xs text-gray-400 font-bold mt-0.5">{t.productsCount} {isRestaurant ? 'طبق' : 'منتج'}</div>
+                      {t.children.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {t.children.slice(0, 3).map((ch: any) => (
+                            <span key={ch.id} className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                              style={{ background: `${primary}10`, color: primary }}>{ch.name}</span>
+                          ))}
+                          {t.children.length > 3 && (
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-400'}`}>+{t.children.length - 3}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
+
         {/* المنتجات حسب الصنف — عرض مجمّع */}
         {activeCat === 'all' && !search ? (
           // عرض مجمّع: كل صنف بقسمه الخاص
