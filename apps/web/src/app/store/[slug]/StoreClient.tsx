@@ -20,7 +20,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || '';
 //  والمنتجات مجمعة حسب أصناف المتجر
 // ═══════════════════════════════════════════════
 export default function StoreClient({ store }: { store: any }) {
-  const [activeCat, setActiveCat] = useState<string>('all');
+  const [activeCat] = useState<string>('all'); // ثابت 'all' — الفلترة الآن عبر بطاقات الأصناف وصفحاتها
   const [search, setSearch] = useState('');
   const [banners, setBanners] = useState<any[]>([]);
   const [bannerIdx, setBannerIdx] = useState(0);
@@ -270,26 +270,7 @@ export default function StoreClient({ store }: { store: any }) {
             }`} />
         </div>
 
-        {/* أصناف المتجر — شريط تمرير أفقي */}
-        <div className="flex gap-2 overflow-x-auto py-3 sticky top-14 z-30 edge-fade"
-          style={{ background: isDark ? 'rgba(10,10,20,0.9)' : 'rgba(247,247,252,0.9)', backdropFilter: 'blur(12px)' }}>
-          <button onClick={() => setActiveCat('all')}
-            className={`theme-chip shrink-0 ${activeCat === 'all' ? 'on' : ''}`}>
-            الكل
-          </button>
-          {(store.categories || []).map((c: any) => (
-            <button key={c.id} onClick={() => setActiveCat(c.id)}
-              className={`theme-chip shrink-0 ${activeCat === c.id ? 'on' : ''}`}>
-              {c.name} ({c.products.length})
-            </button>
-          ))}
-          {store.uncategorized?.length > 0 && (
-            <button onClick={() => setActiveCat('none')}
-              className={`theme-chip shrink-0 ${activeCat === 'none' ? 'on' : ''}`}>
-              عام
-            </button>
-          )}
-        </div>
+        {/* 🗂️ شريط الأصناف القديم أُزيل — بطاقات «تسوق حسب الأصناف» (نفس عرض المول) تغني عنه */}
 
         {/* 🗂️ تسوق حسب الأصناف — نفس عرض صفحة المول التجاري: بطاقات بعدد المنتجات والأصناف الفرعية */}
         {activeCat === 'all' && !search && (store.categories || []).length > 0 && (() => {
