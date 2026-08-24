@@ -112,25 +112,27 @@ export default function StoreClient({ store }: { store: any }) {
   const SectionRow = ({ icon, title, sub, items, href, accent }: any) => {
     if (!items?.length) return null;
     return (
-      <section className="mt-7">
-        <div className="flex items-end justify-between gap-2 mb-3">
-          <div className="min-w-0">
-            <h2 className={`font-black text-lg flex items-center gap-2 ${isDark ? 'text-white' : ''}`}>
-              <span className="w-9 h-9 rounded-xl flex items-center justify-center text-lg text-white shadow-lg"
-                style={{ background: `linear-gradient(135deg, ${accent || primary}, ${secondary})` }}>{icon}</span>
-              {title}
-            </h2>
-            {sub && <p className="f-xs text-gray-400 font-bold mt-1 pr-11">{sub}</p>}
-          </div>
-          <Link href={href} className="f-xs font-extrabold px-3 py-1.5 rounded-full transition-all hover:scale-105 shrink-0"
-            style={{ background: `${primary}12`, color: primary }}>عرض الكل ←</Link>
-        </div>
-        <div className="store-rail flex gap-2.5 sm:gap-3 overflow-x-auto pb-2 edge-fade snap-x">
-          {items.map((p: any) => (
-            <div key={p.id} className="store-rail-item shrink-0 snap-start">
-              <MallProductCard p={p} store={store} primary={primary} />
+      <section className="mt-6">
+        <div className={`rounded-[1.75rem] border p-3 sm:p-4 shadow-sm overflow-hidden ${isDark ? 'bg-white/5 border-white/10' : 'bg-white/85 border-gray-100 backdrop-blur'}`}>
+          <div className="flex items-end justify-between gap-2 mb-3">
+            <div className="min-w-0">
+              <h2 className={`font-black text-lg flex items-center gap-2 min-w-0 ${isDark ? 'text-white' : ''}`}>
+                <span className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl text-white shadow-lg shrink-0"
+                  style={{ background: `linear-gradient(135deg, ${accent || primary}, ${secondary})`, boxShadow: `0 12px 26px -16px ${accent || primary}` }}>{icon}</span>
+                <span className="truncate">{title}</span>
+              </h2>
+              {sub && <p className="f-xs text-gray-400 font-bold mt-1 pr-12">{sub}</p>}
             </div>
-          ))}
+            <Link href={href} className="f-xs font-extrabold px-3 py-2 rounded-full transition-all hover:scale-105 shrink-0 shadow-sm"
+              style={{ background: `${primary}12`, color: primary }}>عرض الكل ←</Link>
+          </div>
+          <div className="store-rail flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 edge-fade snap-x snap-mandatory">
+            {items.map((p: any) => (
+              <div key={p.id} className="store-rail-item shrink-0 snap-start">
+                <MallProductCard p={p} store={store} primary={primary} />
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     );
@@ -394,7 +396,7 @@ export default function StoreClient({ store }: { store: any }) {
                     )}
                   </div>
                 )}
-                <div className={isRestaurant ? 'grid md:grid-cols-2 gap-3' : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 stagger'}>
+                <div className={isRestaurant ? 'grid md:grid-cols-2 gap-3' : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2.5 sm:gap-3 stagger'}>
                   {(isRestaurant ? c.products : c.products.slice(0, 6)).map((p: any) => isRestaurant
                     ? <MenuCard key={p.id} p={p} st={st} primary={primary} isDark={isDark} store={store} />
                     : <MallProductCard key={p.id} p={p} store={store} primary={primary} />)}
@@ -425,7 +427,7 @@ export default function StoreClient({ store }: { store: any }) {
                     )}
                   </div>
                 )}
-                <div className={isRestaurant ? 'grid md:grid-cols-2 gap-3' : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 stagger'}>
+                <div className={isRestaurant ? 'grid md:grid-cols-2 gap-3' : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2.5 sm:gap-3 stagger'}>
                   {(isRestaurant ? store.uncategorized : store.uncategorized.slice(0, 6)).map((p: any) => isRestaurant
                     ? <MenuCard key={p.id} p={p} st={st} primary={primary} isDark={isDark} store={store} />
                     : <MallProductCard key={p.id} p={p} store={store} primary={primary} />)}

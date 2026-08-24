@@ -13,7 +13,7 @@ export default function MallProductCard({ p, store, primary }: { p: any; store: 
   const discount = p.salePrice ? Math.round((1 - Number(p.salePrice) / Number(p.price)) * 100) : 0;
   return (
     <div className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm card-hover card-glow h-full flex flex-col">
-      <Link href={`/store/${store.slug}/product/${p.id}`} className="block h-32 sm:h-36 md:h-44 relative overflow-hidden shrink-0">
+      <Link href={`/store/${store.slug}/product/${p.id}`} className="block aspect-square md:aspect-[4/5] relative overflow-hidden shrink-0">
         <div className="zoom-bg absolute inset-0"
           style={p.images?.[0]
             ? { background: `url(${API}${p.images[0]}) center/cover` }
