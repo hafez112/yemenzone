@@ -10,11 +10,8 @@
 		burst 5
 	}
 	# إخفاء بصمة الخادم
-	# ⚠️ HTTP/3 (QUIC/UDP) معطّل عمداً — كثير من الشبكات اليمنية تحجب أو تخنق UDP/443
-	# فيفشل تحميل الصفحات في المتصفحات ("This page couldn't load") بينما curl ينجح.
-	# HTTP/2 عبر TCP أثبت وأكثر موثوقية لجميع المستخدمين.
 	servers {
-		protocols h1 h2
+		protocols h1 h2 h3
 	}
 }
 
