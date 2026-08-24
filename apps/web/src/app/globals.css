@@ -783,7 +783,7 @@ img, video { max-width: 100%; }
   scroll-padding-inline: 0.75rem;
 }
 .store-rail::-webkit-scrollbar { display: none; }
-.store-rail-item { width: clamp(10.5rem, 62vw, 14.5rem); }
+.store-rail-item { width: clamp(8.75rem, 43vw, 13rem); }
 
 /* ⏳ هيكل تحميل بلمسة المنصة */
 .skeleton {

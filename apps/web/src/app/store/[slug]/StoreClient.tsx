@@ -68,6 +68,7 @@ export default function StoreClient({ store }: { store: any }) {
   const isDark = template === 'dark';
   // 🧬 فصل كامل بين الأنشطة — كل نوع بواجهته ومصطلحاته الخاصة
   const kind: StoreKind = (store.type?.kind || 'products') as StoreKind;
+  const isProductsStore = kind === 'products'; // 🛍️ واجهة متجر المنتجات الجديدة
   // 🍽️ المطاعم تسير على محرك المنتجات — المنيو = الأصناف
   const isProducts = kind === 'products' || kind === 'restaurants';
   const isRestaurant = kind === 'restaurants';
@@ -126,7 +127,7 @@ export default function StoreClient({ store }: { store: any }) {
             <Link href={href} className="f-xs font-extrabold px-3 py-2 rounded-full transition-all hover:scale-105 shrink-0 shadow-sm"
               style={{ background: `${primary}12`, color: primary }}>عرض الكل ←</Link>
           </div>
-          <div className="store-rail flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 edge-fade snap-x snap-mandatory">
+          <div className="store-rail flex gap-3 overflow-x-auto pb-1 -mx-3 sm:-mx-4 px-3 sm:px-4 edge-fade snap-x snap-mandatory">
             {items.map((p: any) => (
               <div key={p.id} className="store-rail-item shrink-0 snap-start">
                 <MallProductCard p={p} store={store} primary={primary} />
@@ -164,48 +165,104 @@ export default function StoreClient({ store }: { store: any }) {
       {/* الشريطان العلوي والسفلي يوفرهما إطار المتجر الموحد (layout) */}
 
       {/* غلاف المتجر */}
-      <header className="relative pt-14">
-        <div className={`h-40 md:h-56 w-full ${template === 'aurora' && !store.cover ? 'anim-blob' : ''}`}
-          style={{
-            background: store.cover
-              ? `url(${API}${store.cover}) center/cover`
-              : template === 'aurora'
-                ? `linear-gradient(120deg, ${primary}, ${secondary}, ${primary}88, ${secondary}88)`
-                : template === 'minimal'
-                  ? `linear-gradient(180deg, #fafafa, #f0f0f0)`
-                  : `linear-gradient(135deg, ${primary}, ${secondary})`,
-            backgroundSize: template === 'aurora' && !store.cover ? '300% 300%' : undefined,
-          }} />
-        {template === 'aurora' && !store.cover && (
-          <div className="absolute inset-0 opacity-30"
-            style={{ background: `radial-gradient(circle at 70% 30%, ${secondary}66, transparent 50%), radial-gradient(circle at 20% 80%, ${primary}55, transparent 50%)` }} />
-        )}
-        <div className={`absolute inset-0 ${isDark ? 'bg-black/40' : template === 'minimal' && !store.cover ? '' : 'bg-black/20'}`} />
-        {!(template === 'minimal' && !store.cover) && <div className="absolute inset-0 cover-fade" />}
-        <div className="absolute inset-x-0 bottom-0 p-4">
-          <div className="max-w-5xl mx-auto flex items-end gap-3">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl border-4 border-white flex items-center justify-center text-3xl bg-white shrink-0"
-              style={{ ...(store.logo ? { background: `url(${API}${store.logo}) center/cover` } : {}),
-                       boxShadow: `0 10px 30px -8px rgba(0,0,0,.45), 0 0 0 4px ${primary}55` }}>
-              {!store.logo && (store.type?.icon || '🏪')}
-            </div>
-            <div className={`min-w-0 ${template === 'minimal' && !store.cover ? 'text-gray-800' : 'text-white'}`}>
-              <h1 className="f-2xl font-black flex items-center gap-1.5 leading-tight" style={{ textShadow: template === 'minimal' && !store.cover ? 'none' : '0 2px 12px rgba(0,0,0,.45)' }}>
-                {store.name} {store.isVerified && <span className="verified-badge">✓</span>}
-              </h1>
-              <div className="text-xs opacity-90 flex items-center gap-1.5 flex-wrap">
-                <span>{store.type?.nameAr} • {store.governorate || 'اليمن'} • ⭐ {store.ratingAvg?.toFixed(1) || 'جديد'} • ❤️ {store.likesCount}</span>
-                {isProducts && store.sellerLevel && store.sellerLevel.id !== 'bronze' && (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-white/25 backdrop-blur"
-                    title={`تاجر ${store.sellerLevel.name} — مستوى محسوب من الطلبات المكتملة`}>
-                    {store.sellerLevel.icon} تاجر {store.sellerLevel.name}
-                  </span>
-                )}
+      {isProductsStore ? (
+        /* 🛍️ غلاف متجر المنتجات — غلاف نظيف + بطاقة هوية زجاجية عائمة بإحصاءات سريعة */
+        <header className="relative pt-14">
+          <div className={`relative h-44 sm:h-52 md:h-64 w-full overflow-hidden ${template === 'aurora' && !store.cover ? 'anim-blob' : ''}`}
+            style={{
+              background: store.cover
+                ? `url(${API}${store.cover}) center/cover`
+                : `linear-gradient(120deg, ${primary}, ${secondary} 55%, ${primary})`,
+              backgroundSize: !store.cover ? '300% 300%' : undefined,
+            }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.38))' }} />
+          {store.cover && <div className="absolute inset-0 cover-fade" />}
+          <div className="max-w-5xl mx-auto px-3">
+            <div className={`relative -mt-12 rounded-[1.75rem] border p-3 sm:p-4 shadow-xl ${isDark ? 'bg-white/10 border-white/10 backdrop-blur-xl' : 'bg-white/90 border-white/70 backdrop-blur-xl'}`}>
+              <div className="flex items-center gap-3">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl border-4 border-white flex items-center justify-center text-3xl bg-white shrink-0 overflow-hidden"
+                  style={{ ...(store.logo ? { background: `url(${API}${store.logo}) center/cover` } : { background: `linear-gradient(135deg, ${primary}18, ${secondary}18)` }),
+                           boxShadow: `0 14px 30px -14px rgba(0,0,0,.4), 0 0 0 4px ${primary}22` }}>
+                  {!store.logo && (store.type?.icon || '🏪')}
+                </div>
+                <div className={`flex-1 min-w-0 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <h1 className="f-2xl font-black flex items-center gap-1.5 leading-tight">
+                    <span className="truncate">{store.name}</span> {store.isVerified && <span className="verified-badge shrink-0">✓</span>}
+                  </h1>
+                  <div className={`text-[11px] sm:text-xs mt-1 flex items-center gap-1.5 flex-wrap font-bold ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
+                    <span className="px-2 py-0.5 rounded-full" style={{ background: `${primary}10`, color: primary }}>{store.type?.nameAr}</span>
+                    <span>{store.governorate || 'اليمن'}</span>
+                    <span>⭐ {store.ratingAvg?.toFixed(1) || 'جديد'}</span>
+                    <span>❤️ {store.likesCount}</span>
+                    {store.sellerLevel && store.sellerLevel.id !== 'bronze' && (
+                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white"
+                        style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>
+                        {store.sellerLevel.icon} تاجر {store.sellerLevel.name}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                {[
+                  { icon: '📦', v: allProducts.length, l: 'منتج' },
+                  { icon: '🗂️', v: (store.categories || []).length, l: 'صنف' },
+                  { icon: '🏷️', v: store.mall?.offers?.length || 0, l: 'عرض' },
+                ].map((s) => (
+                  <div key={s.l} className={`rounded-2xl px-2 py-2 text-center ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
+                    <div className="text-base sm:text-lg">{s.icon}</div>
+                    <div className={`font-black leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>{s.v}</div>
+                    <div className="text-[10px] font-bold text-gray-400">{s.l}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
+      ) : (
+        <header className="relative pt-14">
+          <div className={`h-40 md:h-56 w-full ${template === 'aurora' && !store.cover ? 'anim-blob' : ''}`}
+            style={{
+              background: store.cover
+                ? `url(${API}${store.cover}) center/cover`
+                : template === 'aurora'
+                  ? `linear-gradient(120deg, ${primary}, ${secondary}, ${primary}88, ${secondary}88)`
+                  : template === 'minimal'
+                    ? `linear-gradient(180deg, #fafafa, #f0f0f0)`
+                    : `linear-gradient(135deg, ${primary}, ${secondary})`,
+              backgroundSize: template === 'aurora' && !store.cover ? '300% 300%' : undefined,
+            }} />
+          {template === 'aurora' && !store.cover && (
+            <div className="absolute inset-0 opacity-30"
+              style={{ background: `radial-gradient(circle at 70% 30%, ${secondary}66, transparent 50%), radial-gradient(circle at 20% 80%, ${primary}55, transparent 50%)` }} />
+          )}
+          <div className={`absolute inset-0 ${isDark ? 'bg-black/40' : template === 'minimal' && !store.cover ? '' : 'bg-black/20'}`} />
+          {!(template === 'minimal' && !store.cover) && <div className="absolute inset-0 cover-fade" />}
+          <div className="absolute inset-x-0 bottom-0 p-4">
+            <div className="max-w-5xl mx-auto flex items-end gap-3">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl border-4 border-white flex items-center justify-center text-3xl bg-white shrink-0"
+                style={{ ...(store.logo ? { background: `url(${API}${store.logo}) center/cover` } : {}),
+                         boxShadow: `0 10px 30px -8px rgba(0,0,0,.45), 0 0 0 4px ${primary}55` }}>
+                {!store.logo && (store.type?.icon || '🏪')}
+              </div>
+              <div className={`min-w-0 ${template === 'minimal' && !store.cover ? 'text-gray-800' : 'text-white'}`}>
+                <h1 className="f-2xl font-black flex items-center gap-1.5 leading-tight" style={{ textShadow: template === 'minimal' && !store.cover ? 'none' : '0 2px 12px rgba(0,0,0,.45)' }}>
+                  {store.name} {store.isVerified && <span className="verified-badge">✓</span>}
+                </h1>
+                <div className="text-xs opacity-90 flex items-center gap-1.5 flex-wrap">
+                  <span>{store.type?.nameAr} • {store.governorate || 'اليمن'} • ⭐ {store.ratingAvg?.toFixed(1) || 'جديد'} • ❤️ {store.likesCount}</span>
+                  {isProducts && store.sellerLevel && store.sellerLevel.id !== 'bronze' && (
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-white/25 backdrop-blur"
+                      title={`تاجر ${store.sellerLevel.name} — مستوى محسوب من الطلبات المكتملة`}>
+                      {store.sellerLevel.icon} تاجر {store.sellerLevel.name}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+      )}
 
       {/* ⏸️ لافتة الإغلاق المؤقت — يضعها البائع من إعداداته */}
       {store.pausedAt && (
@@ -327,24 +384,46 @@ export default function StoreClient({ store }: { store: any }) {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3 stagger">
                 {tree.map((t: any) => (
                   <Link key={t.id} href={`/store/${store.slug}/category/${t.id}`}
-                    className={`group relative overflow-hidden rounded-3xl shadow-sm card-hover p-4 ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-gray-100'}`}>
-                    <div className="absolute -top-6 -left-6 w-20 h-20 rounded-full opacity-20 transition-transform group-hover:scale-125"
-                      style={{ background: `radial-gradient(circle, ${primary}, transparent)` }} />
-                    <div className="relative">
-                      <div className={`font-extrabold text-sm ${isDark ? 'text-white' : ''}`}>{t.name}</div>
-                      <div className="f-xs text-gray-400 font-bold mt-0.5">{t.productsCount} {isRestaurant ? 'طبق' : 'منتج'}</div>
-                      {t.children.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {t.children.slice(0, 3).map((ch: any) => (
-                            <span key={ch.id} className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                              style={{ background: `${primary}10`, color: primary }}>{ch.name}</span>
-                          ))}
-                          {t.children.length > 3 && (
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-400'}`}>+{t.children.length - 3}</span>
+                    className={isRestaurant
+                      ? `group relative overflow-hidden rounded-3xl shadow-sm card-hover p-4 ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-gray-100'}`
+                      : `group relative overflow-hidden rounded-3xl shadow-sm card-hover h-28 sm:h-32 ${isDark ? 'border border-white/10' : 'border border-gray-100'}`}>
+                    {isRestaurant ? (
+                      <>
+                        <div className="absolute -top-6 -left-6 w-20 h-20 rounded-full opacity-20 transition-transform group-hover:scale-125"
+                          style={{ background: `radial-gradient(circle, ${primary}, transparent)` }} />
+                        <div className="relative">
+                          <div className={`font-extrabold text-sm ${isDark ? 'text-white' : ''}`}>{t.name}</div>
+                          <div className="f-xs text-gray-400 font-bold mt-0.5">{t.productsCount} طبق</div>
+                          {t.children.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {t.children.slice(0, 3).map((ch: any) => (
+                                <span key={ch.id} className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                  style={{ background: `${primary}10`, color: primary }}>{ch.name}</span>
+                              ))}
+                              {t.children.length > 3 && (
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-400'}`}>+{t.children.length - 3}</span>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
-                    </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105"
+                          style={t.image
+                            ? { background: `url(${API}${t.image}) center/cover` }
+                            : { background: `linear-gradient(135deg, ${primary}, ${secondary})` }} />
+                        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0) 15%, rgba(0,0,0,.68))' }} />
+                        {t.children.length > 0 && (
+                          <span className="absolute top-2 left-2 text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white"
+                            style={{ background: 'rgba(0,0,0,.35)', backdropFilter: 'blur(6px)' }}>+{t.children.length} فرعي</span>
+                        )}
+                        <div className="absolute inset-x-0 bottom-0 p-3 text-white">
+                          <div className="font-extrabold text-sm truncate">{t.name}</div>
+                          <div className="f-xs font-bold text-white/80">{t.productsCount} منتج</div>
+                        </div>
+                      </>
+                    )}
                   </Link>
                 ))}
               </div>
