@@ -788,6 +788,9 @@ img, video { max-width: 100%; }
 /* 🧱 غلاف صفحات المتجر — يفرض عرضاً كاملاً ويقص أي انزياح أفقي جانبي */
 .yz-store-shell { width: 100%; max-width: 100vw; overflow-x: clip; }
 .yz-store-shell > main { width: 100%; max-width: 100%; }
+/* 🛡️ حارس هيكلي: داخل flex-col تُلغي هوامش mx-auto خاصية stretch فينكمش العنصر إلى max-content
+   ويتجاوز عرض الشاشة — نفرض العرض الكامل على حاويات الأقسام max-w-* في كل صفحات المتاجر */
+.yz-store-shell [class*="flex-col"] > [class*="max-w-"] { width: 100%; }
 
 /* ⏳ هيكل تحميل بلمسة المنصة */
 .skeleton {

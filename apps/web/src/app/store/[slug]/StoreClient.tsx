@@ -127,9 +127,9 @@ export default function StoreClient({ store }: { store: any }) {
             <Link href={href} className="f-xs font-extrabold px-3 py-2 rounded-full transition-all hover:scale-105 shrink-0 shadow-sm"
               style={{ background: `${primary}12`, color: primary }}>عرض الكل ←</Link>
           </div>
-          <div className="store-rail flex gap-3 overflow-x-auto pb-1 -mx-3 sm:-mx-4 px-3 sm:px-4 edge-fade snap-x snap-mandatory">
+          <div className="store-rail flex gap-3 overflow-x-auto pb-1 -mx-3 sm:-mx-4 px-3 sm:px-4 edge-fade">
             {items.map((p: any) => (
-              <div key={p.id} className="store-rail-item shrink-0 snap-start">
+              <div key={p.id} className="store-rail-item shrink-0">
                 <MallProductCard p={p} store={store} primary={primary} />
               </div>
             ))}
@@ -177,7 +177,7 @@ export default function StoreClient({ store }: { store: any }) {
             }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.38))' }} />
           {store.cover && <div className="absolute inset-0 cover-fade" />}
-          <div className="max-w-5xl mx-auto px-3">
+          <div className="max-w-5xl mx-auto px-3 w-full">
             <div className={`relative -mt-12 rounded-[1.75rem] border p-3 sm:p-4 shadow-xl ${isDark ? 'bg-white/10 border-white/10 backdrop-blur-xl' : 'bg-white/90 border-white/70 backdrop-blur-xl'}`}>
               <div className="flex items-center gap-3">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl border-4 border-white flex items-center justify-center text-3xl bg-white shrink-0 overflow-hidden"
@@ -239,7 +239,7 @@ export default function StoreClient({ store }: { store: any }) {
           <div className={`absolute inset-0 ${isDark ? 'bg-black/40' : template === 'minimal' && !store.cover ? '' : 'bg-black/20'}`} />
           {!(template === 'minimal' && !store.cover) && <div className="absolute inset-0 cover-fade" />}
           <div className="absolute inset-x-0 bottom-0 p-4">
-            <div className="max-w-5xl mx-auto flex items-end gap-3">
+            <div className="max-w-5xl mx-auto w-full flex items-end gap-3">
               <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl border-4 border-white flex items-center justify-center text-3xl bg-white shrink-0"
                 style={{ ...(store.logo ? { background: `url(${API}${store.logo}) center/cover` } : {}),
                          boxShadow: `0 10px 30px -8px rgba(0,0,0,.45), 0 0 0 4px ${primary}55` }}>
@@ -266,7 +266,7 @@ export default function StoreClient({ store }: { store: any }) {
 
       {/* ⏸️ لافتة الإغلاق المؤقت — يضعها البائع من إعداداته */}
       {store.pausedAt && (
-        <div className="max-w-5xl mx-auto px-3 mt-4">
+        <div className="max-w-5xl mx-auto px-3 w-full mt-4">
           <div className="rounded-3xl p-4 bg-gradient-to-l from-amber-400 to-orange-400 text-white shadow-lg flex items-center gap-3 anim-bounce-in">
             <span className="text-3xl">⏸️</span>
             <div className="flex-1">
@@ -295,7 +295,7 @@ export default function StoreClient({ store }: { store: any }) {
 
       {/* 🖼️ بانرات المتجر الإعلانية — ميزة الخطة الذهبية */}
       {banners.length > 0 && (
-        <div className="max-w-5xl mx-auto px-3 mt-4" style={{ order: orderOf('banners') }}>
+        <div className="max-w-5xl mx-auto px-3 w-full mt-4" style={{ order: orderOf('banners') }}>
           <div className="relative rounded-3xl overflow-hidden shadow-lg glow-soft">
             <div className="flex transition-transform duration-700 ease-out"
               style={{ transform: `translateX(${bannerIdx * 100}%)` }}>
@@ -325,7 +325,7 @@ export default function StoreClient({ store }: { store: any }) {
 
       {/* وصف النشاط — يظهر لكل الأنواع */}
       {store.description && (
-        <div className="max-w-5xl mx-auto px-3" style={{ order: 0 }}>
+        <div className="max-w-5xl mx-auto px-3 w-full" style={{ order: 0 }}>
           <p className={`text-sm mt-4 leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
             {store.description}
           </p>
@@ -334,7 +334,7 @@ export default function StoreClient({ store }: { store: any }) {
 
       {/* 🛍️🍽️ قسم العناصر الكامل — متاجر المنتجات والمطاعم (منيو)، لا يظهر في الفنادق/الإيجارات/الخدمات */}
       {isProducts && (
-      <div className="max-w-5xl mx-auto px-3" style={{ order: orderOf('products') }}>
+      <div className="max-w-5xl mx-auto px-3 w-full" style={{ order: orderOf('products') }}>
         {/* 🍽️ ترويسة المنيو — للمطاعم فقط */}
         {isRestaurant && allProducts.length > 0 && (
           <div className="mt-4 relative overflow-hidden rounded-3xl p-4 text-white flex items-center gap-3"
@@ -386,7 +386,7 @@ export default function StoreClient({ store }: { store: any }) {
                   <Link key={t.id} href={`/store/${store.slug}/category/${t.id}`}
                     className={isRestaurant
                       ? `group relative overflow-hidden rounded-3xl shadow-sm card-hover p-4 ${isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-gray-100'}`
-                      : `group relative overflow-hidden rounded-3xl shadow-sm card-hover h-28 sm:h-32 ${isDark ? 'border border-white/10' : 'border border-gray-100'}`}>
+                      : `group relative overflow-hidden rounded-3xl shadow-sm card-hover h-24 sm:h-28 ${isDark ? 'border border-white/10' : 'border border-gray-100'}`}>
                     {isRestaurant ? (
                       <>
                         <div className="absolute -top-6 -left-6 w-20 h-20 rounded-full opacity-20 transition-transform group-hover:scale-125"
@@ -418,7 +418,7 @@ export default function StoreClient({ store }: { store: any }) {
                           <span className="absolute top-2 left-2 text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white"
                             style={{ background: 'rgba(0,0,0,.35)', backdropFilter: 'blur(6px)' }}>+{t.children.length} فرعي</span>
                         )}
-                        <div className="absolute inset-x-0 bottom-0 p-3 text-white">
+                        <div className="absolute inset-x-0 bottom-0 p-2.5 text-white">
                           <div className="font-extrabold text-sm truncate">{t.name}</div>
                           <div className="f-xs font-bold text-white/80">{t.productsCount} منتج</div>
                         </div>
@@ -538,7 +538,7 @@ export default function StoreClient({ store }: { store: any }) {
         const active = items.filter((it: any) => it.isActive !== false);
         const minPrice = active.length ? Math.min(...active.map(priceOf).filter((n: number) => n > 0)) : 0;
         return (
-          <div className="max-w-5xl mx-auto px-3 mt-4" style={{ order: orderOf('booking') - 1 }}>
+          <div className="max-w-5xl mx-auto px-3 w-full mt-4" style={{ order: orderOf('booking') - 1 }}>
             <div className="grid grid-cols-3 gap-2.5 stagger">
               <div className={`${st.card} p-4 text-center card-hover`}>
                 <div className="text-2xl">{kn.icon}</div>
@@ -580,7 +580,7 @@ export default function StoreClient({ store }: { store: any }) {
 
       {/* 📍 موقعنا — خريطة جوجل مدمجة + اتجاهات مباشرة */}
       {store.lat != null && store.lng != null && (
-        <section className="max-w-5xl mx-auto px-3 mt-8">
+        <section className="max-w-5xl mx-auto px-3 w-full mt-8">
           <div className={`${st.card} overflow-hidden`}>
             <div className="p-4 md:p-5 flex items-center gap-3"
               style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}>
@@ -618,7 +618,7 @@ export default function StoreClient({ store }: { store: any }) {
       )}
 
       {/* ═══ روابط المتجر — تذييل منظم ببطاقات ═══ */}
-      <section className="max-w-5xl mx-auto px-3 mt-10">
+      <section className="max-w-5xl mx-auto px-3 w-full mt-10">
         <div className={`${st.card} overflow-hidden`}>
           {/* رأس القسم */}
           <div className="p-4 md:p-5 flex items-center gap-3"
