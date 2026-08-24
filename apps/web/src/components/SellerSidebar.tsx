@@ -37,6 +37,7 @@ const MENU: Record<string, { href: string; icon: string; label: string; feature?
   analytics: { href: '/seller/analytics', icon: '📊', label: 'الإحصائيات', feature: 'analytics' },
   wallet:    { href: '/seller/wallet',    icon: '💰', label: 'المحفظة' },
   card:      { href: '/seller/card',      icon: '💳', label: 'بطاقتي' },
+  investment: { href: '/seller/investment', icon: '📈', label: 'استثماري' },
   api:       { href: '/seller/api',       icon: '🔑', label: 'API للمطورين', feature: 'api' },
   smartAdd:  { href: '/seller/smart-add', icon: '🤖', label: 'الإضافة الذكية', feature: 'smartAdd' },
   pwa:       { href: '/seller/pwa',       icon: '📲', label: 'تطبيق متجري', feature: 'pwa' },
@@ -70,37 +71,37 @@ export default function SellerSidebar({ store }: { store: any }) {
       { title: '📦 العمليات اليومية', items: ['orders', 'chats', 'products', 'smartAdd', 'categories', 'inventory', 'returns', 'questions', 'reviews'] },
       { title: '📣 التسويق والنمو', items: ['coupons', 'ads', 'campaigns', 'share', 'growth', 'tools'] },
       { title: '💰 المال والتشغيل', items: ['wallet', 'card', 'finance', 'analytics', 'checkout', 'delivery'] },
-      { title: '🏪 متجري وحسابي', items: ['customers', 'pwa', 'verification', 'achievements', 'domain', 'api'] },
+      { title: '🏪 متجري وحسابي', items: ['investment', 'customers', 'pwa', 'verification', 'achievements', 'domain', 'api'] },
     ],
     // 🍽️ المطاعم: نفس منظومة المنتجات (المنيو = أصناف + طلبات + توصيل) بتسميات مطعمية
     restaurants: [
       { title: '🍽️ العمليات اليومية', items: ['orders', 'chats', 'products', 'smartAdd', 'categories', 'inventory', 'returns', 'questions', 'reviews'] },
       { title: '📣 التسويق والنمو', items: ['coupons', 'ads', 'campaigns', 'share', 'growth', 'tools'] },
       { title: '💰 المال والتشغيل', items: ['wallet', 'card', 'finance', 'analytics', 'checkout', 'delivery'] },
-      { title: '🍽️ مطعمي وحسابي', items: ['customers', 'pwa', 'verification', 'achievements', 'domain', 'api'] },
+      { title: '🍽️ مطعمي وحسابي', items: ['investment', 'customers', 'pwa', 'verification', 'achievements', 'domain', 'api'] },
     ],
     // 🏬 المولات التجارية: المنظومة الكاملة بأوسع نطاق — سوق إلكتروني شامل
     malls: [
       { title: '🏬 العمليات اليومية', items: ['orders', 'chats', 'products', 'smartAdd', 'categories', 'inventory', 'returns', 'questions', 'reviews'] },
       { title: '📣 التسويق والنمو', items: ['coupons', 'ads', 'campaigns', 'share', 'growth', 'tools'] },
       { title: '💰 المال والتشغيل', items: ['wallet', 'card', 'finance', 'analytics', 'checkout', 'delivery'] },
-      { title: '🏬 المول وحسابي', items: ['customers', 'pwa', 'verification', 'achievements', 'domain', 'api'] },
+      { title: '🏬 المول وحسابي', items: ['investment', 'customers', 'pwa', 'verification', 'achievements', 'domain', 'api'] },
     ],
     // أنشطة الحجز: إدارة العناصر والحجوزات + التسويق الذاتي فقط — بلا طلبات/مخزون/توصيل/محفظة
     rentals: [
       { title: '📅 العمليات اليومية', items: ['rentals', 'chats', 'reviews'] },
       { title: '📣 التسويق والنمو', items: ['ads', 'tools', 'share'] },
-      { title: '🏠 نشاطي وحسابي', items: ['card', 'pwa', 'verification', 'achievements', 'domain'] },
+      { title: '🏠 نشاطي وحسابي', items: ['investment', 'card', 'pwa', 'verification', 'achievements', 'domain'] },
     ],
     hotel: [
       { title: '🛎️ العمليات اليومية', items: ['rooms', 'chats', 'reviews'] },
       { title: '📣 التسويق والنمو', items: ['ads', 'tools', 'share'] },
-      { title: '🏨 فندقي وحسابي', items: ['card', 'pwa', 'verification', 'achievements', 'domain'] },
+      { title: '🏨 فندقي وحسابي', items: ['investment', 'card', 'pwa', 'verification', 'achievements', 'domain'] },
     ],
     services: [
       { title: '🛠️ العمليات اليومية', items: ['services', 'chats', 'reviews'] },
       { title: '📣 التسويق والنمو', items: ['ads', 'tools', 'share'] },
-      { title: '🛠️ نشاطي وحسابي', items: ['card', 'pwa', 'verification', 'achievements', 'domain'] },
+      { title: '🛠️ نشاطي وحسابي', items: ['investment', 'card', 'pwa', 'verification', 'achievements', 'domain'] },
     ],
   };
   // 🏷️ تسميات وأيقونات خاصة بالمطاعم — المنيو بدل المنتجات، والمطبخ بدل المخزون

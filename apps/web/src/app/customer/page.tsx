@@ -9,6 +9,7 @@ import { TOOLS } from '@/lib/tools';
 import { myTools, addMyTool, removeMyTool } from '@/lib/tool-db';
 import DashboardPwa from '@/components/DashboardPwa';
 import PushSubscribe from '@/components/PushSubscribe';
+import MyInvestment from '@/components/shares/MyInvestment';
 
 const STATUS: Record<string, string> = {
   pending: '⏳ بانتظار', confirmed: '✅ مؤكد', processing: '📦 قيد التجهيز',
@@ -119,6 +120,7 @@ export default function CustomerDashboard() {
     { id: 'likes', icon: '❤️', label: 'مفضلتي', count: data?.likes?.length },
     { id: 'tools', icon: '🧰', label: 'خدماتي', count: mySrv?.length || undefined },
     { id: 'points', icon: '🎁', label: 'نقاطي' },
+    { id: 'invest', icon: '📈', label: 'استثماري' },
     { id: 'settings', icon: '⚙️', label: 'إعداداتي' },
   ];
 
@@ -486,6 +488,11 @@ export default function CustomerDashboard() {
               !points ? <div className="glass rounded-3xl p-10 text-center skeleton h-40" /> : (
                 <PointsPanel points={points} userName={user.name} />
               )
+            )}
+
+            {/* 📈 استثماري في المنصة — أسهمي وأرباحي وصكوكي */}
+            {tab === 'invest' && (
+              <MyInvestment />
             )}
 
             {/* إعداداتي */}
