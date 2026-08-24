@@ -172,6 +172,12 @@ export class SharesService {
       : await this.prisma.customer.findUnique({ where: { id: ownerId }, select: { name: true, phone: true } });
     if (!owner) throw new NotFoundException('الحساب غير موجود');
 
+    // 🪪 الاسم الرباعي — يُكتب في الصك كما أدخله المساهم (إلزامي: 4 مقاطع على الأقل)
+    const fullName = sanitizeText(String(body.ownerName || ''), 80).replace(/\s+/g, ' ').trim();
+    const nameParts = fullName.split(' ').filter(Boolean);
+    if (nameParts.length < 4) throw new BadRequestException('أدخل اسمك الرباعي كاملاً كما تريده في الصك (4 مقاطع على الأقل)');
+    if (!/^[\u0600-\u06FFa-zA-Z\s]+$/.test(fullName)) throw new BadRequestException('الاسم يجب أن يكون حروفاً عربية أو إنجليزية فقط');
+
     const total = Math.round(shares * Number(offering.pricePerShare));
     const method = String(body.method || '');
     const number = await this.nextNumber();
@@ -183,7 +189,7 @@ export class SharesService {
         this.prisma.shareCertificate.create({
           data: {
             number, offeringId: offering.id, ownerType, ownerId,
-            ownerName: owner.name, ownerPhone: owner.phone,
+            ownerName: fullName, ownerPhone: owner.phone,
             shares, pricePerShare: offering.pricePerShare, totalAmount: total,
             currency: offering.currency, method: 'yz-card', status: 'active', reviewedAt: new Date(),
           },
@@ -210,7 +216,7 @@ export class SharesService {
       const cert = await this.prisma.shareCertificate.create({
         data: {
           number, offeringId: offering.id, ownerType, ownerId,
-          ownerName: owner.name, ownerPhone: owner.phone,
+          ownerName: fullName, ownerPhone: owner.phone,
           shares, pricePerShare: offering.pricePerShare, totalAmount: total,
           currency: offering.currency, method: 'transfer', proofImage: proof, status: 'pending',
         },

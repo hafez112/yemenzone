@@ -18,6 +18,7 @@ export default function InvestClient() {
   const [mine, setMine] = useState<any[]>([]);
   // نموذج الشراء
   const [shares, setShares] = useState(10);
+  const [ownerName, setOwnerName] = useState('');   // 🪪 الاسم الرباعي للصك
   const [method, setMethod] = useState<'yz-card' | 'transfer'>('yz-card');
   const [proof, setProof] = useState('');
   const [proofBusy, setProofBusy] = useState(false);
@@ -26,7 +27,8 @@ export default function InvestClient() {
 
   const load = () => {
     api('/v1/shares/offering').then(setD).catch(() => toast('تعذّر تحميل بيانات الأسهم', 'error'));
-    if (getUser()) api('/v1/shares/mine').then((r) => setMine(r.certificates || [])).catch(() => {});
+    const u = getUser();
+    if (u) { if (u.name) setOwnerName(u.name); api('/v1/shares/mine').then((r) => setMine(r.certificates || [])).catch(() => {}); }
   };
 
   useEffect(() => { load(); }, []);
@@ -44,10 +46,12 @@ export default function InvestClient() {
   const buy = async () => {
     if (!getUser()) { router.push('/auth/customer-login?next=/invest'); return; }
     if (shares < 1) return toast('⚠️ أدخل عدد الأسهم', 'error');
+    const nameOk = ownerName.trim().split(/\s+/).filter(Boolean).length >= 4;
+    if (!nameOk) return toast('⚠️ أدخل اسمك الرباعي كاملاً (4 مقاطع على الأقل) — سيُكتب في الصك كما أدخلته', 'error');
     if (method === 'transfer' && !proof) return toast('⚠️ أرفق صورة إثبات التحويل أولاً', 'error');
     setBusy(true);
     try {
-      const r = await api('/v1/shares/buy', { method: 'POST', body: JSON.stringify({ shares, method, proofImage: proof || undefined }) });
+      const r = await api('/v1/shares/buy', { method: 'POST', body: JSON.stringify({ shares, method, ownerName: ownerName.trim(), proofImage: proof || undefined }) });
       toast(r.message);
       setProof('');
       load();
@@ -133,6 +137,19 @@ export default function InvestClient() {
               بِيع {offering.sold.toLocaleString()} من {offering.totalShares.toLocaleString()} — المتبقي <b className="text-emerald-600">{offering.available.toLocaleString()} سهم</b>
               {offering.endsAt && ` · ينتهي ${new Date(offering.endsAt).toLocaleDateString('ar-YE')}`}
             </p>
+
+            {/* 🪪 الاسم الرباعي — يُطبع في الصك */}
+            <label className="block">
+              <span className="text-xs font-extrabold text-gray-600">🪪 الاسم الرباعي الكامل <b className="text-amber-600">(سيُطبع في الصك كما تكتبه هنا)</b></span>
+              <input value={ownerName} onChange={(e) => setOwnerName(e.target.value)}
+                placeholder="مثال: محمد أحمد علي الحميري"
+                className="mt-1 w-full px-4 py-3 rounded-2xl border border-amber-200 text-lg font-black bg-white outline-none focus:border-amber-400" />
+              <span className="text-[10px] font-bold text-gray-400 mt-1 block">
+                {ownerName.trim().split(/\s+/).filter(Boolean).length >= 4
+                  ? '✅ اسم رباعي صحيح'
+                  : 'أدخل 4 مقاطع على الأقل: الأول + الأب + الجد + اللقب'}
+              </span>
+            </label>
 
             <div className="grid md:grid-cols-2 gap-3">
               <label className="block">
