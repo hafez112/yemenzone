@@ -9,6 +9,8 @@ const API = process.env.NEXT_PUBLIC_API_URL || '';
 
 // 🛒 سلة المول — صفحة منفصلة بثيم فاخر: عناصر + كميات + مشاركة + إتمام
 export default function MallCartClient({ store, primary }: { store: any; primary: string }) {
+  const isMall = store.type?.kind === 'malls'; // 🧬 تسميات حسب النشاط
+  const place = isMall ? 'المول' : 'المتجر';
   const [cart, setCart] = useState<CartItem[]>([]);
   const { fmt, convert, def: defCur } = useCurrency();
 
@@ -45,10 +47,10 @@ export default function MallCartClient({ store, primary }: { store: any; primary
           <div className="text-center py-20 text-gray-400">
             <div className="text-6xl mb-3">🛒</div>
             <p className="font-black text-lg">سلتك فارغة</p>
-            <p className="f-xs font-bold mt-1">تصفح أقسام المول وأضف ما يعجبك</p>
+            <p className="f-xs font-bold mt-1">{`تصفح أقسام ${place} وأضف ما يعجبك`}</p>
             <Link href={`/store/${store.slug}`} className="inline-block mt-4 px-6 py-3 rounded-2xl text-white font-extrabold text-sm shadow-lg"
               style={{ background: `linear-gradient(135deg, ${primary}, #F59E0B)` }}>
-              🏬 تسوّق الآن
+              {isMall ? '🏬 تسوّق الآن' : '🏪 تسوّق الآن'}
             </Link>
           </div>
         ) : (
@@ -64,6 +66,7 @@ export default function MallCartClient({ store, primary }: { store: any; primary
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-sm truncate">{i.name}</div>
                     {i.variant && <div className="text-[11px] font-bold" style={{ color: primary }}>🎨 {i.variant}</div>}
+                    <div className="text-[11px] text-gray-400 font-bold mt-0.5">{fmt(i.price, i.currency)} × {i.qty}</div>
                     <div className="text-sm font-black price-grad mt-0.5">{fmt(i.price * i.qty, i.currency)}</div>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -110,7 +113,7 @@ export default function MallCartClient({ store, primary }: { store: any; primary
                 </Link>
               </div>
               <Link href={`/store/${store.slug}`} className="block text-center text-sm text-gray-400 font-bold">
-                ← متابعة التسوق في المول
+                {`← متابعة التسوق في ${place}`}
               </Link>
             </div>
           </>

@@ -6,6 +6,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || '';
 // 🗂️ كل أصناف المول — بطاقات رئيسية مع فروعها الفرعية
 export default function MallCategoriesClient({ store, primary }: { store: any; primary: string }) {
   const tree: any[] = store.mall?.categoriesTree || [];
+  const isMall = store.type?.kind === 'malls'; // 🧬 تسميات حسب النشاط — لا نسمي المتجر مولاً
 
   return (
     <main className="min-h-screen pb-24 pt-20" style={{ background: `linear-gradient(180deg, ${primary}08, transparent 40%), #faf9ff` }}>
@@ -17,7 +18,7 @@ export default function MallCategoriesClient({ store, primary }: { store: any; p
             <span className="text-4xl">🗂️</span>
             <div>
               <h1 className="f-2xl font-black">أصناف {store.name}</h1>
-              <p className="f-xs text-white/85 font-bold">تصفح المول صنفاً صنفاً — رئيسية وفرعية</p>
+              <p className="f-xs text-white/85 font-bold">{isMall ? 'تصفح المول صنفاً صنفاً — رئيسية وفرعية' : 'تصفح أصناف المتجر — رئيسية وفرعية'}</p>
             </div>
           </div>
         </div>
@@ -28,7 +29,7 @@ export default function MallCategoriesClient({ store, primary }: { store: any; p
             <p className="font-black text-lg">الأصناف قيد التجهيز</p>
             <Link href={`/store/${store.slug}`} className="inline-block mt-4 px-6 py-3 rounded-2xl text-white font-extrabold text-sm shadow-lg"
               style={{ background: `linear-gradient(135deg, ${primary}, #F59E0B)` }}>
-              🏬 عودة إلى المول
+              {isMall ? '🏬 عودة إلى المول' : '🏪 عودة إلى المتجر'}
             </Link>
           </div>
         ) : (

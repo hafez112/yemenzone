@@ -82,9 +82,10 @@ export class StorefrontController {
     const features = effectiveFeatures(store);
     const kind = (store.type as any)?.kind || 'products';
 
-    // 🏬 حمولة المول التجاري: شجرة الأصناف + أقسام الواجهة
+    // 🏬 حمولة الواجهة الغنية: شجرة الأصناف + الأجنحة (متميزة/مبيعات/جديد/عروض)
+    // للمولات ومتاجر المنتجات معاً — تُشغّل صفحات الأصناف والأقسام والعرض المبتكر
     let mall: any = undefined;
-    if (kind === 'malls') {
+    if (kind === 'malls' || kind === 'products') {
       const allCats = store.categories.map((c: any) => ({
         ...c,
         products: this.ai.sortProductsSmart(c.products),

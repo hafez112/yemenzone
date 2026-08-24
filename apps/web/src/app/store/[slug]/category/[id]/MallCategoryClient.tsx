@@ -34,7 +34,7 @@ export default function MallCategoryClient({ store, primary, categoryId }: any) 
       <div className="max-w-6xl mx-auto px-3">
         {/* مسار التنقل */}
         <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400 mb-3 flex-wrap">
-          <Link href={`/store/${store.slug}`} className="hover:underline" style={{ color: primary }}>🏬 {store.name}</Link>
+          <Link href={`/store/${store.slug}`} className="hover:underline" style={{ color: primary }}>{store.type?.kind === 'malls' ? '🏬' : store.type?.kind === 'restaurants' ? '🍽️' : '🏪'} {store.name}</Link>
           <span>›</span>
           <Link href={`/store/${store.slug}/categories`} className="hover:underline">الأصناف</Link>
           {cat?.parent && (

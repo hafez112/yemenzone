@@ -99,7 +99,7 @@ export default function MallSectionClient({ store, primary, section, meta }: any
             <p className="font-black text-lg">لا منتجات في هذا القسم بعد</p>
             <Link href={`/store/${store.slug}`} className="inline-block mt-4 px-6 py-3 rounded-2xl text-white font-extrabold text-sm shadow-lg"
               style={{ background: `linear-gradient(135deg, ${primary}, #F59E0B)` }}>
-              🏬 عودة إلى المول
+              {store.type?.kind === 'malls' ? '🏬 عودة إلى المول' : '🏪 عودة إلى المتجر'}
             </Link>
           </div>
         ) : (
