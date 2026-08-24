@@ -35,10 +35,10 @@ export default function MallProductCard({ p, store, primary }: { p: any; store: 
         )}
       </Link>
       <div className="p-2.5 sm:p-3 flex flex-col flex-1">
-        <Link href={`/store/${store.slug}/product/${p.id}`} className="block font-extrabold f-sm truncate">{p.name}</Link>
+        <Link href={`/store/${store.slug}/product/${p.id}`} className="block font-extrabold f-sm leading-snug line-clamp-2 min-h-[2.55em]">{p.name}</Link>
         {p.shortDesc
-          ? <div className="f-xs mt-0.5 line-clamp-1 text-gray-400">{p.shortDesc}</div>
-          : p.description && <div className="f-xs mt-0.5 line-clamp-1 text-gray-400">{p.description}</div>}
+          ? <div className="hidden sm:block f-xs mt-0.5 line-clamp-1 text-gray-400">{p.shortDesc}</div>
+          : p.description && <div className="hidden sm:block f-xs mt-0.5 line-clamp-1 text-gray-400">{p.description}</div>}
         <div className="flex items-center gap-1.5 mt-1.5 min-w-0 flex-wrap">
           {p.salePrice ? (
             <>

@@ -44,77 +44,78 @@ export default function StoreTopBar({ store, primary }: { store: any; primary: s
   };
 
   return (
-    <div className="fixed top-0 inset-x-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100 shadow-sm">
-      <div className="max-w-5xl mx-auto flex items-center gap-2 px-3 h-14">
-        {/* هوية المتجر */}
-        <Link href={`/store/${store.slug}`} className="flex items-center gap-2 min-w-0">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 border border-gray-100 bg-white overflow-hidden">
-            {store.logo
-              ? <img src={`${API}${store.logo}`} alt="" className="w-full h-full object-cover" />
-              : (store.type?.icon || '🏪')}
-          </div>
-          <div className="min-w-0">
-            <div className="font-black text-sm truncate flex items-center gap-1" style={{ color: primary }}>
-              {store.name} {store.isVerified && <span className="verified-badge" style={{ width: '0.85rem', height: '0.85rem', fontSize: '0.5rem' }}>✓</span>}
-            </div>
-            <div className="text-[10px] text-gray-400 truncate">{kindInfo.icon} {kindInfo.label} · {store.governorate || 'اليمن'} · ⭐ {store.ratingAvg?.toFixed(1) || 'جديد'}</div>
-          </div>
-        </Link>
+    <div className="fixed top-0 inset-x-0 z-50" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <div className="max-w-5xl mx-auto px-2 sm:px-3">
+        <div className="mt-2 sm:mt-0 rounded-3xl sm:rounded-none border border-white/60 sm:border-0 sm:border-b sm:border-gray-100 bg-white/88 backdrop-blur-xl shadow-lg sm:shadow-sm">
+          <div className="flex items-center gap-2 px-2.5 sm:px-3 h-14">
+            {/* هوية المتجر */}
+            <Link href={`/store/${store.slug}`} className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shrink-0 border border-gray-100 bg-white overflow-hidden shadow-sm">
+                {store.logo
+                  ? <img src={`${API}${store.logo}`} alt="" className="w-full h-full object-cover" />
+                  : (store.type?.icon || '🏪')}
+              </div>
+              <div className="min-w-0">
+                <div className="font-black text-sm truncate flex items-center gap-1" style={{ color: primary }}>
+                  <span className="truncate">{store.name}</span> {store.isVerified && <span className="verified-badge" style={{ width: '0.85rem', height: '0.85rem', fontSize: '0.5rem' }}>✓</span>}
+                </div>
+                <div className="text-[10px] text-gray-400 truncate">{kindInfo.icon} {kindInfo.label} · {store.governorate || 'اليمن'} · ⭐ {store.ratingAvg?.toFixed(1) || 'جديد'}</div>
+              </div>
+            </Link>
 
-        <div className="flex-1" />
+            {/* 💱 مبدّل العملة — على الشاشات الأوسع حتى لا يزحم شريط الجوال */}
+            <div className="hidden sm:block"><CurrencySwitcher /></div>
 
-        {/* 💱 مبدّل عملة العرض — تحويل حقيقي بأسعار صرف الإدارة */}
-        <CurrencySwitcher />
-
-        {/* تثبيت التطبيق — يظهر فقط عندما يتيحه المتصفح */}
-        {installEvt && (
-          <button onClick={() => { installEvt.prompt(); setInstallEvt(null); }}
-            className="text-[11px] font-extrabold text-white px-3 py-1.5 rounded-full shadow anim-soft-pulse"
-            style={{ background: primary }}>
-            📱 ثبّت التطبيق
-          </button>
-        )}
-
-        {/* مشاركة */}
-        <button onClick={share} aria-label="مشاركة المتجر"
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-base transition-all hover:scale-110"
-          style={{ background: `${primary}15`, color: primary }}>
-          📤
-        </button>
-
-        {/* الإجراء الرئيسي حسب النشاط: سلة للمنتجات / صفحة سلة المول / حجز أو طلب لباقي الأنواع */}
-        {isMall ? (
-          <Link href={`/store/${store.slug}/cart`} aria-label="سلة التسوق"
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-base transition-all hover:scale-110"
-            style={{ background: `${primary}15` }}>
-            🛒
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -left-1 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[10px] font-black flex items-center justify-center"
+            {/* تثبيت التطبيق — يظهر فقط عندما يتيحه المتصفح */}
+            {installEvt && (
+              <button onClick={() => { installEvt.prompt(); setInstallEvt(null); }}
+                className="text-[11px] font-extrabold text-white px-3 py-1.5 rounded-full shadow anim-soft-pulse shrink-0"
                 style={{ background: primary }}>
-                {cartCount}
-              </span>
+                📱 ثبّت
+              </button>
             )}
-          </Link>
-        ) : isProducts ? (
-          <Link href={`/store/${store.slug}`} aria-label="السلة"
-            onClick={() => window.dispatchEvent(new Event('yz-open-cart'))}
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-base transition-all hover:scale-110"
-            style={{ background: `${primary}15` }}>
-            🛒
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -left-1 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[10px] font-black flex items-center justify-center"
-                style={{ background: primary }}>
-                {cartCount}
-              </span>
+
+            {/* مشاركة */}
+            <button onClick={share} aria-label="مشاركة المتجر"
+              className="w-10 h-10 rounded-2xl flex items-center justify-center text-base transition-all active:scale-95 shrink-0"
+              style={{ background: `${primary}12`, color: primary }}>
+              📤
+            </button>
+
+            {/* الإجراء الرئيسي حسب النشاط */}
+            {isMall ? (
+              <Link href={`/store/${store.slug}/cart`} aria-label="سلة التسوق"
+                className="relative w-10 h-10 rounded-2xl flex items-center justify-center text-base transition-all active:scale-95 shrink-0"
+                style={{ background: `${primary}12` }}>
+                🛒
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -left-1 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[10px] font-black flex items-center justify-center"
+                    style={{ background: primary }}>
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            ) : isProducts ? (
+              <Link href={`/store/${store.slug}`} aria-label="السلة"
+                onClick={() => window.dispatchEvent(new Event('yz-open-cart'))}
+                className="relative w-10 h-10 rounded-2xl flex items-center justify-center text-base transition-all active:scale-95 shrink-0"
+                style={{ background: `linear-gradient(135deg, ${primary}, ${primary}CC)`, color: '#fff' }}>
+                🛒
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -left-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            ) : (
+              <Link href={`/store/${store.slug}#booking`}
+                className="theme-glow text-[11px] font-extrabold text-white px-3 py-2 rounded-full transition-all active:scale-95 whitespace-nowrap shrink-0"
+                style={{ background: `linear-gradient(135deg, ${primary}, ${primary}CC)`, '--tp': primary } as any}>
+                {kind === 'hotel' ? '🛎️' : kind === 'rentals' ? '📅' : '🛠️'} {kindInfo.cta}
+              </Link>
             )}
-          </Link>
-        ) : (
-          <Link href={`/store/${store.slug}#booking`}
-            className="theme-glow text-[11px] font-extrabold text-white px-3 py-2 rounded-full transition-all hover:scale-105 whitespace-nowrap"
-            style={{ background: `linear-gradient(135deg, ${primary}, ${primary}CC)`, '--tp': primary } as any}>
-            {kind === 'hotel' ? '🛎️' : kind === 'rentals' ? '📅' : '🛠️'} {kindInfo.cta}
-          </Link>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -785,6 +785,10 @@ img, video { max-width: 100%; }
 .store-rail::-webkit-scrollbar { display: none; }
 .store-rail-item { width: clamp(8.75rem, 43vw, 13rem); }
 
+/* 🧱 غلاف صفحات المتجر — يفرض عرضاً كاملاً ويقص أي انزياح أفقي جانبي */
+.yz-store-shell { width: 100%; max-width: 100vw; overflow-x: clip; }
+.yz-store-shell > main { width: 100%; max-width: 100%; }
+
 /* ⏳ هيكل تحميل بلمسة المنصة */
 .skeleton {
   background: linear-gradient(90deg,

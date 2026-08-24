@@ -8,7 +8,7 @@ export default function StoreChrome({ store, primary, children }: { store: any; 
   return (
     <>
       <StoreTopBar store={store} primary={primary} />
-      {children}
+      <div className="yz-store-shell">{children}</div>
       <StoreBottomNav store={store} primary={primary} />
     </>
   );

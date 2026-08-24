@@ -159,7 +159,7 @@ export default function StoreClient({ store }: { store: any }) {
   }
 
   return (
-    <main className={`min-h-screen pb-24 ${st.page} ${isSerif ? 'store-serif' : ''} ${isDark ? 'store-dark' : ''}`}
+    <main className={`min-h-screen pb-28 ${st.page} ${isSerif ? 'store-serif' : ''} ${isDark ? 'store-dark' : ''}`}
       style={{ '--tp': primary, '--ts': secondary, ...pageBg } as any}>
 
       {/* الشريطان العلوي والسفلي يوفرهما إطار المتجر الموحد (layout) */}
@@ -167,7 +167,7 @@ export default function StoreClient({ store }: { store: any }) {
       {/* غلاف المتجر */}
       {isProductsStore ? (
         /* 🛍️ غلاف متجر المنتجات — غلاف نظيف + بطاقة هوية زجاجية عائمة بإحصاءات سريعة */
-        <header className="relative pt-14">
+        <header className="relative pt-16">
           <div className={`relative h-44 sm:h-52 md:h-64 w-full overflow-hidden ${template === 'aurora' && !store.cover ? 'anim-blob' : ''}`}
             style={{
               background: store.cover
@@ -220,7 +220,7 @@ export default function StoreClient({ store }: { store: any }) {
           </div>
         </header>
       ) : (
-        <header className="relative pt-14">
+        <header className="relative pt-16">
           <div className={`h-40 md:h-56 w-full ${template === 'aurora' && !store.cover ? 'anim-blob' : ''}`}
             style={{
               background: store.cover
