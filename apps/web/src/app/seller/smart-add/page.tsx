@@ -41,7 +41,12 @@ export default function SmartAddPage() {
   useEffect(() => {
     if (!getUser()) { router.push('/auth/login'); return; }
     api('/stores/my').then(setStore).catch(() => router.push('/seller/setup'));
-    api('/seller/categories').then((c) => { if (Array.isArray(c)) setCategories(c); }).catch(() => {});
+    // 🗂️ أصناف المتجر — النقطة ترجع { categories, suggestions } وليست مصفوفة مباشرة
+    api('/seller/categories').then((c) => {
+      const list = Array.isArray(c) ? c : (c?.categories || []);
+      setCategories(list);
+      if (!list.length) toast('ℹ️ أنشئ صنفاً أولاً من صفحة «الأصناف» ثم ارجع للإضافة الذكية');
+    }).catch(() => {});
     api('/seller/ai/smart-add/settings').then((d) => {
       setAiCfg(d);
       setAiForm({ baseUrl: d.baseUrl, apiKey: '', model: d.model });
@@ -216,6 +221,12 @@ export default function SmartAddPage() {
                 {[3, 5, 8, 10].map((n) => <option key={n} value={n}>{n} منتجات</option>)}
               </select>
             </div>
+            {!categories.length && (
+              <Link href="/seller/categories"
+                className="block text-center text-xs font-extrabold text-purple-700 bg-purple-50 border border-purple-100 rounded-xl py-2.5">
+                🗂️ لا توجد أصناف في متجرك بعد — أنشئ صنفك الأول من هنا ثم ارجع ←
+              </Link>
+            )}
             <input value={hint} onChange={(e) => setHint(e.target.value)}
               placeholder="💡 توجيه اختياري: «أسعار اقتصادية»، «منتجات فاخرة»، «للشباب»..."
               className="w-full px-4 py-3 rounded-2xl border border-purple-200 text-sm font-bold bg-white outline-none focus:border-purple-400" />
