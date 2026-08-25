@@ -5,13 +5,13 @@ import { useEffect, useState } from 'react';
 import { api, getUser, logout } from '@/lib/api';
 
 const SKINS = [
+  { id: 'light', icon: '☀️', label: 'نهاري (الافتراضي)', dot: '#F59E0B' },
   { id: 'night', icon: '🌙', label: 'ليلي', dot: '#6C3DF5' },
-  { id: 'light', icon: '☀️', label: 'فاتح زجاجي', dot: '#F59E0B' },
   { id: 'royal', icon: '👑', label: 'ملكي ذهبي', dot: '#D97706' },
 ];
 
 // 🛠️ الشريط العلوي الخاص بلوحة تحكم المنصة — هوية الإدارة + أنماط + تنبيهات + تثبيت
-export default function AdminTopBar({ skin = 'night' }: { skin?: string }) {
+export default function AdminTopBar({ skin = 'light' }: { skin?: string }) {
   const path = usePathname();
   const [alertCount, setAlertCount] = useState(0);
   const [adminName, setAdminName] = useState('');

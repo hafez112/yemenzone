@@ -452,11 +452,11 @@ img, video { max-width: 100%; }
 
 
 /* ═══════════════════════════════════════════════════════════
-   🎨 أنماط لوحة تحكم المنصة — ليلي (افتراضي) / فاتح زجاجي / ملكي ذهبي
+   🎨 أنماط لوحة تحكم المنصة — نهاري (افتراضي) / ليلي / ملكي ذهبي
    تُطبَّق عبر كلاس على غلاف الإدارة: .skin-light / .skin-royal
    ═══════════════════════════════════════════════════════════ */
 
-/* ☀️ النمط الفاتح الزجاجي */
+/* ☀️ النمط النهاري — الافتراضي لكل صفحات لوحة التحكم */
 .skin-light .bg-night {
   background:
     radial-gradient(ellipse 55% 45% at 15% 0%, color-mix(in srgb, var(--primary) 14%, transparent), transparent),
@@ -471,6 +471,9 @@ img, video { max-width: 100%; }
   box-shadow: 0 6px 24px rgba(30, 27, 46, 0.06);
 }
 .skin-light .text-white { color: #1e1b2e !important; }
+/* استثناء: العناصر الداكنة المقصودة (أزرار التبويب النشطة، عارض الأكواد) تحتفظ بنصها الأبيض */
+.skin-light .bg-gray-900 .text-white,
+.skin-light .bg-gray-900.text-white { color: #fff !important; }
 .skin-light .text-gray-300 { color: #4b4760 !important; }
 .skin-light .text-gray-400 { color: #6b6780 !important; }
 .skin-light .text-gray-500 { color: #8a86a0 !important; }
