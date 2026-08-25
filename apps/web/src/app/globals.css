@@ -499,6 +499,33 @@ img, video { max-width: 100%; }
     linear-gradient(135deg, var(--primary), var(--secondary)) border-box !important;
 }
 
+/* 🧩 تغطية شاملة للوضع النهاري — البطاقات المضمّنة بألفا أبيض تتحول لتظليل داكن فاتح */
+.skin-light [style*="rgba(255,255,255,0.04)"], .skin-light [style*="rgba(255, 255, 255, 0.04)"],
+.skin-light [style*="rgba(255,255,255,0.06)"], .skin-light [style*="rgba(255, 255, 255, 0.06)"],
+.skin-light [style*="rgba(255,255,255,.06)"], .skin-light [style*="rgba(255, 255, 255, .06)"] {
+  background: rgba(30, 27, 46, 0.05) !important;
+}
+.skin-light .border-white\/5 { border-color: rgba(30, 27, 46, 0.07) !important; }
+
+/* 🔤 ألوان النصوص الفاتحة تُغمق لتبقى مقروءة على الخلفيات النهارية */
+.skin-light .text-gray-200 { color: #45415e !important; }
+.skin-light .text-purple-300 { color: #7c3aed !important; }
+.skin-light .text-teal-300 { color: #0d9488 !important; }
+.skin-light .text-emerald-300, .skin-light .text-emerald-200 { color: #059669 !important; }
+.skin-light .text-red-300, .skin-light .text-red-200 { color: #dc2626 !important; }
+.skin-light .text-amber-300 { color: #d97706 !important; }
+.skin-light .text-orange-300 { color: #ea580c !important; }
+.skin-light .text-cyan-300 { color: #0891b2 !important; }
+.skin-light .text-blue-300 { color: #2563eb !important; }
+
+/* 🎨 البطاقات المتدرجة الملونة (كبطاقة مؤشر الأسهم) تبقى زاهية — نصوصها تحتفظ بالأبيض */
+.skin-light [style*="linear-gradient"]:not([style*="#0A0A14"]):not([style*="#0a0a14"]) .text-white,
+.skin-light [style*="linear-gradient"]:not([style*="#0A0A14"]):not([style*="#0a0a14"]).text-white { color: #fff !important; }
+.skin-light [style*="linear-gradient"]:not([style*="#0A0A14"]):not([style*="#0a0a14"]) :is(.text-gray-200, .text-gray-300, .text-gray-400, .text-gray-500, .text-purple-300, .text-teal-300, .text-emerald-300, .text-amber-300, .text-red-300) { color: rgba(255, 255, 255, .88) !important; }
+
+/* 🧾 خيارات القوائم المنسدلة الداكنة تتبع النهاري */
+.skin-light option.bg-gray-900 { background: #fff !important; color: #1e1b2e !important; }
+
 /* 👑 النمط الملكي الذهبي */
 .skin-royal .bg-night {
   background:
