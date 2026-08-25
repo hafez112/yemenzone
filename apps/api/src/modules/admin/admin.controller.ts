@@ -268,6 +268,19 @@ export class AdminController {
   @Patch('settings')
   saveSettings(@Body() body: any) { return this.admin.saveSettings(body); }
 
+  // 💬 الرسائل المنبثقة — تظهر للزوار عند دخول المنصة (مع صوت اختياري)
+  @UseGuards(PermsGuard('design'))
+  @Get('popups')
+  popupsList() { return this.admin.popupsList(); }
+
+  @UseGuards(PermsGuard('design'))
+  @Post('popups')
+  popupSave(@CurrentUser() u: any, @Body() body: any) { return this.admin.popupSave(u.sub, body); }
+
+  @UseGuards(PermsGuard('design'))
+  @Delete('popups/:id')
+  popupDelete(@CurrentUser() u: any, @Param('id') id: string) { return this.admin.popupDelete(u.sub, id); }
+
   // 🔐 المصادقة الثنائية — كل مدير يدير حمايته بنفسه
   @Post('2fa/setup')
   tfaSetup(@CurrentUser() u: any) { return this.admin.twoFactorSetup(u.sub); }

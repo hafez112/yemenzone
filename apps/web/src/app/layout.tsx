@@ -19,6 +19,7 @@ import PwaRegister from '@/components/PwaRegister';
 import PwaInstaller from '@/components/PwaInstaller';
 import GaTracker from '@/components/GaTracker';
 import VisitorTracker from '@/components/VisitorTracker';
+import WelcomePopup from '@/components/WelcomePopup';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 const API = process.env.NEXT_PUBLIC_API_URL || '';
@@ -125,6 +126,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ToastHost />
         <PwaRegister />
         <VisitorTracker />
+        <WelcomePopup />
         <MotionFallback />
         <NativeApp />
         <WebStudio />

@@ -770,6 +770,72 @@ export class AdminService {
     return { ok: true };
   }
 
+  // ═══ 💬 الرسائل المنبثقة للزوار — تظهر عند دخول المنصة ═══
+  // تُخزَّن في جدول الإعدادات (مفتاح site_popups) كي لا نحتاج هجرة قاعدة بيانات
+  private static readonly POPUP_FREQS = new Set(['once', 'session', 'daily', 'always']);
+
+  private async readPopups(): Promise<any[]> {
+    const row = await this.prisma.setting.findUnique({ where: { key: 'site_popups' } });
+    const v: any = row?.value;
+    return Array.isArray(v?.items) ? v.items : [];
+  }
+
+  private async writePopups(items: any[]) {
+    await this.prisma.setting.upsert({
+      where: { key: 'site_popups' },
+      update: { value: { items } as any },
+      create: { group: 'general', key: 'site_popups', value: { items } as any },
+    });
+  }
+
+  async popupsList() {
+    const items = await this.readPopups();
+    items.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    return { items };
+  }
+
+  async popupSave(adminId: string, body: any) {
+    const title = String(body?.title || '').trim().slice(0, 120);
+    const text = String(body?.body || '').trim().slice(0, 1000);
+    if (!title) throw new BadRequestException('عنوان الرسالة مطلوب');
+    if (!text) throw new BadRequestException('نص الرسالة مطلوب');
+    const btnLink = String(body?.btnLink || '').trim().slice(0, 300);
+    if (btnLink && !/^(\/|https?:\/\/)/.test(btnLink)) throw new BadRequestException('رابط الزر يجب أن يبدأ بـ / أو http');
+    const frequency = AdminService.POPUP_FREQS.has(body?.frequency) ? body.frequency : 'session';
+    const isoOrNull = (d: any) => { const t = Date.parse(String(d || '')); return Number.isFinite(t) ? new Date(t).toISOString() : null; };
+    const items = await this.readPopups();
+    const id = String(body?.id || '').trim();
+    const prev = id ? items.find(i => i.id === id) : null;
+    const item = {
+      id: prev?.id || `p_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`,
+      title,
+      body: text,
+      image: String(body?.image || '').trim().slice(0, 300),
+      btnText: String(body?.btnText || '').trim().slice(0, 40),
+      btnLink,
+      sound: !!body?.sound,
+      frequency,
+      isActive: body?.isActive !== false,
+      startsAt: isoOrNull(body?.startsAt),
+      endsAt: isoOrNull(body?.endsAt),
+      createdAt: prev?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const next = prev ? items.map(i => (i.id === id ? item : i)) : [...items, item];
+    await this.writePopups(next);
+    await this.security.log(prev ? 'popup.update' : 'popup.create', { userType: 'admin', userId: adminId, details: { id: item.id, title: item.title } });
+    return { ok: true, item };
+  }
+
+  async popupDelete(adminId: string, id: string) {
+    const items = await this.readPopups();
+    const found = items.find(i => i.id === id);
+    if (!found) throw new BadRequestException('الرسالة غير موجودة');
+    await this.writePopups(items.filter(i => i.id !== id));
+    await this.security.log('popup.delete', { userType: 'admin', userId: adminId, details: { id, title: found.title } });
+    return { ok: true };
+  }
+
   // ═══ إدارة المستخدمين (بائعون/عملاء/سائقون) ═══
   async users(role: string, q?: string, status?: string) {
     const where: any = {

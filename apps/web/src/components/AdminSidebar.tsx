@@ -23,6 +23,7 @@ const SECTIONS: { id: string; title: string; icon: string; items: { href: string
       { href: '/admin/verification', icon: '🎖️', label: 'توثيق المتاجر' },
       { href: '/admin/domains', icon: '🌐', label: 'النطاقات الخاصة' },
       { href: '/admin/ads', icon: '📢', label: 'الإعلانات' },
+      { href: '/admin/popups', icon: '💬', label: 'الرسائل المنبثقة' },
       { href: '/admin/rentals', icon: '🏠', label: 'إشراف الإيجارات' },
       { href: '/admin/rooms', icon: '🏨', label: 'إشراف الفنادق' },
       { href: '/admin/services', icon: '🛠️', label: 'إشراف الخدمات' },

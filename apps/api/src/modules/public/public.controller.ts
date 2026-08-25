@@ -32,6 +32,28 @@ export class PublicController {
     return { ok: true, message: '🔔 سجلناك — سنعلمك فور عودته للمخزون' };
   }
 
+  // 💬 الرسالة المنبثقة النشطة — يجلبها الزائر عند دخول المنصة (أحدث رسالة فعّالة ضمن نافذتها الزمنية)
+  @Get('popup')
+  @Header('Cache-Control', 'public, max-age=45, stale-while-revalidate=90')
+  async activePopup() {
+    const row = await this.prisma.setting.findUnique({ where: { key: 'site_popups' } });
+    const v: any = row?.value;
+    const items: any[] = Array.isArray(v?.items) ? v.items : [];
+    const now = Date.now();
+    const active = items
+      .filter(i => i?.isActive && (!i.startsAt || Date.parse(i.startsAt) <= now) && (!i.endsAt || Date.parse(i.endsAt) >= now))
+      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    const p: any = active[0];
+    if (!p) return { popup: null };
+    return {
+      popup: {
+        id: p.id, title: p.title, body: p.body,
+        image: p.image || '', btnText: p.btnText || '', btnLink: p.btnLink || '',
+        sound: !!p.sound, frequency: p.frequency || 'session',
+      },
+    };
+  }
+
   @Get('status')
   status() {
     return {
