@@ -301,6 +301,19 @@ export class AdminController {
   @Post('system/db-reset')
   dbReset(@CurrentUser() u: any, @Body() b: { confirm: string }) { return this.admin.dbReset(u.sub, b?.confirm || ''); }
 
+  // 🧹 الصيانة الانتقائية — قائمة الجداول + استعادة ضبط انتقائية + تصغير بيانات انتقائي
+  @UseGuards(PermsGuard('system'))
+  @Get('system/db-tables')
+  dbTables() { return this.admin.dbTables(); }
+
+  @UseGuards(PermsGuard('system'))
+  @Post('system/db-reset-tables')
+  dbResetTables(@CurrentUser() u: any, @Body() b: any) { return this.admin.dbResetTables(u.sub, b?.tables || [], b?.confirm || ''); }
+
+  @UseGuards(PermsGuard('system'))
+  @Post('system/db-shrink')
+  dbShrink(@CurrentUser() u: any, @Body() b: any) { return this.admin.dbShrink(u.sub, b?.tables || [], b?.days, b?.confirm || ''); }
+
   // 🎟️ كوبونات المنصة — حملات مركزية بجدولة وقياس أداء
   @UseGuards(PermsGuard('finance'))
   @Get('coupons')

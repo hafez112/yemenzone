@@ -13,6 +13,7 @@ const TABS = [
   { id: "customers", icon: "👥", label: "العملاء" },
   { id: "account", icon: "👤", label: "حساب المدير" },
   { id: "database", icon: "🗄️", label: "قاعدة البيانات" },
+  { id: "reset", icon: "🧹", label: "استعادة الضبط" },
 ];
 
 const DB_LABELS: Record<string, string> = {
@@ -20,6 +21,32 @@ const DB_LABELS: Record<string, string> = {
   products: "📦 المنتجات", orders: "🛒 الطلبات", payments: "💳 المدفوعات", reviews: "⭐ التقييمات",
   notifications: "🔔 الإشعارات", sessions: "🎫 الجلسات", logs: "🛡️ السجل الأمني",
 };
+
+// 🏷️ أسماء عربية ودية للجداول الأكثر شيوعاً — ما ليس هنا يظهر باسمه التقني
+const TABLE_LABELS: Record<string, string> = {
+  stores: "🏪 المتاجر", sellers: "🧑‍💼 البائعون", customers: "👥 العملاء", drivers: "🛵 السائقون",
+  products: "📦 المنتجات", categories: "🗂️ الأصناف", orders: "🛒 الطلبات", order_items: "🧾 عناصر الطلبات",
+  payments: "💳 المدفوعات", wallets: "👛 المحافظ", wallet_transactions: "💸 حركات المحافظ",
+  reviews: "⭐ التقييمات", notifications: "🔔 الإشعارات", sessions: "🎫 الجلسات", security_logs: "🛡️ السجل الأمني",
+  message_logs: "✉️ سجل الرسائل", broadcasts: "📣 البث الجماعي", search_queries: "🔎 سجل البحث",
+  ads: "📢 الإعلانات", coupons: "🎟️ الكوبونات", subscriptions: "📋 الاشتراكات", complaints: "🚨 الشكاوى",
+  rental_bookings: "🏠 حجوزات الإيجارات", rental_units: "🏘️ وحدات الإيجار", room_bookings: "🛏️ حجوزات الغرف",
+  hotel_rooms: "🏨 غرف الفنادق", service_requests: "🛠️ طلبات الخدمات", service_items: "🧰 عناصر الخدمات",
+  blog_posts: "📰 مقالات المدونة", custom_pages: "📄 الصفحات المخصصة", slides: "🖼️ الشرائح",
+  otp_codes: "🔑 رموز التحقق", banned_ips: "⛔ العناوين المحظورة", trusted_devices: "📱 الأجهزة الموثوقة",
+  referrals: "🤝 الإحالات", points_transactions: "🎯 حركات النقاط", expenses: "🧾 المصروفات",
+  store_likes: "❤️ إعجابات المتاجر", verification_requests: "✅ طلبات التوثيق", backup_records: "💾 سجل النسخ",
+  share_offers: "📈 عروض الأسهم", share_holdings: "📊 ملكيات الأسهم", carts: "🛒 سلال التسوق",
+};
+
+// ⚡ مجموعات تحديد سريع حسب طبيعة البيانات
+const TABLE_GROUPS: { label: string; tables: string[] }[] = [
+  { label: "🛡️ السجلات والجلسات", tables: ["security_logs", "message_logs", "search_queries", "sessions", "otp_codes", "api_usage", "api_keys", "trusted_devices", "banned_ips", "pwa_requests"] },
+  { label: "🔔 الإشعارات والبث", tables: ["notifications", "broadcasts"] },
+  { label: "🛒 الطلبات والمدفوعات", tables: ["order_items", "orders", "payments", "wallet_transactions", "withdrawal_requests", "card_topups", "customer_cards", "payment_cards", "card_batches", "wallets"] },
+  { label: "🏪 المتاجر والمنتجات", tables: ["products", "categories", "store_likes", "reviews", "stores", "subscriptions", "verification_requests", "store_payment_methods", "store_delivery_methods"] },
+  { label: "👥 المستخدمون", tables: ["customers", "sellers", "drivers", "delivery_companies", "store_delivery_companies"] },
+];
 
 export default function AdminSettingsPage() {
   const router = useRouter();
@@ -118,6 +145,63 @@ export default function AdminSettingsPage() {
     setResetting(false);
   };
 
+  // 🧹 استعادة الضبط الانتقائية — تحديد الجداول + تصغير البيانات
+  const [tables, setTables] = useState<any[] | null>(null);
+  const [tablesLoading, setTablesLoading] = useState(false);
+  const [selTables, setSelTables] = useState<string[]>([]);
+  const [shrinkDays, setShrinkDays] = useState(30);
+  const [shrinkAck, setShrinkAck] = useState(false);
+  const [shrinkPhrase, setShrinkPhrase] = useState("");
+  const [shrinking, setShrinking] = useState(false);
+  const [wipeAck, setWipeAck] = useState(false);
+  const [wipePhrase, setWipePhrase] = useState("");
+  const [wiping, setWiping] = useState(false);
+  const [opResult, setOpResult] = useState<any>(null);
+
+  const loadTables = async () => {
+    setTablesLoading(true);
+    try { const d = await api("/admin/system/db-tables"); setTables(d.tables); }
+    catch (e: any) { toast(e.message, "error"); }
+    setTablesLoading(false);
+  };
+
+  const toggleTable = (name: string) =>
+    setSelTables((s) => (s.includes(name) ? s.filter((t) => t !== name) : [...s, name]));
+
+  const selectableNames = () => (tables || []).filter((t) => !t.protected).map((t) => t.name);
+
+  const selectAll = () => setSelTables(selectableNames());
+
+  const selectGroup = (names: string[]) => {
+    const real = new Set(selectableNames());
+    setSelTables((s) => [...new Set([...s, ...names.filter((n) => real.has(n))])]);
+  };
+
+  const runShrink = async () => {
+    setShrinking(true); setOpResult(null);
+    try {
+      const d = await api("/admin/system/db-shrink", { method: "POST", body: JSON.stringify({ tables: selTables, days: shrinkDays, confirm: shrinkPhrase }) });
+      const total = (d.results || []).reduce((s: number, r: any) => s + (r.deleted || 0), 0);
+      toast(`🗜️ اكتمل التصغير — حُذف ${Number(total).toLocaleString("en")} سجل أقدم من ${d.days} يوماً`);
+      setOpResult({ type: "shrink", ...d });
+      setShrinkAck(false); setShrinkPhrase("");
+      loadTables(); loadDbStats();
+    } catch (e: any) { toast(e.message, "error"); }
+    setShrinking(false);
+  };
+
+  const runWipeSelected = async () => {
+    setWiping(true); setOpResult(null);
+    try {
+      const d = await api("/admin/system/db-reset-tables", { method: "POST", body: JSON.stringify({ tables: selTables, confirm: wipePhrase }) });
+      toast(`♻️ فُرّغت ${d.wipedTables} جدولاً بالكامل`);
+      setOpResult({ type: "reset", ...d });
+      setWipeAck(false); setWipePhrase(""); setSelTables([]);
+      loadTables(); loadDbStats();
+    } catch (e: any) { toast(e.message, "error"); }
+    setWiping(false);
+  };
+
   // 💾 النسخ الاحتياطي والاستعادة
   const [backups, setBackups] = useState<any>(null);
   const [creatingBk, setCreatingBk] = useState(false);
@@ -193,6 +277,9 @@ export default function AdminSettingsPage() {
     loadDbStats();
     loadBackups();
   }, []);
+
+  // 🧹 تحميل قائمة الجداول كسولاً عند فتح تبويب استعادة الضبط
+  useEffect(() => { if (tab === "reset" && tables === null && !tablesLoading) loadTables(); }, [tab]);
 
   async function saveSettings() {
     setSaving(true);
@@ -607,7 +694,140 @@ export default function AdminSettingsPage() {
                 </>
               )}
 
-              {tab !== "account" && tab !== "database" && (
+              {tab === "reset" && (
+                <>
+                  <section className="card">
+                    <div className="row between" style={{ marginBottom: ".5rem", flexWrap: "wrap", gap: ".4rem" }}>
+                      <h2 style={{ marginBottom: 0 }}>🧹 تحديد جداول قاعدة البيانات</h2>
+                      <div className="flex gap-1">
+                        <button className="btn ghost small" onClick={selectAll} disabled={!tables}>تحديد الكل</button>
+                        <button className="btn ghost small" onClick={() => setSelTables([])}>إلغاء التحديد</button>
+                        <button className="btn ghost small" onClick={loadTables} disabled={tablesLoading}>{tablesLoading ? "⏳" : "🔄"}</button>
+                      </div>
+                    </div>
+                    <p className="muted small" style={{ marginBottom: ".5rem" }}>
+                      حدّد الجداول المستهدفة ثم اختر الإجراء بالأسفل: <strong>تصغير البيانات</strong> يحذف السجلات القديمة ويبقي الأحدث،
+                      و<strong>استعادة الضبط</strong> تُفرّغ الجدول بالكامل. الجداول المرجعية (الإدارة، الإعدادات، الخطط، العملات، بوابات الدفع) محمية ولا يمكن تحديدها.
+                    </p>
+                    <div className="flex gap-1" style={{ flexWrap: "wrap", marginBottom: ".6rem" }}>
+                      {TABLE_GROUPS.map((g) => (
+                        <button key={g.label} className="btn ghost small" onClick={() => selectGroup(g.tables)} disabled={!tables}>{g.label}</button>
+                      ))}
+                    </div>
+                    {selTables.length > 0 && (
+                      <p className="small" style={{ color: "var(--primary, #6C3DF5)", fontWeight: 800, marginBottom: ".5rem" }}>
+                        ✅ حدّدت {selTables.length} جدولاً
+                      </p>
+                    )}
+                    {!tables ? (
+                      <div className="skeleton h-24 rounded-2xl" />
+                    ) : (
+                      <div style={{ maxHeight: 340, overflowY: "auto", display: "grid", gap: ".35rem" }}>
+                        {tables.map((t) => {
+                          const sel = selTables.includes(t.name);
+                          return (
+                            <label key={t.name} className="row between small"
+                              style={{ padding: ".45rem .6rem", borderRadius: 12, gap: ".5rem",
+                                background: sel ? "rgba(108,61,245,.09)" : "rgba(127,127,127,.06)",
+                                border: sel ? "1px solid rgba(108,61,245,.35)" : "1px solid transparent",
+                                opacity: t.protected ? .55 : 1, cursor: t.protected ? "not-allowed" : "pointer" }}>
+                              <span className="row" style={{ gap: ".45rem", minWidth: 0, flexWrap: "wrap" }}>
+                                <input type="checkbox" disabled={t.protected} checked={sel} onChange={() => toggleTable(t.name)} style={{ width: "auto", marginBottom: 0 }} />
+                                <b style={{ fontFamily: "monospace", fontSize: 12 }}>{t.name}</b>
+                                {TABLE_LABELS[t.name] && <span className="muted">{TABLE_LABELS[t.name]}</span>}
+                                {t.protected && <span className="badge" style={{ background: "#dcfce7", color: "#166534" }}>🔒 محمي</span>}
+                                {!t.hasCreatedAt && !t.protected && <span className="badge" style={{ background: "#fef3c7", color: "#92400e" }}>⏱️ بلا تاريخ</span>}
+                              </span>
+                              <span className="muted" style={{ whiteSpace: "nowrap" }}>{Number(t.rows).toLocaleString("en")} سجل · {t.size}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </section>
+
+                  {/* 🗜️ تصغير بيانات الجداول المحددة */}
+                  <section className="card" style={{ border: "1.5px solid rgba(217,119,6,.35)", background: "rgba(217,119,6,.04)" }}>
+                    <h2 style={{ color: "#b45309" }}>🗜️ تصغير بيانات الجداول المحددة</h2>
+                    <p className="muted small" style={{ marginBottom: ".5rem" }}>
+                      يحذف السجلات <strong>الأقدم</strong> من المدة التي تحددها ويبقي الأحدث — مثالي لتخفيف السجلات والإشعارات والجلسات دون فقدان البيانات الحديثة. الجداول بلا عمود تاريخ تُتخطّى تلقائياً.
+                    </p>
+                    <div className="row" style={{ gap: ".5rem", marginBottom: ".6rem", flexWrap: "wrap" }}>
+                      <span className="small muted">الاحتفاظ بآخر</span>
+                      <input type="number" min={1} max={3650} value={shrinkDays} onChange={(e) => setShrinkDays(Math.max(1, Number(e.target.value) || 30))} style={{ width: 90, marginBottom: 0 }} />
+                      <span className="small muted">يوماً — يُحذف ما هو أقدم من ذلك</span>
+                    </div>
+                    {!shrinkAck ? (
+                      <button className="btn primary" style={{ width: "100%", justifyContent: "center", background: "#d97706" }}
+                        disabled={!selTables.length} onClick={() => setShrinkAck(true)}>
+                        🔓 المتابعة للتصغير — {selTables.length ? `حدّدت ${selTables.length} جدولاً` : "حدّد الجداول أولاً من الأعلى"}
+                      </button>
+                    ) : (
+                      <div className="anim-bounce-in">
+                        <label className="muted small">اكتب عبارة التأكيد: <strong style={{ color: "#b45309" }}>تصغير</strong></label>
+                        <input value={shrinkPhrase} onChange={(e) => setShrinkPhrase(e.target.value)} placeholder="تصغير" style={{ borderColor: "rgba(217,119,6,.4)" }} />
+                        <div className="flex gap-2">
+                          <button className="btn primary flex-1" style={{ justifyContent: "center", background: "#d97706" }}
+                            disabled={shrinking || shrinkPhrase.trim() !== "تصغير" || !selTables.length} onClick={runShrink}>
+                            {shrinking ? "⏳ جاري التصغير..." : "🗜️ تنفيذ التصغير الآن"}
+                          </button>
+                          <button className="btn ghost" onClick={() => { setShrinkAck(false); setShrinkPhrase(""); }}>تراجع</button>
+                        </div>
+                      </div>
+                    )}
+                  </section>
+
+                  {/* ♻️ استعادة ضبط الجداول المحددة */}
+                  <section className="card" style={{ border: "1.5px solid rgba(220,38,38,.35)", background: "rgba(220,38,38,.04)" }}>
+                    <h2 style={{ color: "#dc2626" }}>⚠️ استعادة ضبط الجداول المحددة</h2>
+                    <p className="muted small" style={{ marginBottom: ".5rem" }}>
+                      إجراء نهائي لا يمكن التراجع عنه — يُفرّغ <strong>كل جدول حدّدته</strong> بالكامل مع إعادة ترقيمه. لا تُمس الجداول غير المحددة ولا المحمية.
+                    </p>
+                    <p className="small" style={{ color: "#b91c1c", fontWeight: 700, marginBottom: ".6rem" }}>
+                      💾 يُنصح بشدة بأخذ نسخة احتياطية من تبويب قاعدة البيانات قبل المتابعة
+                    </p>
+                    {!wipeAck ? (
+                      <button className="btn danger" style={{ width: "100%", justifyContent: "center" }}
+                        disabled={!selTables.length} onClick={() => setWipeAck(true)}>
+                        🔓 فتح منطقة الخطر — {selTables.length ? `حدّدت ${selTables.length} جدولاً` : "حدّد الجداول أولاً من الأعلى"}
+                      </button>
+                    ) : (
+                      <div className="anim-bounce-in">
+                        <label className="muted small">اكتب عبارة التأكيد: <strong style={{ color: "#dc2626" }}>إعادة ضبط</strong></label>
+                        <input value={wipePhrase} onChange={(e) => setWipePhrase(e.target.value)} placeholder="إعادة ضبط" style={{ borderColor: "rgba(220,38,38,.4)" }} />
+                        <div className="flex gap-2">
+                          <button className="btn danger flex-1" style={{ justifyContent: "center", background: "#dc2626", color: "#fff" }}
+                            disabled={wiping || wipePhrase.trim() !== "إعادة ضبط" || !selTables.length} onClick={runWipeSelected}>
+                            {wiping ? "⏳ جاري التفريغ..." : "♻️ تفريغ الجداول المحددة نهائياً"}
+                          </button>
+                          <button className="btn ghost" onClick={() => { setWipeAck(false); setWipePhrase(""); }}>تراجع</button>
+                        </div>
+                      </div>
+                    )}
+                  </section>
+
+                  {/* 📋 نتيجة آخر عملية */}
+                  {opResult && (
+                    <section className="card anim-bounce-in">
+                      <h2>{opResult.type === "shrink" ? "🗜️ نتيجة التصغير" : "♻️ نتيجة استعادة الضبط"}</h2>
+                      {opResult.type === "shrink" ? (
+                        <div>
+                          {(opResult.results || []).map((r: any, i: number) => (
+                            <p key={i} className="row between small" style={{ padding: ".35rem 0", borderBottom: i < opResult.results.length - 1 ? "1px dashed rgba(127,127,127,.2)" : "none" }}>
+                              <span style={{ fontFamily: "monospace" }}>{TABLE_LABELS[r.table] || "🗃️"} {r.table}</span>
+                              <strong>{r.skipped ? "⏭️ تُخطّي — بلا عمود تاريخ" : `🗑️ حُذف ${Number(r.deleted).toLocaleString("en")}`}</strong>
+                            </p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="small muted">فُرّغت الجداول: <b style={{ fontFamily: "monospace" }}>{(opResult.tables || []).join("، ")}</b></p>
+                      )}
+                    </section>
+                  )}
+                </>
+              )}
+
+              {tab !== "account" && tab !== "database" && tab !== "reset" && (
                 <button className="btn primary" style={{ width: "100%", justifyContent: "center" }} disabled={saving} onClick={saveSettings}>
                   {saving ? "⏳ جاري الحفظ..." : "💾 حفظ جميع الإعدادات"}
                 </button>

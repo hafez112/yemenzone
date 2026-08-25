@@ -1005,6 +1005,91 @@ export class AdminService {
     return { ok: true, wipedTables: WIPE.length, at: new Date() };
   }
 
+  // 🧹 الصيانة الانتقائية — الجداول المرجعية والحساسة محمية ولا تُمس بأي إجراء انتقائي
+  private static readonly PROTECTED_TABLES = new Set([
+    '_prisma_migrations', 'admin_users', 'settings', 'plans', 'currencies', 'governorates',
+    'store_types', 'payment_gateways', 'messaging_providers', 'ai_providers',
+  ]);
+
+  // أسماء الجداول الموجودة فعلاً — مرجع التحقق الذي يمنع أي اسم غير موثوق
+  private async listRealTables(): Promise<Set<string>> {
+    const rows: any[] = await this.prisma.$queryRawUnsafe(
+      `SELECT table_name AS name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`,
+    );
+    return new Set(rows.map((r) => String(r.name)));
+  }
+
+  // يُبقي فقط أسماء صالحة: موجودة فعلاً + بصيغة آمنة + غير محمية
+  private async sanitizeTables(tables: string[]): Promise<string[]> {
+    const real = await this.listRealTables();
+    return [...new Set((tables || []).map((t) => String(t)))]
+      .filter((t) => /^[a-zA-Z0-9_]+$/.test(t) && real.has(t) && !AdminService.PROTECTED_TABLES.has(t));
+  }
+
+  // 🗂️ كل الجداول الفعلية — عدد الصفوف والحجم وهل تحمل عمود تاريخ (قابلة للتصغير)
+  async dbTables() {
+    const rows: any[] = await this.prisma.$queryRawUnsafe(`
+      SELECT t.table_name AS name,
+             GREATEST(COALESCE(s.n_live_tup, 0), 0)::bigint AS rows,
+             pg_size_pretty(pg_total_relation_size(format('%I', t.table_name)::regclass)) AS size,
+             pg_total_relation_size(format('%I', t.table_name)::regclass)::bigint AS bytes,
+             EXISTS (
+               SELECT 1 FROM information_schema.columns c
+               WHERE c.table_schema = 'public' AND c.table_name = t.table_name AND c.column_name = 'createdAt'
+             ) AS "hasCreatedAt"
+      FROM information_schema.tables t
+      LEFT JOIN pg_stat_user_tables s ON s.relname = t.table_name AND s.schemaname = 'public'
+      WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE' AND t.table_name <> '_prisma_migrations'
+      ORDER BY bytes DESC, name ASC
+    `);
+    return {
+      tables: rows.map((r) => ({
+        name: String(r.name),
+        rows: Number(r.rows),
+        size: String(r.size),
+        bytes: Number(r.bytes),
+        hasCreatedAt: !!r.hasCreatedAt,
+        protected: AdminService.PROTECTED_TABLES.has(String(r.name)),
+      })),
+      at: new Date(),
+    };
+  }
+
+  // ♻️ استعادة ضبط انتقائية — تفريغ الجداول المحددة فقط تفريغاً كاملاً
+  async dbResetTables(adminId: string, tables: string[], confirm: string) {
+    if ((confirm || '').trim() !== 'إعادة ضبط') {
+      throw new BadRequestException('⚠️ اكتب عبارة التأكيد «إعادة ضبط» كاملة للمتابعة');
+    }
+    const clean = await this.sanitizeTables(tables);
+    if (!clean.length) throw new BadRequestException('⚠️ حدّد جدولاً صالحاً واحداً على الأقل — الجداول المحمية لا تُمس');
+    await this.prisma.$executeRawUnsafe(`TRUNCATE TABLE ${clean.map((t) => `"${t}"`).join(', ')} RESTART IDENTITY CASCADE`);
+    await this.security.log('db.reset.tables', { userType: 'admin', userId: adminId, details: { tables: clean } });
+    return { ok: true, wipedTables: clean.length, tables: clean, at: new Date() };
+  }
+
+  // 🗜️ تصغير البيانات — يحذف السجلات الأقدم من المدة المحددة ويبقي الأحدث (للجداول ذات عمود التاريخ فقط)
+  async dbShrink(adminId: string, tables: string[], days: number, confirm: string) {
+    if ((confirm || '').trim() !== 'تصغير') {
+      throw new BadRequestException('⚠️ اكتب عبارة التأكيد «تصغير» للمتابعة');
+    }
+    const keepDays = Math.min(Math.max(Math.floor(Number(days) || 30), 1), 3650);
+    const clean = await this.sanitizeTables(tables);
+    if (!clean.length) throw new BadRequestException('⚠️ حدّد جدولاً صالحاً واحداً على الأقل — الجداول المحمية لا تُمس');
+    const results: { table: string; deleted: number; skipped?: boolean }[] = [];
+    for (const t of clean) {
+      const col: any[] = await this.prisma.$queryRawUnsafe(
+        `SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '${t}' AND column_name = 'createdAt' LIMIT 1`,
+      );
+      if (!col.length) { results.push({ table: t, deleted: 0, skipped: true }); continue; }
+      const deleted = await this.prisma.$executeRawUnsafe(
+        `DELETE FROM "${t}" WHERE "createdAt" < NOW() - INTERVAL '${keepDays} days'`,
+      );
+      results.push({ table: t, deleted: Number(deleted) || 0 });
+    }
+    await this.security.log('db.shrink', { userType: 'admin', userId: adminId, details: { days: keepDays, results } });
+    return { ok: true, days: keepDays, results, at: new Date() };
+  }
+
   // ═══ 🎟️ كوبونات المنصة المركزية — تخصم من ميزانية المنصة لا من البائع ═══
 
   // قائمة كوبونات المنصة + إحصاءات الأداء الحقيقية
